@@ -4,7 +4,7 @@ from CNBuildSupport import CNBSEnvironment
 import wnsbase.RCS as RCS
 
 commonEnv = CNBSEnvironment(PROJNAME       = 'wimac',
-                            PROJMODULES    = ['TEST', 'BASE'],
+                            PROJMODULES    = ['TEST', 'SERVICES', 'CONTROLPLANE', 'SCHEDULER', 'FRAME', 'BASE', 'MODULE', 'COMPSWITCH'],
                             FLATINCLUDES   = False,
                             LIBRARY        = True,
                             SHORTCUTS      = True,
