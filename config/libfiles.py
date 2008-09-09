@@ -1,12 +1,4 @@
-srcFiles = dict()
-
-srcFiles['BASE'] = [
-    ]
-
-
-srcFiles['TEST'] = [
-    ]
-
+srcFiles = []
 hppFiles = []
 pyconfigs = []
 Return('srcFiles hppFiles pyconfigs')
