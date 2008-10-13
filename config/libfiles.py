@@ -1,4 +1,4 @@
-libname = []
+libname = 'wimac'
 srcFiles = []
 hppFiles = []
 pyconfigs = []
