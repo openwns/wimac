@@ -41,7 +41,7 @@ namespace wimac {
 	class Utilities
 	{
 	public:
-		static std::string printip(uint ip);
+		static std::string printip(unsigned int ip);
 
 		static double getComputationalAccuracyFactor();
 	};
