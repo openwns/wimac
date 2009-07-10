@@ -65,13 +65,14 @@ ULCallback::callBack(wns::scheduler::MapInfoEntryPtr mapInfoEntry)
   double rate = phyModePtr->getDataRate();
 
   assure(compounds.size() > 0, "Empty compound list");
-  simTimeType pduEndTime = (*(compounds.begin()))->getLengthInBits() / rate;
-  simTimeType pduStartTime = 0.0;
+  simTimeType pduPointer = 0.0;
 
   // iterate over all compounds in list:
   for (wns::scheduler::CompoundList::iterator iter=compounds.begin(); iter!=compounds.end(); ++iter)
   {
 	wns::ldk::CompoundPtr pdu = *iter;
+    simTimeType pduDuration = pdu->getLengthInBits() / rate;;
+
 
 	assure(pdu != wns::ldk::CompoundPtr(), "Invalid PDU");
 
@@ -80,8 +81,8 @@ ULCallback::callBack(wns::scheduler::MapInfoEntryPtr mapInfoEntry)
 	m <<     ":  direction: UL \n"
 	  << "        PDU scheduled for user: " << colleagues.registry->getNameForUser(user) << "\n"
 	  << "        Frequency Slot: " << fSlot << "\n"
-	  << "        StartTime:      " << pduStartTime << "\n"
-	  << "        EndTime:        " << pduEndTime << "\n"
+	  << "        StartTime:      " << pduPointer << "\n"
+	  << "        EndTime:        " << pduPointer + pduDuration << "\n"
 //	  << "        Beamforming:    " << beamforming << "\n"
 	  << "        Beam:           " << beam << "\n"
 	  << "        Tx Power:       " << txPower;
@@ -110,8 +111,8 @@ ULCallback::callBack(wns::scheduler::MapInfoEntryPtr mapInfoEntry)
 	PatternSetterPhyAccessFunc* patternFunc =
 		new PatternSetterPhyAccessFunc;
 	patternFunc->destination_ = user;
-	patternFunc->patternStart_ = pduStartTime;
-	patternFunc->patternEnd_ = pduEndTime;
+	patternFunc->patternStart_ = pduPointer;
+	patternFunc->patternEnd_ = pduPointer + pduDuration;
 	patternFunc->pattern_ = pattern;
 
 	// set PhyUser command
@@ -137,9 +138,7 @@ ULCallback::callBack(wns::scheduler::MapInfoEntryPtr mapInfoEntry)
 
 	scheduledPDUs.push(pdu);
   
-    simTimeType oldEnd = pduEndTime;
-    pduEndTime = pduEndTime +  pdu->getLengthInBits() / rate;
-    pduStartTime = oldEnd;
+    pduPointer += pduDuration;
   }
 }
 
