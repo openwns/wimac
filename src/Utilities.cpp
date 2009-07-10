@@ -30,7 +30,7 @@
 #include <sstream>
 using namespace wimac;
 
-std::string Utilities::printip(uint ip)
+std::string Utilities::printip(unsigned int ip)
 {
 	std::stringstream ss;
 

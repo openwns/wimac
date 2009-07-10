@@ -68,13 +68,13 @@ DLCallback::callBack(wns::scheduler::MapInfoEntryPtr mapInfoEntry)
   double rate = phyModePtr->getDataRate();
 
   assure(compounds.size() > 0, "Empty compound list");
-  simTimeType pduEndTime = (*(compounds.begin()))->getLengthInBits() / rate;
-  simTimeType pduStartTime = 0.0;
+  simTimeType pduPointer = 0.0;
 
   // iterate over all compounds in list:
   for (wns::scheduler::CompoundList::iterator iter=compounds.begin(); iter!=compounds.end(); ++iter)
   {
     wns::ldk::CompoundPtr pdu = *iter;
+    simTimeType pduDuration = pdu->getLengthInBits() / rate;
 
   // TODO
 	assure(pdu != wns::ldk::CompoundPtr(), "Invalid PDU");
@@ -88,8 +88,8 @@ DLCallback::callBack(wns::scheduler::MapInfoEntryPtr mapInfoEntry)
 	m <<     ":  direction: DL \n"
 	  << "        PDU scheduled for user: " << colleagues.registry->getNameForUser(user) << "\n"
 	  << "        Frequency Slot: " << fSlot << "\n"
-	  << "        StartTime:      " << pduStartTime << "\n"
-	  << "        EndTime:        " << pduEndTime << "\n"
+	  << "        StartTime:      " << pduPointer << "\n"
+	  << "        EndTime:        " << pduPointer + pduDuration - Utilities::getComputationalAccuracyFactor()<< "\n"
 //	  << "        Beamforming:    " << beamforming << "\n"
 	  << "        Beam:           " << beam << "\n"
 	  << "        Tx Power:       " << txPower;
@@ -123,9 +123,9 @@ DLCallback::callBack(wns::scheduler::MapInfoEntryPtr mapInfoEntry)
 	{
 		BeamformingPhyAccessFunc* sdmaFunc = new BeamformingPhyAccessFunc;
 		sdmaFunc->destination_ = user;
-		sdmaFunc->transmissionStart_ = pduStartTime;
-		sdmaFunc->transmissionStop_ =
-			pduEndTime - Utilities::getComputationalAccuracyFactor();
+		sdmaFunc->transmissionStart_ = pduPointer;
+		sdmaFunc->transmissionStop_ = 
+			pduPointer + pduDuration - Utilities::getComputationalAccuracyFactor();
 		sdmaFunc->subBand_ = fSlot;
 		sdmaFunc->pattern_ = pattern;
 		sdmaFunc->requestedTxPower_ = txPower;
@@ -135,17 +135,17 @@ DLCallback::callBack(wns::scheduler::MapInfoEntryPtr mapInfoEntry)
 	{
 		OmniUnicastPhyAccessFunc* omniUnicastFunc = new OmniUnicastPhyAccessFunc;
 		omniUnicastFunc->destination_ = user;
-		omniUnicastFunc->transmissionStart_ = pduStartTime;
+		omniUnicastFunc->transmissionStart_ = pduPointer;
 		omniUnicastFunc->transmissionStop_ =
-			pduEndTime - Utilities::getComputationalAccuracyFactor();
+			pduPointer + pduDuration - Utilities::getComputationalAccuracyFactor();
 		omniUnicastFunc->subBand_ = fSlot;
 		func = omniUnicastFunc;
 	}else
 	{
 		BroadcastPhyAccessFunc* broadcastFunc = new BroadcastPhyAccessFunc;
-		broadcastFunc->transmissionStart_ = pduStartTime;
+		broadcastFunc->transmissionStart_ = pduPointer;
 		broadcastFunc->transmissionStop_ =
-			pduEndTime - Utilities::getComputationalAccuracyFactor();
+			pduPointer + pduDuration - Utilities::getComputationalAccuracyFactor();
 		broadcastFunc->subBand_ = fSlot;
 		func = broadcastFunc;
 	}
@@ -177,11 +177,8 @@ DLCallback::callBack(wns::scheduler::MapInfoEntryPtr mapInfoEntry)
 	//this->pduWatch(pdu);  // Watch for special compounds to inform its observer
 
 	scheduledPDUs.push(pdu);
-    simTimeType oldEnd = pduEndTime;
-    pduEndTime = pduEndTime +  pdu->getLengthInBits() / rate;
-    pduStartTime = oldEnd;
-  }
-  
+    pduPointer += pduDuration;
+  }  
 }
 
 void DLCallback::deliverNow(wns::ldk::Connector* connector)
