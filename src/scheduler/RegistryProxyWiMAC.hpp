@@ -51,6 +51,7 @@ namespace wimac { namespace scheduler {
 
 
 		wns::scheduler::UserID getUserForCID(wns::scheduler::ConnectionID cid);
+		virtual wns::service::dll::UnicastAddress getPeerAddressForCID(wns::scheduler::ConnectionID cid);
 		wns::scheduler::ConnectionVector getConnectionsForUser(const wns::scheduler::UserID user);
 		float getMinTPForCID(wns::scheduler::ConnectionID cid);
 		float getMaxDelayForCID(wns::scheduler::ConnectionID cid);

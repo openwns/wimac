@@ -111,6 +111,15 @@ RegistryProxyWiMAC::getUserForCID(wns::scheduler::ConnectionID cid) {
 	}
 }
 
+wns::service::dll::UnicastAddress
+RegistryProxyWiMAC::getPeerAddressForCID(wns::scheduler::ConnectionID cid)
+{
+    wns::scheduler::UserID user = getUserForCID(cid);
+    wns::service::dll::UnicastAddress peerAddress
+      = layer2->getStationManager()->getStationByNode(user)->getDLLAddress();
+    return peerAddress;
+}
+
 wns::scheduler::ConnectionVector
 RegistryProxyWiMAC::getConnectionsForUser(const wns::scheduler::UserID user) {
 	wns::scheduler::ConnectionVector connections;
