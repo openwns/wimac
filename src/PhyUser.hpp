@@ -53,6 +53,7 @@
 #include <WIMAC/CIRMeasureInterface.hpp>
 #include <WIMAC/PhyUserCommand.hpp>
 
+#include <WNS/service/phy/phymode/PhyModeMapperInterface.hpp>
 
 namespace wns { namespace node{
 	class Node;
@@ -165,12 +166,14 @@ namespace wimac {
 			wns::probe::bus::ContextCollectorPtr carrierSDMA;
 			wns::probe::bus::ContextCollectorPtr cirSDMA;
 			wns::probe::bus::ContextCollectorPtr deltaPHYModeSDMA;
+			wns::probe::bus::ContextCollectorPtr PHYModeSDMA;
 			wns::probe::bus::ContextCollectorPtr deltaInterferenceSDMA;
 			wns::probe::bus::ContextCollectorPtr deltaCarrierSDMA;
 			wns::probe::bus::ContextCollectorPtr interferenceFrameHead;
 			wns::probe::bus::ContextCollectorPtr cirFrameHead;
 			wns::probe::bus::ContextCollectorPtr interferenceContention;
 			wns::probe::bus::ContextCollectorPtr cirContention;
+            wns::probe::bus::ContextCollectorPtr pathloss;
 		} probes_;
 
 		simTimeType safetyFraction;
