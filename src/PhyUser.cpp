@@ -261,6 +261,11 @@ PhyUser::onData(wns::osi::PDUPtr pdu,
 		wns::service::phy::power::PowerMeasurementPtr rxPowerMeasurement)
 {
 	wns::ldk::CompoundPtr compound = wns::staticCast<wns::ldk::Compound>(pdu);
+
+    if(!getFUN()->getProxy()->commandIsActivated(
+        compound->getCommandPool(), this))      
+            return;
+
 	PhyUserCommand* puCommand = getCommand( compound->getCommandPool() );
 
 	// store measured signal into PhyUserCommand
