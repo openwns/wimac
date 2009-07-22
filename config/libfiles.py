@@ -169,5 +169,5 @@ pyconfigs = [
 'wimac/evaluation/__init__.py',
 'wimac/evaluation/default.py',
 ]
-dependencies = ['boost_filesystem']
+dependencies = []
 Return('libname srcFiles hppFiles pyconfigs dependencies')

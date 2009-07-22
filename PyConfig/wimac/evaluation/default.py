@@ -79,7 +79,7 @@ def installEvaluation(sim, _accessPointIDs, _userTerminalIDs):
                                        description = 'Carrier to Interference for data packets [dB]',
                                        minXValue = -40.0,
                                        maxXValue = 100.0,
-                                       resolution =  1000))
+                                       resolution =  1000))    
 
     sourceName = 'wimac.buffer.size'
     node = openwns.evaluation.createSourceNode(sim, sourceName)
@@ -92,3 +92,19 @@ def installEvaluation(sim, _accessPointIDs, _userTerminalIDs):
     node.appendChildren(SeparateByRingAndType(_accessPointIDs + _userTerminalIDs))
     node.getLeafs().appendChildren(Moments(name = sourceName,
                                            description = 'Loss Ratio'))
+
+
+def installOverFrameOffsetEvaluation(sim, symbolsInFrame, _accessPointIDs, _userTerminalIDs):
+  
+    for sourceName in ['wimac.cirSDMA', 'wimac.interferenceSDMA', 'wimac.carrierSDMA']:
+        try:
+            node = openwns.evaluation.getSourceNode(sim, sourceName)
+        except SourceNotRegistered:         
+            node = openwns.evaluation.createSourceNode(sim, sourceName)
+            node.appendChildren(SeparateByRingAndType(_accessPointIDs + _userTerminalIDs))
+            
+        node.getLeafs().appendChildren(Plot2D(xDataKey = 'OffsetFromFrameStart',
+                                            minX = 0,
+                                            maxX = symbolsInFrame - 1,
+                                            resolution = symbolsInFrame - 1,
+                                            statEvals = ['deviation','trials','mean']))
