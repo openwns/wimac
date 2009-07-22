@@ -81,7 +81,9 @@ PhyUser::PhyUser(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config) :
 	tune_.numberOfSubCarrier = config.get<int>("numberOfSubCarrier");
 
 	// Probes configure
-    wns::probe::bus::ContextProviderCollection& cpc = getFUN()->getLayer()->getContextProviderCollection();
+    wns::probe::bus::ContextProviderCollection* cpcParent = &fun->getLayer()->getContextProviderCollection();
+
+    wns::probe::bus::ContextProviderCollection cpc(cpcParent);
 
     probes_.interferenceSDMA = wns::probe::bus::ContextCollectorPtr(
         new wns::probe::bus::ContextCollector(cpc, "wimac.interferenceSDMA"));

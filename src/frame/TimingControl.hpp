@@ -100,6 +100,7 @@ public:
 
 	void onFUNCreated();
 
+    int getOffset();
 private:
 	struct ActivationEntry
 	{
@@ -130,6 +131,7 @@ private:
 	wns::pyconfig::View config_;
 
 	simTimeType frameStartupDelay_;
+    simTimeType frameStartTime_;
 
 	friend class TriggerActivationStart;
 };
