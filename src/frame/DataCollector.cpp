@@ -64,8 +64,8 @@ DataCollector::DataCollector(wns::ldk::fun::FUN* fun, const wns::pyconfig::View&
 }
 
 DataCollector::DataCollector(const DataCollector& rhs) :
-	wns::ldk::fcf::CompoundCollectorInterface(rhs),
-	wns::ldk::CompoundHandlerInterface(rhs),
+    wns::ldk::fcf::CompoundCollectorInterface(rhs),
+    wns::ldk::CompoundHandlerInterface<FunctionalUnit>(rhs),
 	wns::ldk::CommandTypeSpecifierInterface(rhs),
 	wns::ldk::HasReceptorInterface(rhs),
 	wns::ldk::HasConnectorInterface(rhs),
@@ -76,7 +76,7 @@ DataCollector::DataCollector(const DataCollector& rhs) :
 	wns::ldk::FunctionalUnit(rhs),
 	wns::ldk::fcf::CompoundCollector(rhs),
 	wns::ldk::CommandTypeSpecifier<wns::ldk::EmptyCommand>(rhs),
-	wns::ldk::HasConnector<wns::ldk::SingleConnector, wns::ldk::SingleConnector>(rhs),
+	wns::ldk::HasConnector<wns::ldk::SingleConnector>(rhs),
 	wns::ldk::HasReceptor<wns::ldk::SingleReceptor>(rhs),
 	wns::ldk::HasDeliverer<wns::ldk::SingleDeliverer>(rhs),
 	wns::Cloneable<wimac::frame::DataCollector>(rhs),

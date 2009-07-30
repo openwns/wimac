@@ -75,7 +75,7 @@ BufferDropping::BufferDropping(wns::ldk::fun::FUN* fun,
 
 
 BufferDropping::BufferDropping(const BufferDropping& other)
-	: wns::ldk::CompoundHandlerInterface(other),
+    : wns::ldk::CompoundHandlerInterface<FunctionalUnit>(other),
 	  wns::ldk::CommandTypeSpecifierInterface(other),
 	  wns::ldk::HasReceptorInterface(other),
 	  wns::ldk::HasConnectorInterface(other),

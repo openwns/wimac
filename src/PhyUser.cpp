@@ -128,7 +128,7 @@ PhyUser::PhyUser(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config) :
 
 
 PhyUser::PhyUser( const PhyUser& rhs ):
-	wns::ldk::CompoundHandlerInterface( rhs ),
+    wns::ldk::CompoundHandlerInterface<FunctionalUnit>( rhs ),
 	wns::ldk::CommandTypeSpecifierInterface( rhs ),
 	wns::ldk::HasReceptorInterface( rhs ),
 	wns::ldk::HasConnectorInterface( rhs ),
