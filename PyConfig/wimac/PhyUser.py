@@ -33,7 +33,27 @@ class PhyUser(Sealed):
     centerFrequency = None
     bandwidth = None
     numberOfSubCarrier = None
+    
+    iProbeName = None
+    cirProbeName = None
+    cProbeName = None
+    deltaPhyProbeName = None
+    deltaIProbeName = None
+    deltaCProbeName = None
+    iFCHProbeName = None
+    cirFCHProbeName = None
+    iContentionProbeName = None
+    cirContentionProbeName = None
 
     def __init__(self, **kw):
+        self.iProbeName = "wimac.interferenceSDMA"
+        self.cirProbeName = "wimac.cirSDMA"
+        self.cProbeName = "wimac.carrierSDMA"
+        self.deltaPhyProbeName = "wimac.deltaPHYModeSDMA"
+        self.deltaIProbeName = "wimac.deltaInterferenceSDMA"
+        self.deltaCProbeName = "wimac.deltaCarrierSDMA"
+        self.iFCHProbeName = "wimac.interferenceFrameHead"
+        self.cirFCHProbeName = "wimac.cirFrameHead"
+        self.iContentionProbeName = "wimac.interferenceContention"
+        self.cirContentionProbeName = "wimac.cirContention"      
         attrsetter(self, kw)
-

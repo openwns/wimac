@@ -40,6 +40,7 @@
 #include <WNS/ldk/fcf/FrameBuilder.hpp>
 #include <WNS/pyconfig/View.hpp>
 #include <WNS/probe/bus/ContextProviderCollection.hpp>
+#include <WNS/probe/bus/utils.hpp>
 
 #include <cmath>
 
@@ -85,38 +86,35 @@ PhyUser::PhyUser(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config) :
 
     wns::probe::bus::ContextProviderCollection cpc(cpcParent);
 
-    probes_.interferenceSDMA = wns::probe::bus::ContextCollectorPtr(
-        new wns::probe::bus::ContextCollector(cpc, "wimac.interferenceSDMA"));
+    probes_.interferenceSDMA = 
+        wns::probe::bus::collector(cpc, config, "iProbeName");
 
-    probes_.cirSDMA = wns::probe::bus::ContextCollectorPtr(
-        new wns::probe::bus::ContextCollector(cpc, "wimac.cirSDMA"));
+    probes_.cirSDMA = 
+        wns::probe::bus::collector(cpc, config, "cirProbeName");
 
-    probes_.carrierSDMA = wns::probe::bus::ContextCollectorPtr(
-        new wns::probe::bus::ContextCollector(cpc, "wimac.carrierSDMA"));
+    probes_.carrierSDMA = 
+        wns::probe::bus::collector(cpc, config, "cProbeName");
 
-    probes_.deltaInterferenceSDMA = wns::probe::bus::ContextCollectorPtr(
-        new wns::probe::bus::ContextCollector(cpc, "wimac.deltaInterferenceSDMA"));
+    probes_.deltaInterferenceSDMA =
+        wns::probe::bus::collector(cpc, config, "deltaIProbeName");
 
-    probes_.deltaCarrierSDMA = wns::probe::bus::ContextCollectorPtr(
-        new wns::probe::bus::ContextCollector(cpc, "wimac.deltaCarrierSDMA"));
+    probes_.deltaCarrierSDMA = 
+        wns::probe::bus::collector(cpc, config, "deltaCProbeName");
 
-    probes_.deltaPHYModeSDMA = wns::probe::bus::ContextCollectorPtr(
-        new wns::probe::bus::ContextCollector(cpc, "wimac.deltaPHYModeSDMA"));
+    probes_.deltaPHYModeSDMA = 
+        wns::probe::bus::collector(cpc, config, "deltaPhyProbeName");
 
-    probes_.interferenceFrameHead = wns::probe::bus::ContextCollectorPtr(
-        new wns::probe::bus::ContextCollector(cpc, "wimac.interferenceFrameHead"));
+    probes_.interferenceFrameHead = 
+        wns::probe::bus::collector(cpc, config, "iFCHProbeName");
 
-    probes_.interferenceFrameHead = wns::probe::bus::ContextCollectorPtr(
-        new wns::probe::bus::ContextCollector(cpc, "wimac.interferenceFrameHead"));
+    probes_.cirFrameHead = 
+        wns::probe::bus::collector(cpc, config, "cirFCHProbeName");
 
-    probes_.cirFrameHead = wns::probe::bus::ContextCollectorPtr(
-        new wns::probe::bus::ContextCollector(cpc, "wimac.cirFrameHead"));
+    probes_.interferenceContention = 
+        wns::probe::bus::collector(cpc, config, "iContentionProbeName");
 
-    probes_.interferenceContention = wns::probe::bus::ContextCollectorPtr(
-        new wns::probe::bus::ContextCollector(cpc, "wimac.interferenceContention"));
-
-    probes_.cirContention = wns::probe::bus::ContextCollectorPtr(
-        new wns::probe::bus::ContextCollector(cpc, "wimac.cirContention"));
+    probes_.cirContention = 
+        wns::probe::bus::collector(cpc, config, "cirContentionProbeName");
 }
 
 
