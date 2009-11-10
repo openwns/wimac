@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,136 +23,115 @@
  *
  ******************************************************************************/
 
+
 #include <WIMAC/EventSubjectObserver.hpp>
 
 #include <WNS/Assure.hpp>
 
-
 using namespace wimac;
 
-
-/************ EventSubject **********************/
-
 EventSubject::EventSubject(std::string stationName) :
-	observersToNotify_(),
-	eventObservers_(),
-	stationName_(stationName),
-	logger_("WIMAC", "EventSubject")
+    observersToNotify_(),
+    eventObservers_(),
+    stationName_(stationName),
+    logger_("WIMAC", "EventSubject")
 {
-} //EventSubject
-
-
+}
 
 EventSubject::~EventSubject()
 {
-	for(EventObservers::iterator iter = eventObservers_.begin();
-		iter != eventObservers_.end(); ++iter)
-	{
-		(*iter)->setEventSubject(NULL);
-	}
+    for(EventObservers::iterator iter = eventObservers_.begin();
+        iter != eventObservers_.end(); ++iter)
+    {
+        (*iter)->setEventSubject(NULL);
+    }
 }
-
-
 
 void
 EventSubject::attachObserver(EventObserver* eventObserver)
 {
-	assure(std::find(eventObservers_.begin(),
-					 eventObservers_.end(),
-					 eventObserver)
-	       == eventObservers_.end(),
-	       "EventObserver is already added to EventSubject");
+    assure(std::find(eventObservers_.begin(),
+                     eventObservers_.end(),
+                     eventObserver)
+           == eventObservers_.end(),
+           "EventObserver is already added to EventSubject");
 
-	MESSAGE_BEGIN(NORMAL, logger_, m, stationName_ );
-	m << ": Attach observer! "
-	  << eventObserver->getObserverName();
-	MESSAGE_END();
+    MESSAGE_BEGIN(NORMAL, logger_, m, stationName_ );
+    m << ": Attach observer! "
+      << eventObserver->getObserverName();
+    MESSAGE_END();
 
-	eventObservers_.push_back(eventObserver);
-	eventObserver->setEventSubject(this);
-} //attachEventObserver
-
-
+    eventObservers_.push_back(eventObserver);
+    eventObserver->setEventSubject(this);
+}
 
 void
 EventSubject::detachObserver(EventObserver* eventObserver)
 {
-	assure(std::find(eventObservers_.begin(),
-					 eventObservers_.end(),
-					 eventObserver)
-		   != eventObservers_.end(),
-		  "unknown EventObserver");
+    assure(std::find(eventObservers_.begin(),
+                     eventObservers_.end(),
+                     eventObserver)
+           != eventObservers_.end(),
+           "unknown EventObserver");
 
-	MESSAGE_BEGIN(NORMAL, logger_, m, stationName_ );
-	m << ": Detach observer! "
-	  << eventObserver->getObserverName();
-	MESSAGE_END();
+    MESSAGE_BEGIN(NORMAL, logger_, m, stationName_ );
+    m << ": Detach observer! "
+      << eventObserver->getObserverName();
+    MESSAGE_END();
 
-	eventObserver->setEventSubject(NULL);
-	eventObserver->eventSubjectDeleted();
-	eventObservers_.remove(eventObserver);
+    eventObserver->setEventSubject(NULL);
+    eventObserver->eventSubjectDeleted();
+    eventObservers_.remove(eventObserver);
 
-	// remove observer from list observersToNotify_, because it is detached
-	if(	std::find(observersToNotify_.begin(), observersToNotify_.end(),
-				  eventObserver) != eventObservers_.end() )
-		observersToNotify_.remove(eventObserver);
+    // remove observer from list observersToNotify_, because it is detached
+    if( std::find(observersToNotify_.begin(), observersToNotify_.end(),
+                  eventObserver) != eventObservers_.end() )
+        observersToNotify_.remove(eventObserver);
 
-} //detachEventObserver
-
-
+}
 
 void
 EventSubject::notifyEventObservers(std::string event)
 {
-	// Copy of list is necessary, because elements of List could deleted while
-	// iterating throw the list
-	observersToNotify_ = eventObservers_;
+    // Copy of list is necessary, because elements of List could deleted while
+    // iterating throw the list
+    observersToNotify_ = eventObservers_;
 
-	// Send NewFrame message to observer
-	MESSAGE_BEGIN(NORMAL, logger_, m, stationName_ );
-	m << ": Notify all observers! eventObservers_.size():" << observersToNotify_.size();
-	MESSAGE_END();
+    // Send NewFrame message to observer
+    MESSAGE_BEGIN(NORMAL, logger_, m, stationName_ );
+    m << ": Notify all observers! eventObservers_.size():" << observersToNotify_.size();
+    MESSAGE_END();
 
-	while(!observersToNotify_.empty())
-	{
-		EventObserver* observer = observersToNotify_.front();
-		observersToNotify_.pop_front();
-		observer->event(event);
-	}
-} //notifyEventObservers
-
-
-
-/************ EventObserver **********************/
+    while(!observersToNotify_.empty())
+    {
+        EventObserver* observer = observersToNotify_.front();
+        observersToNotify_.pop_front();
+        observer->event(event);
+    }
+}
 
 EventObserver::EventObserver(std::string observerName):
-	observerName_(observerName),
-	eventSubject_(NULL)
-{} // EventObserver
-
-
+    observerName_(observerName),
+    eventSubject_(NULL)
+{}
 
 EventObserver::~EventObserver()
 {
-	if (eventSubject_)
-	{
-		eventSubject_->detachObserver(this);
-	    eventSubject_ = NULL;
-	}
+    if (eventSubject_)
+    {
+        eventSubject_->detachObserver(this);
+        eventSubject_ = NULL;
+    }
 
-} // ~EventObserver
-
-
+}
 
 void
 EventObserver::setEventSubject(EventSubject* eventSubject)
 {
-	eventSubject_ = eventSubject;
-} // setEventObserver
-
-
+    eventSubject_ = eventSubject;
+}
 
 void
 EventObserver::eventSubjectDeleted()
 {
-} //eventSubjectDeleted
+}

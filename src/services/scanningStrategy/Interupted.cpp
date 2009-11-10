@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,13 +23,15 @@
  *
  ******************************************************************************/
 
+
 /**
- * \file
- * \author Markus Grauer <gra@comnets.rwth-aachen.de>
+ * @file
+ * @author Markus Grauer <gra@comnets.rwth-aachen.de>
  */
 
 #include <WIMAC/services/scanningStrategy/Interupted.hpp>
 #include <WIMAC/services/scanningStrategy/VersusInterfaceLayerConfigCreator.hpp>
+#include <WIMAC/Component.hpp>
 
 using namespace wimac;
 using namespace wimac::service;
@@ -39,37 +39,35 @@ using namespace wimac::service::scanningStrategy;
 
 
 STATIC_FACTORY_REGISTER_WITH_CREATOR(
-	wimac::service::scanningStrategy::Interupted,
-	wimac::service::scanningStrategy::Interface,
-	"wimac.services.scanningStrategy.Interupted",
-	VersusInterfaceLayerConfigCreator);
+    wimac::service::scanningStrategy::Interupted,
+    wimac::service::scanningStrategy::Interface,
+    "wimac.services.scanningStrategy.Interupted",
+    VersusInterfaceLayerConfigCreator);
 
 
-/********** Interupted ***************************************************/
-
-Interupted::Interupted(VersusInterface* const versusUnit,
-					   const dll::Layer2* layer,
-					   const wns::pyconfig::View& config)
-	: ScanningStrategy(versusUnit, layer, config),
-	  oldNextStationToScan_(),
-	  nextStationToScan_(),
-	  measuredValues_(),
-	  maxNumberOfStationsToScan_(config.get<int>("maxNumberOfStationsToScan")),
-	  framesBetweenSubScanning_(config.get<int>("framesBetweenSubScanning"))
+Interupted::Interupted(VersusInterface* versusUnit,
+                       Component* layer,
+                       const wns::pyconfig::View& config) :
+    ScanningStrategy(versusUnit, layer, config),
+    oldNextStationToScan_(),
+    nextStationToScan_(),
+    measuredValues_(),
+    maxNumberOfStationsToScan_(config.get<int>("maxNumberOfStationsToScan")),
+    framesBetweenSubScanning_(config.get<int>("framesBetweenSubScanning"))
 {
-	oldNextStationToScan_ = stationsToScan_.end();
-	nextStationToScan_ = stationsToScan_.end();
+    oldNextStationToScan_ = stationsToScan_.end();
+    nextStationToScan_ = stationsToScan_.end();
 }
 
 void
 Interupted::controlRSP()
 {
-	LOG_INFO( layer_->getName(),
-			  ": Calling controlRSP()");
+    LOG_INFO( layer_->getName(),
+              ": Calling controlRSP()");
 
-	remainRetries_ = -1;
-	measuredValues_.clear();
-	this->scan();
+    remainRetries_ = -1;
+    measuredValues_.clear();
+    this->scan();
 }
 
 
@@ -77,40 +75,37 @@ Interupted::controlRSP()
 void
 Interupted::setup(const Stations stationsToScan)
 {
-	ScanningStrategy::setup(stationsToScan);
-	nextStationToScan_ = stationsToScan_.end();
-	this->timerStart(framesBetweenScanning_);
+    ScanningStrategy::setup(stationsToScan);
+    nextStationToScan_ = stationsToScan_.end();
+    this->timerStart(framesBetweenScanning_);
 }
 
-
-
-/************* Private Functions *********************************************/
 
 void
 Interupted::result(const MeasureValues& measuredValues)
 {
-	if( measuredValues.empty() )
-	{ // Scanning failed
-		nextStationToScan_= oldNextStationToScan_; // go to previous subScanning
+    if( measuredValues.empty() )
+    { // Scanning failed
+        nextStationToScan_= oldNextStationToScan_; // go to previous subScanning
 
-		this->scan();
-		return;
-	}
+        this->scan();
+        return;
+    }
 
-	// Store measured values
-	MeasureValues mV = measuredValues;
-	measuredValues_.merge(mV);
+    // Store measured values
+    MeasureValues mV = measuredValues;
+    measuredValues_.merge(mV);
 
-	if(nextStationToScan_ != stationsToScan_.end())
-	{ // Scanning isn't finished, continue scanning after a break;
-		this->timerStart(framesBetweenSubScanning_);
-		return;
-	}
+    if(nextStationToScan_ != stationsToScan_.end())
+    { // Scanning isn't finished, continue scanning after a break;
+        this->timerStart(framesBetweenSubScanning_);
+        return;
+    }
 
-	this->timerStart(framesBetweenScanning_);
-	MeasureValues result = measuredValues_;
-	measuredValues_.clear();
-	versusUnit_->scanningStrategyResult(result);
+    this->timerStart(framesBetweenScanning_);
+    MeasureValues result = measuredValues_;
+    measuredValues_.clear();
+    versusUnit_->scanningStrategyResult(result);
 }
 
 
@@ -118,14 +113,14 @@ Interupted::result(const MeasureValues& measuredValues)
 void
 Interupted::timerExecute()
 {
-	if(nextStationToScan_ == stationsToScan_.end())
-	{
-		this->timerStart(framesBetweenScanning_);
-		versusUnit_->scanningStrategyControlREQ();
-	} else
-	{
-		this->scan();
-	}
+    if(nextStationToScan_ == stationsToScan_.end())
+    {
+        this->timerStart(framesBetweenScanning_);
+        versusUnit_->scanningStrategyControlREQ();
+    } else
+    {
+        this->scan();
+    }
 }
 
 
@@ -133,28 +128,27 @@ Interupted::timerExecute()
 void
 Interupted::scan()
 {
-	if(timer_ >= 0)
-		this->timerStop();
+    if(timer_ >= 0)
+        this->timerStop();
 
-	/** Scan only the allowed max number of stations at one scan process **/
-	Stations stationsToScan;
+    // Scan only the allowed max number of stations at one scan process
+    Stations stationsToScan;
 
-	if(nextStationToScan_ == stationsToScan_.end())
-		nextStationToScan_ = stationsToScan_.begin();
+    if(nextStationToScan_ == stationsToScan_.end())
+        nextStationToScan_ = stationsToScan_.begin();
 
-	oldNextStationToScan_ = nextStationToScan_;
+    oldNextStationToScan_ = nextStationToScan_;
 
-	for(int i = 0; i != maxNumberOfStationsToScan_; ++i)
-	{
-		if(nextStationToScan_ == stationsToScan_.end())
-			break;
+    for(int i = 0; i != maxNumberOfStationsToScan_; ++i)
+    {
+        if(nextStationToScan_ == stationsToScan_.end())
+            break;
 
-		stationsToScan.push_back(*nextStationToScan_);
-		++nextStationToScan_;
-	}
-	/*********************************************************************/
+        stationsToScan.push_back(*nextStationToScan_);
+        ++nextStationToScan_;
+    }
 
-	this->startScanning(stationsToScan);
+    this->startScanning(stationsToScan);
 }
 
 

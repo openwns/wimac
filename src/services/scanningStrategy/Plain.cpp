@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,13 +23,15 @@
  *
  ******************************************************************************/
 
+
 /**
- * \file
- * \author Markus Grauer <gra@comnets.rwth-aachen.de>
+ * @file
+ * @author Markus Grauer <gra@comnets.rwth-aachen.de>
  */
 
 #include <WIMAC/services/scanningStrategy/Plain.hpp>
 #include <WIMAC/services/scanningStrategy/VersusInterfaceLayerConfigCreator.hpp>
+#include <WIMAC/Component.hpp>
 
 using namespace wimac;
 using namespace wimac::service;
@@ -39,17 +39,17 @@ using namespace wimac::service::scanningStrategy;
 
 
 STATIC_FACTORY_REGISTER_WITH_CREATOR(
-	wimac::service::scanningStrategy::Plain,
-	wimac::service::scanningStrategy::Interface,
-	"wimac.services.scanningStrategy.Plain",
-	VersusInterfaceLayerConfigCreator);
+    wimac::service::scanningStrategy::Plain,
+    wimac::service::scanningStrategy::Interface,
+    "wimac.services.scanningStrategy.Plain",
+    VersusInterfaceLayerConfigCreator);
 
 
 
-Plain::Plain(VersusInterface* const versusUnit,
-			 const dll::Layer2* layer,
-			 const wns::pyconfig::View& config)
-	: ScanningStrategy(versusUnit, layer, config)
+Plain::Plain(VersusInterface* versusUnit,
+             Component* layer,
+             const wns::pyconfig::View& config):
+    ScanningStrategy(versusUnit, layer, config)
 {
 }
 
@@ -58,11 +58,11 @@ Plain::Plain(VersusInterface* const versusUnit,
 void
 Plain::controlRSP()
 {
-	LOG_INFO( layer_->getName(),
-			  ": Calling controlRSP()");
+    LOG_INFO( layer_->getName(),
+              ": Calling controlRSP()");
 
-	remainRetries_ = -1;
-	this->scan();
+    remainRetries_ = -1;
+    this->scan();
 }
 
 
@@ -70,25 +70,23 @@ Plain::controlRSP()
 void
 Plain::setup(const Stations stationsToScan)
 {
-	ScanningStrategy::setup(stationsToScan);
-	this->timerStart(framesBetweenScanning_);
+    ScanningStrategy::setup(stationsToScan);
+    this->timerStart(framesBetweenScanning_);
 }
 
 
 
-/************* Private Functions *********************************************/
-
 void
 Plain::result(const MeasureValues& measuredValues)
 {
-	if( measuredValues.empty() )
-	{ // Scanning failed
-		this->scan();
-		return;
-	}
+    if( measuredValues.empty() )
+    { // Scanning failed
+        this->scan();
+        return;
+    }
 
-	this->timerStart(framesBetweenScanning_);
-	versusUnit_->scanningStrategyResult(measuredValues);
+    this->timerStart(framesBetweenScanning_);
+    versusUnit_->scanningStrategyResult(measuredValues);
 }
 
 
@@ -96,8 +94,8 @@ Plain::result(const MeasureValues& measuredValues)
 void
 Plain::timerExecute()
 {
-	this->timerStart(framesBetweenScanning_);
-	versusUnit_->scanningStrategyControlREQ();
+    this->timerStart(framesBetweenScanning_);
+    versusUnit_->scanningStrategyControlREQ();
 }
 
 
@@ -105,9 +103,9 @@ Plain::timerExecute()
 void
 Plain::scan()
 {
-	if(timer_ >= 0)
-		this->timerStop();
-	this->startScanning(stationsToScan_);
+    if(timer_ >= 0)
+        this->timerStop();
+    this->startScanning(stationsToScan_);
 }
 
 

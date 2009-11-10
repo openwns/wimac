@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,9 +23,10 @@
  *
  ******************************************************************************/
 
+
 /**
- * \file
- * \author Markus Grauer <gra@comnets.rwth-aachen.de>
+ * @file
+ * @author Markus Grauer <gra@comnets.rwth-aachen.de>
  */
 
 #ifndef WIMAC_SERVICES_FURESETER_HPP
@@ -36,81 +35,75 @@
 
 #include <WNS/pyconfig/View.hpp>
 #include <WNS/ldk/FlowSeparator.hpp>
+#include <WNS/ldk/ManagementServiceInterface.hpp>
 
 #include <WIMAC/Logger.hpp>
 #include <WIMAC/ConnectionKey.hpp>
+#include <WIMAC/ConnectionIdentifier.hpp>
 
 #include <list>
 
 namespace wns{ namespace probe{ namespace idprovider{
-class Variable;
+            class Variable;
 }}}
 
+namespace wns { namespace ldk { 
+    class ManagementServiceRegistry;
+}}
 
 namespace wimac{ namespace service{
 
 
-/******************** Interface ************************************************/
-/**
- * @brief FUResetInterface for a Functional Unit, which should be reset by
- * FUReseter.
- *
- */
-class FUResetInterface
-{
-public:
-	virtual ~FUResetInterface(){}
-	virtual void resetCID(ConnectionIdentifier::CID cid) = 0;
-};
 
+        /**
+         * @brief FUResetInterface for a Functional Unit, which should be reset by
+         * FUReseter.
+         */
+        class FUResetInterface
+        {
+        public:
+            virtual ~FUResetInterface(){}
+            virtual void resetCID(ConnectionIdentifier::CID cid) = 0;
+        };
 
+        /**
+         * @brief FUReseter is an management service, which reset all Functional Units
+         * and Flows it knows by PyConfig.
+         */
+        class FUReseter :
+            public wns::ldk::ManagementService
+        {
+        public:
+            FUReseter(wns::ldk::ManagementServiceRegistry* msr, const wns::pyconfig::View& config );
 
+            void
+            onMSRCreated();
 
-/****************** Implementation *******************************************/
-/**
- * @brief FUReseter is an management service, which reset all Functional Units
- * and Flows it knows by PyConfig.
- *
- */
-class FUReseter
-	: public wns::ldk::ManagementService
-{
-public:
-	FUReseter(wns::ldk::ManagementServiceRegistry* msr, const wns::pyconfig::View& config );
+            void
+            resetAll(ConnectionIdentifier::Ptr ci)
+            {
+                this->resetFlowSeparator(ci);
+                this->resetCID(ci);
+            }
 
-	void
-	onMSRCreated();
+            void
+            resetFlowSeparator(ConnectionIdentifier::Ptr ci);
 
-	void
-	resetAll(ConnectionIdentifier::Ptr ci)
-	{
-		this->resetFlowSeparator(ci);
-		this->resetCID(ci);
-	}
+            void
+            resetCID(ConnectionIdentifier::Ptr ci);
 
-	void
-	resetFlowSeparator(ConnectionIdentifier::Ptr ci);
+        private:
+            wns::ldk::fun::FUN* fun_;
 
-	void
-	resetCID(ConnectionIdentifier::Ptr ci);
+            struct{
+                std::list<std::string> flowSeparatorNames;
+                std::list<std::string> resetFUNames;
 
-private:
-	wns::ldk::fun::FUN* fun_;
-
-	struct{
-		std::list<std::string> flowSeparatorNames;
-		std::list<std::string> resetFUNames;
-
-		std::list<wns::ldk::FlowSeparator*> flowSeparators;
-		std::list<FUResetInterface*> resetFUs;
-	} friends_;
-
-
-
-};
-
-}} // managementServices // wimac
+                std::list<wns::ldk::FlowSeparator*> flowSeparators;
+                std::list<FUResetInterface*> resetFUs;
+            } friends_;
+        };
+    }
+}
 
 #endif
-
-

@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,20 +23,15 @@
  *
  ******************************************************************************/
 
+
 #ifndef WIMAC_CONNECTIONKEY_H
 #define WIMAC_CONNECTIONKEY_H
 
-#include <WNS/SmartPtr.hpp>
-
-#include <WNS/ldk/ldk.hpp>
-#include <WNS/ldk/FlowSeparator.hpp>
-#include <WNS/ldk/Key.hpp>
-#include <WNS/ldk/Processor.hpp>
-#include <WNS/ldk/CommandTypeSpecifier.hpp>
-
-#include <WIMAC/Component.hpp>
 #include <string>
 #include <sstream>
+
+#include <WNS/SmartPtr.hpp>
+#include <WNS/ldk/Key.hpp>
 
 namespace wns { namespace ldk {
 
@@ -51,7 +44,9 @@ namespace wimac {
     class CIDKeyBuilder;
     class ConnectionClassifier;
 
-    /// Key to seperate flows in the layer.
+    /**
+     * @brief Key to separate flows in the layer.
+     */
     class ConnectionKey :
         public wns::ldk::Key
     {
@@ -60,7 +55,7 @@ namespace wimac {
                        int direction );
 
         // used by Handover.hpp
-        ConnectionKey( long cid )
+        ConnectionKey( int cid )
         {
             id = cid;
         }
@@ -69,10 +64,12 @@ namespace wimac {
         std::string str() const;
 
     private:
-        ulong id;
+        int id;
     };
 
-    /// KeyBuilder for Flow Separators that use CIDs as keys.
+    /**
+     * @brief KeyBuilder for Flow Separators that use CIDs as keys.
+     */
     class CIDKeyBuilder :
         public wns::ldk::KeyBuilder
     {

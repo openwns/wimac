@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -33,111 +31,106 @@
 #include <WNS/events/CanTimeout.hpp>
 
 
-NAMESPACE_BEGIN(wns)
+namespace wns {
+    namespace pyconfig {
+        class View;
+    }
 
-NAMESPACE_BEGIN(pyconfig)
+    namespace ldk {
+        namespace fcf {
+            class FrameBuilder;
+            class CompoundCollectorInterface;
+        }
+    }
+}
 
-class View;
+namespace wimac {
+    namespace frame {
 
-NAMESPACE_END
+        /**
+         * @brief WiMAC specific Timing Control.
+         *
+         * The Timing Control of the WiMAC module introduces abstract Activations
+         * to the Frame Configuration Framework. Each CompoundCollector is activated
+         * by three different types of Activations (Start, StartCollection,	FinishCollection).
+         * The Activations specify the concrete action the CompoundCollector has to perform.
+         * The chronologically ordered list of Activations is created from (/defined by) the PyConig file.
+         */
+        class TimingControl :
+            public virtual wns::ldk::fcf::TimingControlInterface,
+            public wns::events::PeriodicTimeout,
+            public wns::events::CanTimeout
+        {
+        public:
 
-NAMESPACE_BEGIN(ldk)
-NAMESPACE_BEGIN(fcf)
+            enum Activation {
+                Start,
+                StartCollection,
+                FinishCollection,
+                Pause
+            };
 
-class FrameBuilder;
-class CompoundCollectorInterface;
+            TimingControl( wns::ldk::fcf::FrameBuilder* fb, const wns::pyconfig::View& config );
 
-NAMESPACE_END
-NAMESPACE_END
-NAMESPACE_END
+            void configure();
+            void start();
+            void pause();
+            void stop();
+            void getRole();
+            void finishedPhase( wns::ldk::fcf::CompoundCollectorInterface* collector );
+            wns::ldk::fcf::FrameBuilder* getFrameBuilder() const
+            {
+                return frameBuilder_;
+            }
 
-NAMESPACE_BEGIN(wimac)
-NAMESPACE_BEGIN(frame)
+            void periodically();
 
-/**
- * @brief WiMAC specific Timing Control.
- *
- * The Timing Control of the WiMAC module introduces abstract Activations
- * to the Frame Configuration Framework. Each CompoundCollector is activated
- * by three different types of Activations (Start, StartCollection,	FinishCollection).
- * The Activations specify the concrete action the CompoundCollector has to perform.
- * The chronologically ordered list of Activations is created from (/defined by) the PyConig file.
- */
-class TimingControl :
-	public virtual wns::ldk::fcf::TimingControlInterface,
-	public wns::events::PeriodicTimeout,
-	public wns::events::CanTimeout
-{
-public:
+            void onTimeout();
 
-	enum Activation	{
-		Start,
-		StartCollection,
-		FinishCollection,
-		Pause
-	};
+            void onFUNCreated();
 
-	TimingControl( wns::ldk::fcf::FrameBuilder* fb, const wns::pyconfig::View& config );
+        private:
+            struct ActivationEntry
+            {
+                wns::ldk::fcf::CompoundCollectorInterface* compoundCollector;
+                int mode;
+                int action;
+                double duration;
+            };
+            typedef std::list<ActivationEntry> Activations;
 
-	/// Inherited from TiminControlInterface
-	void configure();
-	void start();
-	void pause();
-	void stop();
-	void getRole();
-	void finishedPhase( wns::ldk::fcf::CompoundCollectorInterface* collector );
-	wns::ldk::fcf::FrameBuilder* getFrameBuilder() const
-	{
-		return frameBuilder_;
-	}
+            void startProcessingActivations();
+            void processOneActivation();
 
+            /**
+             * @brief Chronologically ordered list of activations.
+             *
+             * For the modes sending and receiving a CompoundCollector
+             * has three Activations: startCollection,
+             * finishCollection, start For the mode pause only one
+             * activation is valid: pause
+             */
+            Activations activations_;
 
-	/// Inherited from PeriodicTimeout
-	void periodically();
+            /**
+             * @brief Indicates the active CompoundCollector.
+             */
+            Activations::const_iterator activeCC_;
 
-	/// Inherited from CanTimeout
-	void onTimeout();
+            // iterator is used for validation only ( assure(timeoutIsForMe == activeCC_, ...) )
+            //Activations::const_iterator timeoutIsForMe;
 
-	void onFUNCreated();
+            wns::ldk::fcf::FrameBuilder* frameBuilder_;
 
-    int getOffset();
-private:
-	struct ActivationEntry
-	{
-		wns::ldk::fcf::CompoundCollectorInterface* compoundCollector;
-		int mode;
-		int action;
-		double duration;
-	};
-	typedef std::list<ActivationEntry> Activations;
+            bool running_;
+            wns::pyconfig::View config_;
 
-	void startProcessingActivations();
-	void processOneActivation();
+            wns::simulator::Time frameStartupDelay_;
 
-	/// cronologically ordered list of activations.
-	/// For the modes sending and receiving a CompoundCollector has three
-	/// Activations: startCollection, finishCollection, start
-	/// For the mode pause only one activation is valid: pause
-	Activations activations_;
-	/// iterator through activations
-	Activations::const_iterator activeCC_;
-
-	/// iterator is used for validation only ( assure(timeoutIsForMe == activeCC_, ...) )
-	//Activations::const_iterator timeoutIsForMe;
-
-	wns::ldk::fcf::FrameBuilder* frameBuilder_;
-
-	bool running_;
-	wns::pyconfig::View config_;
-
-	simTimeType frameStartupDelay_;
-    simTimeType frameStartTime_;
-
-	friend class TriggerActivationStart;
-};
-
-NAMESPACE_END
-NAMESPACE_END
+            friend class TriggerActivationStart;
+        };
+    }
+}
 
 #endif
 

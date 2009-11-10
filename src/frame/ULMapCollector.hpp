@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,6 +23,8 @@
  *
  ******************************************************************************/
 
+
+
 #ifndef WIMAC_FRAME_ULMAPCOLLECTOR_H
 #define WIMAC_FRAME_ULMAPCOLLECTOR_H
 
@@ -36,100 +36,112 @@
 
 
 namespace wimac {
-	class Component;
-	class PhyUser;
+    class Component;
+    class PhyUser;
 
-	namespace service {
-		class ConnectionManager;
-	}
-	namespace scheduler {
-		class Scheduler;
-	}
+    namespace service {
+        class ConnectionManager;
+    }
+    namespace scheduler {
+        class Scheduler;
+    }
 }
 
 namespace wimac { namespace frame {
-	class BSULScheduler;
+        class BSULScheduler;
 
-	/// Command of the ULMapWriter and ULMapRetreiver.
-
-	typedef MapCommand ULMapCommand;
-
-	/// Sending entity for the ULMapCommand.
-	class ULMapCollector :
-		public wns::ldk::fcf::CompoundCollector,
-		public wns::ldk::CommandTypeSpecifier<MapCommand>,
-		public wns::ldk::HasConnector<>,
-		public wns::ldk::HasReceptor<>,
-		public wns::ldk::tools::UpUnconnectable,
-		public wns::Cloneable<ULMapCollector>,
-		public wns::events::CanTimeout
-	{
-	public:
-		ULMapCollector( wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config );
-
-		void onFUNCreated();
-		void calculateSizes( const wns::ldk::CommandPool* commandPool, Bit& commandPoolSize, Bit& dataSize ) const;
+        /**
+         * @brief Command of the ULMapWriter and ULMapRetreiver.
+         */
 
 
-		void doOnData( const wns::ldk::CompoundPtr& );
+        typedef MapCommand ULMapCommand;
 
-		void doStart(int);
+        /**
+         * @brief Sending entity for the ULMapCommand.
+         */
 
-		void onTimeout();
+        class ULMapCollector :
+            public wns::ldk::fcf::CompoundCollector,
+            public wns::ldk::CommandTypeSpecifier<MapCommand>,
+            public wns::ldk::HasConnector<>,
+            public wns::ldk::HasReceptor<>,
+            public wns::ldk::tools::UpUnconnectable,
+            public wns::Cloneable<ULMapCollector>,
+            public wns::events::CanTimeout
+        {
+        public:
+            ULMapCollector( wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config );
 
-		void doStartCollection(int){}
-		void finishCollection(){}
+            void onFUNCreated();
+            void calculateSizes( const wns::ldk::CommandPool* commandPool, Bit& commandPoolSize, Bit& dataSize ) const;
 
-		simTimeType getCurrentDuration() const;
+            void doOnData( const wns::ldk::CompoundPtr& );
 
-		simTimeType getULPhaseDuration() const { return ulPhaseDuration_; }
+            void doStart(int);
 
-		/// Returns the start of the subscriber station's burst relative to ULPhase start time.
-		simTimeType getBurstStart() const {
-			return burstStartTime_;
-		}
+            void onTimeout();
 
-		/// Returns the end of the subscriber station's burst relative to ULPhase start time.
-		simTimeType getBurstEnd() const {
-			return burstEndTime_;
-		}
+            void doStartCollection(int){}
+            void finishCollection(){}
 
-		wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface> getPhyMode() const {
-			return burstPhyMode;
-		}
+            wns::simulator::Time getCurrentDuration() const;
 
-		wns::CandI getEstimatedCandI() const {
-			return estimatedCandI_;
-		}
+            wns::simulator::Time getULPhaseDuration() const { return ulPhaseDuration_; }
 
-		bool hasUplinkBurst() const {
-			return hasUplinkBurst_;
-		}
-	private:
-		wimac::scheduler::Scheduler* ulScheduler_;
-		std::string ulSchedulerName_;
-		wimac::Component* component_;
-		wimac::PhyUser* phyUser_;
-		wimac::service::ConnectionManager* connectionManager_;
+            /**
+             * @brief Returns the start of the subscriber station's
+             * burst relative to ULPhase start time.
+             */
+            wns::simulator::Time getBurstStart() const {
+                return burstStartTime_;
+            }
 
-		// used variables at the receiving MAP collector
+            /**
+             * @brief Returns the end of the subscriber station's
+             * burst relative to ULPhase start time.
+             */
 
-		/**
-		 * @brief PhyMode to be used for the MAP.
-		 */
-		wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface> phyMode;
-		simTimeType ulPhaseDuration_;
-		simTimeType burstStartTime_;
-		simTimeType burstEndTime_;
+            wns::simulator::Time getBurstEnd() const {
+                return burstEndTime_;
+            }
 
-		/**
-		 * @brief PhyMode to be used for the burst.
-		 */
-		wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface> burstPhyMode;
-		wns::CandI estimatedCandI_;
-		bool hasUplinkBurst_;
-	};
+            wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface> getPhyMode() const {
+                return burstPhyMode;
+            }
 
-}}
+            wns::CandI getEstimatedCandI() const {
+                return estimatedCandI_;
+            }
+
+            bool hasUplinkBurst() const {
+                return hasUplinkBurst_;
+            }
+        private:
+            wimac::scheduler::Scheduler* ulScheduler_;
+            std::string ulSchedulerName_;
+            wimac::Component* component_;
+            wimac::PhyUser* phyUser_;
+            wimac::service::ConnectionManager* connectionManager_;
+
+            // used variables at the receiving MAP collector
+
+            /**
+             * @brief PhyMode to be used for the MAP.
+             */
+            wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface> phyMode;
+            wns::simulator::Time ulPhaseDuration_;
+            wns::simulator::Time burstStartTime_;
+            wns::simulator::Time burstEndTime_;
+
+            /**
+             * @brief PhyMode to be used for the burst.
+             */
+            wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface> burstPhyMode;
+            wns::CandI estimatedCandI_;
+            bool hasUplinkBurst_;
+        };
+    }
+}
 #endif
 

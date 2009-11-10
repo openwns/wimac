@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -43,142 +41,142 @@
 using namespace wimac::frame;
 
 STATIC_FACTORY_REGISTER_WITH_CREATOR(
-	wimac::frame::ULMapCollector,
-	wns::ldk::FunctionalUnit,
-	"wimac.frame.ULMapCollector",
-	wns::ldk::FUNConfigCreator );
+    wimac::frame::ULMapCollector,
+    wns::ldk::FunctionalUnit,
+    "wimac.frame.ULMapCollector",
+    wns::ldk::FUNConfigCreator );
 
 
-struct UserFind
-	: public std::unary_function<wns::scheduler::MapInfoEntryPtr, bool>
+struct UserFind :
+    public std::unary_function<wns::scheduler::MapInfoEntryPtr, bool>
 {
-	explicit UserFind( wns::node::Interface* node ) : node_(node){}
-	bool operator()(const wns::scheduler::MapInfoEntryPtr& mapInfo)
-	{
-		return node_ == mapInfo->user;
-	}
+    explicit UserFind( wns::node::Interface* node ) : node_(node){}
+    bool operator()(const wns::scheduler::MapInfoEntryPtr& mapInfo)
+    {
+        return node_ == mapInfo->user;
+    }
 private:
-	wns::node::Interface* node_;
+    wns::node::Interface* node_;
 };
 
 ULMapCollector::ULMapCollector( wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config ) :
-	wns::ldk::fcf::CompoundCollector( config ),
-	wns::ldk::CommandTypeSpecifier<ULMapCommand>(fun),
-	ulSchedulerName_(),
-	phyUser_(0),
-	phyMode(wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface>
-		(wns::service::phy::phymode::createPhyMode( config.getView("phyMode") ) ) ),
-	hasUplinkBurst_(false)
+    wns::ldk::fcf::CompoundCollector( config ),
+    wns::ldk::CommandTypeSpecifier<ULMapCommand>(fun),
+    ulSchedulerName_(),
+    phyUser_(0),
+    phyMode(wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface>
+            (wns::service::phy::phymode::createPhyMode( config.getView("phyMode") ) ) ),
+    hasUplinkBurst_(false)
 {
-	if (!config.isNone("ulSchedulerName") )
-		ulSchedulerName_ = config.get<std::string>("ulSchedulerName");
+    if (!config.isNone("ulSchedulerName") )
+        ulSchedulerName_ = config.get<std::string>("ulSchedulerName");
 }
 
 
 void ULMapCollector::onFUNCreated()
 {
-	wns::ldk::fcf::CompoundCollector::onFUNCreated();
+    wns::ldk::fcf::CompoundCollector::onFUNCreated();
 
-	assureType(getFUN()->getLayer(), wimac::Component*);
-	component_ = dynamic_cast<wimac::Component*>(getFUN()->getLayer());
+    assureType(getFUN()->getLayer(), wimac::Component*);
+    component_ = dynamic_cast<wimac::Component*>(getFUN()->getLayer());
 
-	if ( ulSchedulerName_ != "" )
-	{
-		ulScheduler_ = dynamic_cast<wimac::scheduler::Scheduler*>
-			(getFUN()->findFriend<DataCollector*>(ulSchedulerName_)->getRxScheduler());
-		assure( ulScheduler_, "Uplink Scheduler not present in FUN" );
-	}
+    if ( ulSchedulerName_ != "" )
+    {
+        ulScheduler_ = dynamic_cast<wimac::scheduler::Scheduler*>
+            (getFUN()->findFriend<DataCollector*>(ulSchedulerName_)->getRxScheduler());
+        assure( ulScheduler_, "Uplink Scheduler not present in FUN" );
+    }
 
-	phyUser_ = getFUN()->findFriend<wimac::PhyUser*>("phyUser");
-	assure( phyUser_, "PhyUser is not of type wimac::PhyUser");
+    phyUser_ = getFUN()->findFriend<wimac::PhyUser*>("phyUser");
+    assure( phyUser_, "PhyUser is not of type wimac::PhyUser");
 
-	connectionManager_ =
-		component_->getManagementService<service::ConnectionManager>("connectionManager");
+    connectionManager_ =
+        component_->getManagementService<service::ConnectionManager>("connectionManager");
 
-	setFrameBuilder( getFUN()->findFriend<wns::ldk::fcf::FrameBuilder*>("frameBuilder") );
+    setFrameBuilder( getFUN()->findFriend<wns::ldk::fcf::FrameBuilder*>("frameBuilder") );
 
-	CompoundCollector::onFUNCreated();
+    CompoundCollector::onFUNCreated();
 }
 
 void ULMapCollector::doStart(int mode)
 {
-	switch (mode) {
-	case Sending:
-		{
-			wns::ldk::CompoundPtr compound
-				( new wns::ldk::Compound( getFUN()->getProxy()->createCommandPool() ) );
-			ULMapCommand* command = activateCommand( compound->getCommandPool() );
-			command->peer.phaseDuration =
-				ulScheduler_->getDuration();
-			command->peer.baseStationID =
-				component_->getID();
-			command->local.numBursts =
-				ulScheduler_->getNumBursts();
-			command->peer.mapInfo =
-				ulScheduler_->getMapInfo();
-			// map duration is a little shorter than the phase duration
-			command->local.mapDuration =
-				getCurrentDuration() - Utilities::getComputationalAccuracyFactor();
+    switch (mode) {
+    case Sending:
+    {
+        wns::ldk::CompoundPtr compound
+            ( new wns::ldk::Compound( getFUN()->getProxy()->createCommandPool() ) );
+        ULMapCommand* command = activateCommand( compound->getCommandPool() );
+        command->peer.phaseDuration =
+            ulScheduler_->getDuration();
+        command->peer.baseStationID =
+            component_->getID();
+        command->local.numBursts =
+            ulScheduler_->getNumBursts();
+        command->peer.mapInfo =
+            ulScheduler_->getMapInfo();
+        // map duration is a little shorter than the phase duration
+        command->local.mapDuration =
+            getCurrentDuration() - Utilities::getComputationalAccuracyFactor();
 
-			assure( command->local.mapDuration <= this->getMaximumDuration(),
-					"ULMapCollector: PDU overun the maximum duration of the frame phase!");
+        assure( command->local.mapDuration <= this->getMaximumDuration(),
+                "ULMapCollector: PDU overun the maximum duration of the frame phase!");
 
-			PhyUserCommand* phyCommand = dynamic_cast<wimac::PhyUserCommand*>
-				( getFUN()->getProxy()->activateCommand( compound->getCommandPool(), phyUser_) );
-			phyCommand->peer.destination_ = 0;
-			phyCommand->peer.cellID_ = component_->getCellID();
-			phyCommand->peer.source_ = component_->getNode();
-			assureNotNull(phyMode.getPtr());
-			phyCommand->peer.phyModePtr = phyMode;
-			phyCommand->magic.sourceComponent_ = component_;
+        PhyUserCommand* phyCommand = dynamic_cast<wimac::PhyUserCommand*>
+            ( getFUN()->getProxy()->activateCommand( compound->getCommandPool(), phyUser_) );
+        phyCommand->peer.destination_ = 0;
+        phyCommand->peer.cellID_ = component_->getCellID();
+        phyCommand->peer.source_ = component_->getNode();
+        assureNotNull(phyMode.getPtr());
+        phyCommand->peer.phyModePtr = phyMode;
+        phyCommand->magic.sourceComponent_ = component_;
 
-			simTimeType now = wns::simulator::getEventScheduler()->getTime();
-			phyCommand->local.pAFunc_.reset
-				( new BroadcastPhyAccessFunc );
-			phyCommand->local.pAFunc_->transmissionStart_ = now;
-			phyCommand->local.pAFunc_->transmissionStop_ = now + getCurrentDuration() - Utilities::getComputationalAccuracyFactor() * 20;
-			phyCommand->local.pAFunc_->phyMode_ = phyMode;
+        wns::simulator::Time now = wns::simulator::getEventScheduler()->getTime();
+        phyCommand->local.pAFunc_.reset
+            ( new BroadcastPhyAccessFunc );
+        phyCommand->local.pAFunc_->transmissionStart_ = now;
+        phyCommand->local.pAFunc_->transmissionStop_ = now + getCurrentDuration() - Utilities::getComputationalAccuracyFactor() * 20;
+        phyCommand->local.pAFunc_->phyMode_ = phyMode;
 
-			setTimeout( getCurrentDuration() - Utilities::getComputationalAccuracyFactor() );
-			LOG_INFO( getFUN()->getLayer()->getName(), " send UL Map of size: ", command->local.numBursts, " / ", command->peer.mapInfo->size() );
-			getConnector()->getAcceptor( compound )->sendData( compound );
-		}
-	case Receiving:
-		/* wait and do nothing */
-		break;
-	default:
-		throw wns::Exception("Unknown activation mode in DLMapCollector");
-	}
+        setTimeout( getCurrentDuration() - Utilities::getComputationalAccuracyFactor() );
+        LOG_INFO( getFUN()->getLayer()->getName(), " send UL Map of size: ", command->local.numBursts, " / ", command->peer.mapInfo->size() );
+        getConnector()->getAcceptor( compound )->sendData( compound );
+    }
+    case Receiving:
+        /* wait and do nothing */
+        break;
+    default:
+        throw wns::Exception("Unknown activation mode in DLMapCollector");
+    }
 }
 
 void
 ULMapCollector::onTimeout()
 {
-	getFrameBuilder()->finishedPhase( this );
+    getFrameBuilder()->finishedPhase( this );
 }
 
 void
 ULMapCollector::calculateSizes( const wns::ldk::CommandPool* commandPool, Bit& commandPoolSize, Bit& dataSize ) const
 {
-	//What are the sizes in the upper Layers
-	getFUN()->getProxy()->calculateSizes(commandPool, commandPoolSize, dataSize, this);
+    //What are the sizes in the upper Layers
+    getFUN()->getProxy()->calculateSizes(commandPool, commandPoolSize, dataSize, this);
 
-	ULMapCommand* command = getCommand( commandPool );
-	commandPoolSize += ( 56 + command->local.numBursts * 48 );
+    ULMapCommand* command = getCommand( commandPool );
+    commandPoolSize += ( 56 + command->local.numBursts * 48 );
 }
 
-simTimeType ULMapCollector::getCurrentDuration() const
+wns::simulator::Time ULMapCollector::getCurrentDuration() const
 {
-	double dataRate =
-		phyMode->getDataRate();
+    double dataRate =
+        phyMode->getDataRate();
 
-	Bit compoundSize =
-		56 + ulScheduler_->getNumBursts() * 48;
-	simTimeType symbolDuration = parameter::ThePHY::getInstance()->getSymbolDuration();
-	simTimeType roundedDuration =
-		ceil( (compoundSize / dataRate ) / symbolDuration ) * symbolDuration;
+    Bit compoundSize =
+        56 + ulScheduler_->getNumBursts() * 48;
+    wns::simulator::Time symbolDuration = parameter::ThePHY::getInstance()->getSymbolDuration();
+    wns::simulator::Time roundedDuration =
+        ceil( (compoundSize / dataRate ) / symbolDuration ) * symbolDuration;
 
-	return roundedDuration;
+    return roundedDuration;
 }
 
 void ULMapCollector::doOnData( const wns::ldk::CompoundPtr& compound )
@@ -222,5 +220,5 @@ void ULMapCollector::doOnData( const wns::ldk::CompoundPtr& compound )
 		hasUplinkBurst_ = true;
 	}
 
-	getFrameBuilder()->finishedPhase(this);
+    getFrameBuilder()->finishedPhase(this);
 }

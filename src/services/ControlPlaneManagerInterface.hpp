@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -24,6 +22,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
+
 
 /**
  * \file
@@ -44,31 +43,22 @@
 
 namespace wimac { namespace service {
 
+        /**
+         * @brief ControlPlaneManagerInterface
+         */
+        class ControlPlaneManagerInterface
+        {
+        public:
+            typedef ConnectionIdentifier::StationID StationID;
 
-/**
-* @brief ControlPlaneManagerInterface
-*
-*/
+            virtual
+            ~ControlPlaneManagerInterface(){};
 
-class ControlPlaneManagerInterface
-//	: public wns::ldk::ManagementService
-{
-public:
-	typedef ConnectionIdentifier::StationID StationID;
-	typedef ConnectionIdentifier::QoSCategory QoSCategory;
+            virtual void start(StationID associateTo, int QoSCategory) = 0;
+        };
+    }
+}
 
-
-	virtual
-	~ControlPlaneManagerInterface(){};
-
-	virtual void start(StationID associateTo, QoSCategory QoSCategory) = 0;
-
-	//virtual void onFUNCreated() = 0;
-};
-
-
-}} // service::wimac
-
-#endif // WIMAC_SERVICES_CONTROLPLANEMANAGERINTERFACE_HPP
+#endif
 
 

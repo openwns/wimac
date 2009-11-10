@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,9 +23,10 @@
  *
  ******************************************************************************/
 
+
 /**
- * \file
- * \author Markus Grauer <gra@comnets.rwth-aachen.de>
+ * @file
+ * @author Markus Grauer <gra@comnets.rwth-aachen.de>
  */
 
 #ifndef WIMAC_SERVICES_SCANNINGSTRATEGY_INTERFACE_HPP
@@ -39,77 +38,71 @@
 
 #include <WIMAC/CIRMeasureInterface.hpp>
 #include <WIMAC/services/scanningStrategy/VersusInterfaceLayerConfigCreator.hpp>
+#include <WIMAC/ConnectionIdentifier.hpp>
 
 namespace wimac {
-namespace service {
-namespace scanningStrategy{
+    namespace service {
+        namespace scanningStrategy{
 
-/**
-* @brief Scanning Strategy Inteface
-* @author Markus Grauer <gra@comnets.rwth-aachen.de>
-* -
-* -
-* -
-*
-*/
-class Interface
-{
-public:
-	typedef ConnectionIdentifier::StationID StationID;
+            /**
+             * @brief Scanning Strategy Inteface
+             * @author Markus Grauer <gra@comnets.rwth-aachen.de>
+             */
+            class Interface
+            {
+            public:
+                typedef ConnectionIdentifier::StationID StationID;
 
-	struct Station{
-		ConnectionIdentifier::StationID id;
-		wns::service::phy::ofdma::Tune tune;
-	};
-    typedef std::list<Station> Stations;
+                struct Station{
+                    ConnectionIdentifier::StationID id;
+                    wns::service::phy::ofdma::Tune tune;
+                };
+                typedef std::list<Station> Stations;
 
 
-	virtual
-	~Interface(){}
+                virtual
+                ~Interface(){}
 
-	virtual void
-	controlRSP() = 0;
+                virtual void
+                controlRSP() = 0;
 
-	virtual void
-	abortScanning() = 0;
+                virtual void
+                abortScanning() = 0;
 
-	virtual void
-	setup(const Stations stationToScan) = 0;
+                virtual void
+                setup(const Stations stationToScan) = 0;
 
-	virtual void
-	onFUNCreated() = 0;
-};
+                virtual void
+                onFUNCreated() = 0;
+            };
 
-typedef VersusInterfaceLayerConfigCreator<Interface> Creator;
-typedef wns::StaticFactory<Creator> Factory;
-
-
-/**
-* @brief Versus Scanning Strategy Inteface
-* @author Markus Grauer <gra@comnets.rwth-aachen.de>
-* -
-* -
-* -
-*
-*/
-class VersusInterface
-{
-public:
-	typedef CIRMeasureInterface::MeasureValues MeasureValues;
+            typedef VersusInterfaceLayerConfigCreator<Interface> Creator;
+            typedef wns::StaticFactory<Creator> Factory;
 
 
-	virtual
-	~VersusInterface(){}
+            /**
+             * @brief Versus Scanning Strategy Inteface
+             * @author Markus Grauer <gra@comnets.rwth-aachen.de>
+             */
+            class VersusInterface
+            {
+            public:
+                typedef CIRMeasureInterface::MeasureValues MeasureValues;
 
-	virtual void
-	scanningStrategyControlREQ() = 0;
 
-	virtual void
-	scanningStrategyResult(const MeasureValues& mValues) = 0;
-};
+                virtual
+                ~VersusInterface(){}
 
-}}} // scanningStrategy::service::wimac
+                virtual void
+                scanningStrategyControlREQ() = 0;
 
-#endif // WIMAC_SERVICES_SCANNINGSTRATEGY_INTERFACE_HPP
+                virtual void
+                scanningStrategyResult(const MeasureValues& mValues) = 0;
+            };
+        }
+    }
+}
+
+#endif
 
 

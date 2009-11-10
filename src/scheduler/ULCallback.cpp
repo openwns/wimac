@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -28,6 +26,8 @@
 #include <WIMAC/scheduler/ULCallback.hpp>
 #include <WNS/ldk/Layer.hpp>
 #include <WNS/scheduler/RegistryProxyInterface.hpp>
+
+#include <WIMAC/Component.hpp>
 #include <WIMAC/Logger.hpp>
 #include <WIMAC/PhyAccessFunc.hpp>
 #include <WIMAC/PhyUserCommand.hpp>
@@ -145,7 +145,7 @@ ULCallback::callBack(wns::scheduler::MapInfoEntryPtr mapInfoEntry)
 void ULCallback::deliverNow(wns::ldk::Connector* connector)
 {
 
-	simTimeType now = wns::simulator::getEventScheduler()->getTime();
+	wns::simulator::Time now = wns::simulator::getEventScheduler()->getTime();
 
 	//if(beamforming)
 	//{

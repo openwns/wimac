@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -47,61 +45,71 @@
 #include <WIMAC/ConnectionIdentifier.hpp>
 
 namespace wns { namespace ldk { namespace arq {
-
-	class ARQ;
-
+    class ARQ;
 }}}
 
 namespace wimac {
 
 namespace service {
-	class ConnectionManagerInterface;
+    class ConnectionManagerInterface;
 }
 
-	/// The Command for the ACKSwitch.
-	class AckSwitchCommand
-		: public wns::ldk::Command
-	{
-	public:
-		struct {
-			ConnectionIdentifier::CID originalCID;
-		} peer;
+    /**
+     * \brief The Command for the ACKSwitch.
+     */
+    class AckSwitchCommand
+            : public wns::ldk::Command
+    {
+    public:
+        struct {
+            ConnectionIdentifier::CID originalCID;
+        } peer;
 
-		struct {
-		} local;
+        struct {
+        } local;
 
-		struct {
-		} magic;
-	};
+        struct {
+        } magic;
+    };
 
-	/// Switches ARQ ACKs to the control connection of an associated SS.
-	class ACKSwitch
-		: public wns::ldk::CommandTypeSpecifier<AckSwitchCommand>,
-		  public wns::ldk::HasConnector<>,
-		  public wns::ldk::HasReceptor<>,
-		  public wns::ldk::HasDeliverer<>,
-		  public wns::ldk::Processor<ACKSwitch>,
-		  public wns::Cloneable<ACKSwitch>
-	{
-	public:
-		ACKSwitch( wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config );
+    /*
+     * \brief Switches ARQ ACKs to the control connection of an associated SS.
+     */
+    class ACKSwitch :
+            public wns::ldk::CommandTypeSpecifier<AckSwitchCommand>,
+            public wns::ldk::HasConnector<>,
+            public wns::ldk::HasReceptor<>,
+            public wns::ldk::HasDeliverer<>,
+            public wns::ldk::Processor<ACKSwitch>,
+            public wns::Cloneable<ACKSwitch>
+    {
+    public:
+        /**
+         * \brief Constructor to create an ACKSwitch in a FUN.
+         *
+         * The ACKSwitch does not need any special configuration
+         * options in the PyConfig.
+         */
+        ACKSwitch( wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config );
 
-		virtual ~ACKSwitch() {}
+        /**
+         * \brief Mandatory reimplementation from Processor.
+         */
+        void processIncoming( const wns::ldk::CompoundPtr& compound );
 
-		/// Mandatory reimplementation from Processor.
-		void processIncoming( const wns::ldk::CompoundPtr& compound );
+        /*
+         * \brief Mandatory reimplementation from Processor.
+         */
+        void processOutgoing( const wns::ldk::CompoundPtr& compound );
 
-		/// Mandatory reimplementation from Processor.
-		void processOutgoing( const wns::ldk::CompoundPtr& compound );
+        void onFUNCreated();
 
-		void onFUNCreated();
-
-	private:
-		// friends
-		wns::ldk::arq::ARQ* arq_;
-		wns::ldk::CommandTypeSpecifier< wns::ldk::ClassifierCommand >* classifier_;
-		service::ConnectionManagerInterface* connectionManager_;
-	};
+    private:
+        // friends
+        wns::ldk::arq::ARQ* arq_;
+        wns::ldk::CommandTypeSpecifier< wns::ldk::ClassifierCommand >* classifier_;
+        service::ConnectionManagerInterface* connectionManager_;
+    };
 }
 
 #endif

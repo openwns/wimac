@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,9 +23,10 @@
  *
  ******************************************************************************/
 
+
 /**
- * \file
- * \author Markus Grauer <gra@comnets.rwth-aachen.de>
+ * @file
+ * @author Markus Grauer <gra@comnets.rwth-aachen.de>
  */
 
 #ifndef WIMAC_SERVICES_CONTROLPLANESIMPLE_HPP
@@ -45,78 +44,79 @@
 
 namespace wimac{
 
-	class Layer2;
+    class Layer2;
 
-namespace service{
+    namespace service{
 
-class ConnectionManager;
-
-
-     /**
-	 * @brief ControlplaneSimple provides simple Controlplane functionality
-	 *
-     *
-     *
-	 */
-class ControlPlaneManagerSimpleSS
-	: public ControlPlaneManagerInterface,
-	  public wns::ldk::ManagementService
-{
-	typedef relay::RSRelayMapper::RelayMapping RelayMapping;
-
-public:
-	typedef ConnectionIdentifier::StationID StationID;
-	typedef ConnectionIdentifier::CID CID;
-	typedef ConnectionIdentifier::QoSCategory QoSCategory;
+        class ConnectionManager;
 
 
-	ControlPlaneManagerSimpleSS(wns::ldk::ManagementServiceRegistry* msr,
-					   const wns::pyconfig::View& config);
+        /**
+         * @brief ControlplaneSimple provides simple Controlplane functionality
+         *
+         *
+         *
+         */
+        class ControlPlaneManagerSimpleSS :
+            public ControlPlaneManagerInterface,
+            public wns::ldk::ManagementService
+        {
+            typedef relay::RSRelayMapper::RelayMapping RelayMapping;
 
-	~ControlPlaneManagerSimpleSS(){};
-
-	/// ControlPlaneManagerInterface implementation
-	void
-	start(StationID associateTo, QoSCategory qosCategory);
-
-	void
-	associateAndConnectTo(StationID associateTo, QoSCategory qosCategory);
-
-	void
-	createRecursiveConnection(CID basicCID,
-							  CID primaryCID,
-							  CID downlinkTransportCID,
-							  CID uplinkTransportCID,
-							  StationID remote,
-							  QoSCategory qosCategory);
-
-	ConnectionManager*
-	getConnectionManagerMaster();
-
-	/// ControlPlaneManagerInterface implementation
-	void
-	onMSRCreated();
+        public:
+            typedef ConnectionIdentifier::StationID StationID;
+            typedef ConnectionIdentifier::CID CID;
 
 
+            ControlPlaneManagerSimpleSS(wns::ldk::ManagementServiceRegistry* msr,
+                                        const wns::pyconfig::View& config);
 
-private:
-	std::string msName_;
-	wimac::Component* component_;
+            /**
+             * @brief ControlPlaneManagerInterface implementation
+             */
+            void
+            start(StationID associateTo, int qosCategory);
 
-	struct{
-		std::string connectionManagerName;
+            void
+            associateAndConnectTo(StationID associateTo, int qosCategory);
 
-		ConnectionManager* connectionManager;
-	} friends_;
+            void
+            createRecursiveConnection(CID basicCID,
+                                      CID primaryCID,
+                                      CID downlinkTransportCID,
+                                      CID uplinkTransportCID,
+                                      StationID remote,
+                                      int qosCategory);
 
-	// Probes
-	wns::probe::bus::contextprovider::Variable probeAssociatedToContextProvider_;
-	wns::probe::bus::contextprovider::Variable probeQoSCategoryContextProvider_;
-	// Static values from PyConfig
-};
+            ConnectionManager*
+            getConnectionManagerMaster();
 
-}} //service::wimac
+            /**
+             * @brief ControlPlaneManagerInterface implementation
+             */
+            void
+            onMSRCreated();
 
-#endif // WIMAC_SERVICES_CONTROLPLANESIMPLE_HPP
+
+
+        private:
+            std::string msName_;
+            wimac::Component* component_;
+
+            struct{
+                std::string connectionManagerName;
+
+                ConnectionManager* connectionManager;
+            } friends_;
+
+            // Probes
+            wns::probe::bus::contextprovider::Variable probeAssociatedToContextProvider_;
+            wns::probe::bus::contextprovider::Variable probeQoSCategoryContextProvider_;
+            // Static values from PyConfig
+        };
+    }
+}
+
+#endif
 
 

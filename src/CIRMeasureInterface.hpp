@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,55 +23,52 @@
  *
  ******************************************************************************/
 
+
 #ifndef WIMAC_CIRMEASUREINTERFACE_HPP
 #define WIMAC_CIRMEASUREINTERFACE_HPP
-
-#include <WIMAC/Component.hpp>
 
 #include <WNS/service/phy/ofdma/DataTransmission.hpp>
 
 namespace wimac {
+    class Component;
 
-	class CIRMeasureInterface
-	{
-	public:
+    class CIRMeasureInterface
+    {
+    public:
 
-		struct MValue{
-			MValue()
-				: cir(wns::Ratio()),
-				  timeStamp(0),
-				  station(NULL),
-				  tune()
-				{}
+        struct MValue{
+            MValue() :
+                cir(wns::Ratio()),
+                timeStamp(0),
+                station(NULL),
+                tune()
+            {}
 
-			bool operator<(MValue& other)
-			{
-				return cir < other.cir;
-			}
+            bool operator<(MValue& other)
+            {
+                return cir < other.cir;
+            }
 
-			wns::Ratio cir;
-			simTimeType timeStamp;
-			wimac::Component* station;
-			wns::service::phy::ofdma::Tune tune;
-		};
+            wns::Ratio cir;
+            wns::simulator::Time timeStamp;
+            wimac::Component* station;
+            wns::service::phy::ofdma::Tune tune;
+        };
 
-		typedef std::list<MValue> MeasureValues;
+        typedef std::list<MValue> MeasureValues;
 
+        virtual void
+        startMeasuring() = 0;
 
+        virtual MeasureValues
+        stopMeasuring() = 0;
 
-		virtual void
-		startMeasuring() = 0;
+        virtual void
+        setRxFrequency(wns::service::phy::ofdma::Tune tune) = 0;
 
-		virtual MeasureValues
-		stopMeasuring() = 0;
-
-		virtual void
-		setRxFrequency(wns::service::phy::ofdma::Tune tune) = 0;
-
-		virtual ~CIRMeasureInterface() {}
-	};
-
+        virtual ~CIRMeasureInterface() {}
+    };
 }
 
-#endif // NOT defined WIMAC_CIRMEASUREINTERFACE_HPP
+#endif
 

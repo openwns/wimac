@@ -25,8 +25,7 @@
 #
 ###############################################################################
 
-from openwns.pyconfig import Sealed
-from openwns.pyconfig import Frozen
+from openwns.pyconfig import Sealed, Frozen
 
 class BSRelayMapper(Sealed):
     __plugin__ = "wimac.relay.BSRelayMapper"

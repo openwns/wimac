@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -24,6 +22,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
+
 
 #ifndef WIMAC_HPP
 #define WIMAC_HPP
@@ -46,48 +45,48 @@
  * Functional Units and management classes.
  */
 
-/** @namespace wimac
+/**
+ * @namespace wimac
  * The wimac namespace contains all WiMAC specific implementations.
  */
 
-/** @namespace wimac::frame
+/**
+ * @namespace wimac::frame
  * The wimac::frame namespace contains all implemetations that are specific for
  * the WiMAC frame.
  */
 
-/** @namespace wimac::scheduler
+/**
+ * @namespace wimac::scheduler
  * Scheduler related classes.
  */
 
 namespace dll{
-	class StationManager;
+    class StationManager;
 }
 namespace wimac {
 
-	/**
-	 * @brief Anchor of the library.
-	 *
-	 * Start up and shut down are coordinated from here
-	 * WNS-Core will use an instance of this class to start up and shut down the
-	 * library. Therefor it calls GetModuleInterface() which returns a pointer
-	 * to an instance of this class. The method StartUp() is called
-	 * subsequently.
-	 */
+    /**
+     * @brief Anchor of the library.
+     *
+     * Start up and shut down are coordinated from here. The
+     * openWNS-core will use an instance of this class to start up and
+     * shut down the library. Therefor it calls GetModuleInterface()
+     * which returns a pointer to an instance of this class. The
+     * method startUp() is called subsequently.
+     */
 
-	class WiMAC :
-		public wns::module::Module<WiMAC>
-	{
+    class WiMAC :
+            public wns::module::Module<WiMAC>
+    {
 
-	public:
-		WiMAC(const wns::pyconfig::View& _pyConfigView);
+    public:
+        WiMAC(const wns::pyconfig::View& _pyConfigView);
 
-		virtual void configure();
-		virtual void startUp();
-		virtual void shutDown();
-
-		dll::StationManager* getStationManager();
-
-	};
+        virtual void configure();
+        virtual void startUp();
+        virtual void shutDown();
+    };
 }
 
 #endif

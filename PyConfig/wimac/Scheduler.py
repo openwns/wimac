@@ -27,11 +27,11 @@
 
 """ Experimental Scheduler
 """
-from openwns.pyconfig import Sealed
-from openwns.pyconfig import attrsetter
-import openwns.Scheduler
+from openwns.pyconfig import Sealed, attrsetter
 from openwns.logger import Logger
+import openwns.qos
 import openwns.FCF
+import openwns.Scheduler
 from support.WiMACParameters import ParametersOFDM, ParametersSystem
 from LLMapping import WIMAXMapper
 
@@ -57,6 +57,8 @@ class RegistryProxyWiMAC(openwns.Scheduler.RegistryProxy):
     powerCapabilitiesUT = None
     powerCapabilitiesAP = None
     powerCapabilitiesFRS = None
+    qosClassMapping    = openwns.qos.QoSClasses()
+    numberOfPriorities = qosClassMapping.getMaxPriority() + 1
 
     def setPhyModeMapper(self, phyModeMapper):
         self.phyModeMapper = phyModeMapper
@@ -77,7 +79,7 @@ class SpaceTimeSectorizationRegistryProxy(openwns.Scheduler.RegistryProxy):
     queueSize = 320000
     logger = openwns.logger.Logger("WiMAC", "SpaceTimeSectorizationRegProxy", True)
 
-    #each sectors is served in seperate frames
+    #each sectors is served // TODO: no QoS yet.in seperate frames
     numberOfSectors = 2
 
     #a sector can consist of subsectors increaing SDMA gain
@@ -167,6 +169,13 @@ class ULCallback(Sealed):
 class DLCallback(Sealed):
     __plugin__ = 'wimac.scheduler.DLCallback'
     beamforming = None
+
+    def __init__(self, **kw):
+        attrsetter(self, kw)
+
+class BypassQueue(Sealed):
+    __plugin__ = 'wimac.BypassQueue'
+    nameInQueueFactory = __plugin__
 
     def __init__(self, **kw):
         attrsetter(self, kw)

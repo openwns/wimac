@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -24,6 +22,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
+
 #include <WIMAC/scheduler/DLCallback.hpp>
 
 #include <WNS/scheduler/RegistryProxyInterface.hpp>
@@ -31,6 +30,7 @@
 #include <WNS/ldk/Layer.hpp>
 #include <WIMAC/Logger.hpp>
 
+#include <WIMAC/Component.hpp>
 #include <WIMAC/Utilities.hpp>
 #include <WIMAC/PhyAccessFunc.hpp>
 #include <WIMAC/PhyUser.hpp>
@@ -73,33 +73,37 @@ DLCallback::callBack(wns::scheduler::MapInfoEntryPtr mapInfoEntry)
   // iterate over all compounds in list:
   for (wns::scheduler::CompoundList::iterator iter=compounds.begin(); iter!=compounds.end(); ++iter)
   {
-    wns::ldk::CompoundPtr pdu = *iter;
-    simTimeType pduDuration = pdu->getLengthInBits() / rate;
+      if (*iter == wns::ldk::CompoundPtr())
+          continue;
 
-  // TODO
-	assure(pdu != wns::ldk::CompoundPtr(), "Invalid PDU");
-// 	assure(beam < maxBeams, "Too many beams");
-// 	assure(endTime > startTime, "Scheduled PDU must end after it starts");
-// 	assure(endTime <= this->getDuration(), "PDU overun the maximum duration of the frame phase!");
-// 	assure(fSlot < freqChannels, "Invalid frequency channel");
+      wns::ldk::CompoundPtr pdu = *iter;
+      simTimeType pduDuration = pdu->getLengthInBits() / rate;
+
+      // TODO
+      //assure(pdu != wns::ldk::CompoundPtr(), "Invalid empty PDU");
+      //assure(beam < maxBeams, "Too many beams");
+      //assure(endTime > startTime, "Scheduled PDU must end after it starts");
+      //assure(endTime <= this->getDuration(), "PDU overun the maximum duration of the frame phase!");
+      //assure(fSlot < freqChannels, "Invalid frequency channel");
+
 
 #ifndef WNS_NO_LOGGING
-	std::stringstream m;
-	m <<     ":  direction: DL \n"
-	  << "        PDU scheduled for user: " << colleagues.registry->getNameForUser(user) << "\n"
-	  << "        Frequency Slot: " << fSlot << "\n"
-	  << "        StartTime:      " << pduPointer << "\n"
-	  << "        EndTime:        " << pduPointer + pduDuration - Utilities::getComputationalAccuracyFactor()<< "\n"
-//	  << "        Beamforming:    " << beamforming << "\n"
-	  << "        Beam:           " << beam << "\n"
-	  << "        Tx Power:       " << txPower;
-	LOG_INFO(fun_->getLayer()->getName(), m.str());
+      std::stringstream m;
+      m <<     ":  direction: DL \n"
+        << "        PDU scheduled for user: " << colleagues.registry->getNameForUser(user) << "\n"
+        << "        Frequency Slot: " << fSlot << "\n"
+        << "        StartTime:      " << pduPointer << "\n"
+        << "        EndTime:        " << pduPointer + pduDuration - Utilities::getComputationalAccuracyFactor()<< "\n"
+      //<< "        Beamforming:    " << beamforming << "\n"
+        << "        Beam:           " << beam << "\n"
+        << "        Tx Power:       " << txPower;
+      LOG_INFO(fun_->getLayer()->getName(), m.str());
 #endif
 
-//	pduCount++;
+      //pduCount++;
 
-	/// @todo enable frame plotting again
-// 	if (plotFrames) {
+      /// @todo enable frame plotting again
+      //if (plotFrames) {
 // 		// substr(19,2) should deliver the "subscriber station xy"
 
 // 		std::string printID;
@@ -183,7 +187,7 @@ DLCallback::callBack(wns::scheduler::MapInfoEntryPtr mapInfoEntry)
 
 void DLCallback::deliverNow(wns::ldk::Connector* connector)
 {
-	simTimeType now = wns::simulator::getEventScheduler()->getTime();
+	wns::simulator::Time now = wns::simulator::getEventScheduler()->getTime();
 
 	while (!scheduledPDUs.empty())
 	{

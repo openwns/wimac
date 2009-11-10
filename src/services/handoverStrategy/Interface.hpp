@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,9 +23,10 @@
  *
  ******************************************************************************/
 
+
 /**
- * \file
- * \author Markus Grauer <gra@comnets.rwth-aachen.de>
+ * @file
+ * @author Markus Grauer <gra@comnets.rwth-aachen.de>
  */
 
 #ifndef WIMAC_SERVICES_HANDOVERSTRATEGY_INTERFACE_HPP
@@ -37,48 +36,44 @@
 #include <WIMAC/CIRMeasureInterface.hpp>
 #include <WNS/ldk/PyConfigCreator.hpp>
 #include <WNS/service/phy/ofdma/DataTransmission.hpp>
+#include <WIMAC/ConnectionIdentifier.hpp>
 
 namespace wimac {
-namespace service {
-namespace handoverStrategy{
+    namespace service {
+        namespace handoverStrategy{
 
-/**
-* @brief Handover Strategy Inteface
-* @author Markus Grauer <gra@comnets.rwth-aachen.de>
-* -
-* -
-* -
-*
-*/
-class Interface
-{
-public:
-	typedef ConnectionIdentifier::StationID StationID;
-	typedef CIRMeasureInterface::MeasureValues MeasureValues;
+            /**
+             * @brief Handover Strategy Inteface
+             * @author Markus Grauer <gra@comnets.rwth-aachen.de>
+             */
+            class Interface
+            {
+            public:
+                typedef ConnectionIdentifier::StationID StationID;
+                typedef CIRMeasureInterface::MeasureValues MeasureValues;
 
-	struct Station{
-		ConnectionIdentifier::StationID id;
-		wns::service::phy::ofdma::Tune tune;
-	};
-    typedef std::list<Station> Stations;
+                struct Station{
+                    ConnectionIdentifier::StationID id;
+                    wns::service::phy::ofdma::Tune tune;
+                };
+                typedef std::list<Station> Stations;
 
 
 
-	virtual
-	~Interface(){}
+                virtual
+                ~Interface(){}
 
-	virtual void
-	storeValues(const MeasureValues& measureValues) = 0;
+                virtual void
+                storeValues(const MeasureValues& measureValues) = 0;
 
-	virtual Stations
-	decide(const StationID compareStation) = 0;
-};
+                virtual Stations
+                decide(const StationID compareStation) = 0;
+            };
 
-typedef wns::ldk::PyConfigCreator<Interface> Creator;
-typedef wns::StaticFactory<Creator> Factory;
+            typedef wns::ldk::PyConfigCreator<Interface> Creator;
+            typedef wns::StaticFactory<Creator> Factory;
+        }
+    }
+}
 
-}}} // handoverStrategy::service::wimac
-
-#endif // WIMAC_SERVICES_LOGICHANDOVERRDECISION_HPP
-
-
+#endif

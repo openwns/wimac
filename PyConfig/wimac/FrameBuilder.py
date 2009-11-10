@@ -25,11 +25,9 @@
 #
 ###############################################################################
 
-from openwns.pyconfig import Sealed
-from openwns.pyconfig import Frozen
-from openwns.pyconfig import attrsetter
+from openwns.pyconfig import Sealed, Frozen, attrsetter
 from support.WiMACParameters import ParametersOFDMA
-from LLMapping import WIMAXLowestPhyMode
+from wimac.LLMapping import WIMAXLowestPhyMode
 
 import openwns.FCF
 import openwns.Multiplexer

@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -34,201 +32,253 @@
 #include <WNS/service/phy/phymode/PhyModeInterface.hpp>
 
 namespace wns { namespace node {
-	class Interface;
+    class Interface;
 }}
 
 namespace wimac {
-	class PhyUser;
+    class PhyUser;
 
-	class PhyAccessFunc :
-		public virtual wns::CloneableInterface
-	{
-	public:
-		virtual void operator()( PhyUser*, const wns::ldk::CompoundPtr& compound) = 0;
-		virtual ~PhyAccessFunc(){}
-		PhyAccessFunc():
-			transmissionStart_(-1.0),
-			transmissionStop_(-1.0),
-			subBand_(0),
-			phyMode_()
-		{}
-		double transmissionStart_;
-		double transmissionStop_;
-		int subBand_;
-		wns::service::phy::phymode::PhyModeInterfacePtr phyMode_;
-	};
+    /**
+     * \defgroup phyAccessFunctors Physical Layers Access Functors
+     * @{
+     */
 
-	class BroadcastPhyAccessFunc :
-		public wimac::PhyAccessFunc,
-		public wns::Cloneable<BroadcastPhyAccessFunc>
-	{
-	public:
-		virtual void
-		operator()( wimac::PhyUser* , const wns::ldk::CompoundPtr& );
+    /**
+     * @brief The PhyAccessFunc provides an interface for accessing
+     * the physical layer.
+     *
+     * The PhyAccessFunc is a base class for access to the physical
+     * layer. Derive from this class and implement the operator()().
+     */
+    class PhyAccessFunc :
+        public virtual wns::CloneableInterface
+    {
+    public:
+        virtual void operator()( PhyUser*, const wns::ldk::CompoundPtr& compound) = 0;
+        virtual ~PhyAccessFunc(){}
+        PhyAccessFunc():
+            transmissionStart_(-1.0),
+            transmissionStop_(-1.0),
+            subBand_(0),
+            phyMode_()
+        {}
+        wns::simulator::Time transmissionStart_;
+        wns::simulator::Time transmissionStop_;
+        int subBand_;
+        wns::service::phy::phymode::PhyModeInterfacePtr phyMode_;
+    };
 
-	private:
-	};
+    /**
+     * @brief A transmission that starts and stops a broadcast
+     * transmission.
+     */
+    class BroadcastPhyAccessFunc :
+        public wimac::PhyAccessFunc,
+        public wns::Cloneable<BroadcastPhyAccessFunc>
+    {
+    public:
+        virtual void
+        operator()( wimac::PhyUser* , const wns::ldk::CompoundPtr& );
 
-	class OmniUnicastPhyAccessFunc :
-		public PhyAccessFunc,
-		public wns::Cloneable<OmniUnicastPhyAccessFunc>
-	{
-	public:
-		virtual void operator()( PhyUser*, const wns::ldk::CompoundPtr& );
+    private:
+    };
 
-		wns::node::Interface* destination_;
-	};
+    /**
+     * @brief A functor that starts and stops a unicast transmission.
+     */
+    class OmniUnicastPhyAccessFunc :
+        public PhyAccessFunc,
+        public wns::Cloneable<OmniUnicastPhyAccessFunc>
+    {
+    public:
+        virtual void operator()( PhyUser*, const wns::ldk::CompoundPtr& );
 
-	class BeamformingPhyAccessFunc :
-		public PhyAccessFunc,
-		public wns::Cloneable<BeamformingPhyAccessFunc>
-	{
-	public:
-		virtual void operator()( PhyUser*, const wns::ldk::CompoundPtr& );
+        wns::node::Interface* destination_;
+    };
 
-		wns::node::Interface* destination_;
-		wns::service::phy::ofdma::PatternPtr pattern_;
-		wns::Power requestedTxPower_;
-	};
+    /**
+     * @brief A functor that sets a beamforming pasttern and starts
+     * and stops a transmission with the pattern.
+     */
+    class BeamformingPhyAccessFunc :
+        public PhyAccessFunc,
+        public wns::Cloneable<BeamformingPhyAccessFunc>
+    {
+    public:
+        virtual void operator()( PhyUser*, const wns::ldk::CompoundPtr& );
 
-	class PatternSetterPhyAccessFunc :
-		public PhyAccessFunc,
-		public wns::Cloneable<PatternSetterPhyAccessFunc>
-	{
-	public:
-		virtual void operator()( PhyUser*, const wns::ldk::CompoundPtr& );
+        wns::node::Interface* destination_;
+        wns::service::phy::ofdma::PatternPtr pattern_;
+        wns::Power requestedTxPower_;
+    };
 
-		wns::node::Interface* destination_;
-		double patternStart_;
-		double patternEnd_;
-		wns::service::phy::ofdma::PatternPtr pattern_;
-	};
+    /**
+     * @brief A functor that sets a beamforming pattern but does not
+     * start or stop a transmission.
+     */
+    class PatternSetterPhyAccessFunc :
+        public PhyAccessFunc,
+        public wns::Cloneable<PatternSetterPhyAccessFunc>
+    {
+    public:
+        virtual void operator()( PhyUser*, const wns::ldk::CompoundPtr& );
 
-	/******************* Events ********************/
+        wns::node::Interface* destination_;
+        wns::simulator::Time patternStart_;
+        wns::simulator::Time patternEnd_;
+        wns::service::phy::ofdma::PatternPtr pattern_;
+    };
+    /* @} */
 
-	class StopTransmission
-	{
-	public:
-		StopTransmission( wimac::PhyUser* phyUser, const wns::ldk::CompoundPtr& compound, int subBand = 0) :
-			phyUser_( phyUser ),
-			compound_( compound ),
-			subBand_( subBand )
-		{}
+    /**
+     * \defgroup Physical Layer Access Events
+     * @{
+     */
 
-		void operator()();
+    /**
+     * @brief An event to stop a transmission with the specified compound.
+     */
+    class StopTransmission
+    {
+    public:
+        StopTransmission( wimac::PhyUser* phyUser, const wns::ldk::CompoundPtr& compound, int subBand = 0) :
+            phyUser_( phyUser ),
+            compound_( compound ),
+            subBand_( subBand )
+        {}
 
-	private:
-		wimac::PhyUser* phyUser_;
-		wns::ldk::CompoundPtr compound_;
-		int subBand_;
-	};
+        void operator()();
 
-	class StartBroadcastTransmission
-	{
-	public:
-		StartBroadcastTransmission( wimac::PhyUser* phyUser,
-									const wns::ldk::CompoundPtr& compound,
-									wns::service::phy::phymode::PhyModeInterfacePtr phyMode,
-									int subBand = 0):
-			phyUser_( phyUser ),
-			compound_( compound ),
-			subBand_( subBand ),
-			phyMode_( phyMode )
-		{}
+    private:
+        wimac::PhyUser* phyUser_;
+        wns::ldk::CompoundPtr compound_;
+        int subBand_;
+    };
+    /**
+     * @brief An event to stop a broadcast transmission.
+     */
+    class StartBroadcastTransmission
+    {
+    public:
+        StartBroadcastTransmission( wimac::PhyUser* phyUser,
+                                    const wns::ldk::CompoundPtr& compound,
+                                    wns::service::phy::phymode::PhyModeInterfacePtr phyMode,
+                                    int subBand = 0):
+            phyUser_( phyUser ),
+            compound_( compound ),
+            subBand_( subBand ),
+            phyMode_( phyMode )
+        {}
 
-		void operator()();
+        void operator()();
 
-	protected:
-		wimac::PhyUser* phyUser_;
-		wns::ldk::CompoundPtr compound_;
-		int subBand_;
-		const wns::service::phy::phymode::PhyModeInterfacePtr phyMode_;
-	};
+    protected:
+        wimac::PhyUser* phyUser_;
+        wns::ldk::CompoundPtr compound_;
+        int subBand_;
+        const wns::service::phy::phymode::PhyModeInterfacePtr phyMode_;
+    };
 
-	class StartTransmission
-	{
-	public:
-		StartTransmission( wimac::PhyUser* phyUser,
-						   const wns::ldk::CompoundPtr& compound,
-						   wns::node::Interface* dstStation,
-						   const wns::service::phy::phymode::PhyModeInterfacePtr phyMode,
-						   int subBand = 0
-						   ) :
-			phyUser_( phyUser ),
-			compound_( compound ),
-			dstStation_( dstStation ),
-			subBand_( subBand ),
-			phyMode_( phyMode )
-		{}
+    /**
+     * @brief An event to start a transmission with the given compound
+     * to the destination station.
+     */
+    class StartTransmission
+    {
+    public:
+        StartTransmission( wimac::PhyUser* phyUser,
+                           const wns::ldk::CompoundPtr& compound,
+                           wns::node::Interface* dstStation,
+                           const wns::service::phy::phymode::PhyModeInterfacePtr phyMode,
+                           int subBand = 0
+            ) :
+            phyUser_( phyUser ),
+            compound_( compound ),
+            dstStation_( dstStation ),
+            subBand_( subBand ),
+            phyMode_( phyMode )
+        {}
 
-		void operator()();
+        void operator()();
 
-	protected:
-		wimac::PhyUser* phyUser_;
-		wns::ldk::CompoundPtr compound_;
-		wns::node::Interface* dstStation_;
-		int subBand_;
-		const wns::service::phy::phymode::PhyModeInterfacePtr phyMode_;
-	};
+    protected:
+        wimac::PhyUser* phyUser_;
+        wns::ldk::CompoundPtr compound_;
+        wns::node::Interface* dstStation_;
+        int subBand_;
+        const wns::service::phy::phymode::PhyModeInterfacePtr phyMode_;
+    };
 
-	class StartBeamformingTransmission :
-		public StartTransmission
-	{
-	public:
-		StartBeamformingTransmission( wimac::PhyUser* phyUser,
-									  const wns::ldk::CompoundPtr& compound,
-									  wns::node::Interface* dstStation,
-									  wns::service::phy::ofdma::PatternPtr pattern,
-									  int subBand,
-									  wns::Power requestedTxPower,
-									  wns::service::phy::phymode::PhyModeInterfacePtr phyMode) :
-			StartTransmission( phyUser, compound, dstStation, phyMode ),
-			pattern_(pattern),
-			subBand_(subBand),
-			requestedTxPower_(requestedTxPower)
-		{}
+    /**
+     * @brief An event to start a transmission with a given compound
+     * and a given antenna pattern to the destination station.
+     */
+    class StartBeamformingTransmission :
+        public StartTransmission
+    {
+    public:
+        StartBeamformingTransmission( wimac::PhyUser* phyUser,
+                                      const wns::ldk::CompoundPtr& compound,
+                                      wns::node::Interface* dstStation,
+                                      wns::service::phy::ofdma::PatternPtr pattern,
+                                      int subBand,
+                                      wns::Power requestedTxPower,
+                                      wns::service::phy::phymode::PhyModeInterfacePtr phyMode) :
+            StartTransmission( phyUser, compound, dstStation, phyMode ),
+            pattern_(pattern),
+            subBand_(subBand),
+            requestedTxPower_(requestedTxPower)
+        {}
 
-		void operator()();
+        void operator()();
 
-	protected:
-		wns::service::phy::ofdma::PatternPtr pattern_;
-		int subBand_;
-		wns::Power requestedTxPower_;
-	};
+    protected:
+        wns::service::phy::ofdma::PatternPtr pattern_;
+        int subBand_;
+        wns::Power requestedTxPower_;
+    };
 
-	class SetPattern
-	{
-	public:
-		SetPattern( wimac::PhyUser* phyUser,
-					wns::node::Interface* dstStation,
-					wns::service::phy::ofdma::PatternPtr pattern ) :
-			phyUser_(phyUser),
-			dstStation_(dstStation),
-			pattern_(pattern)
-		{}
+    /**
+     * @brief An event to set an antenna pattern.
+     */
+    class SetPattern
+    {
+    public:
+        SetPattern( wimac::PhyUser* phyUser,
+                    wns::node::Interface* dstStation,
+                    wns::service::phy::ofdma::PatternPtr pattern ) :
+            phyUser_(phyUser),
+            dstStation_(dstStation),
+            pattern_(pattern)
+        {}
 
-		void operator()();
+        void operator()();
 
-	protected:
-		wimac::PhyUser* phyUser_;
-		wns::node::Interface* dstStation_;
-		wns::service::phy::ofdma::PatternPtr pattern_;
-	};
+    protected:
+        wimac::PhyUser* phyUser_;
+        wns::node::Interface* dstStation_;
+        wns::service::phy::ofdma::PatternPtr pattern_;
+    };
 
-	class RemovePattern
-	{
-	public:
-		RemovePattern( wimac::PhyUser* phyUser,
-					   wns::node::Interface* dstStation) :
-			phyUser_(phyUser),
-			dstStation_(dstStation)
-		{}
+    /**
+     * @brief An event to remove the current antenna pattern for the
+     * destination station.
+     */
+    class RemovePattern
+    {
+    public:
+        RemovePattern( wimac::PhyUser* phyUser,
+                       wns::node::Interface* dstStation) :
+            phyUser_(phyUser),
+            dstStation_(dstStation)
+        {}
 
-		void operator()();
-	protected:
-		wimac::PhyUser* phyUser_;
-		wns::node::Interface* dstStation_;
-	};
+        void operator()();
+    protected:
+        wimac::PhyUser* phyUser_;
+        wns::node::Interface* dstStation_;
+    };
+    /* @} */
 }
 
 #endif

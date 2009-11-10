@@ -30,14 +30,18 @@
 #include <WNS/node/Node.hpp>
 #include <WNS/ldk/FUNConfigCreator.hpp>
 #include <WNS/service/phy/phymode/PhyModeMapperInterface.hpp>
+#include <WNS/service/qos/QoSClasses.hpp>
+#include <WNS/service/dll/StationTypes.hpp>
 
-#include <DLL/StationManager.hpp>
-
+#include <WIMAC/StationManager.hpp>
 #include <WIMAC/Classifier.hpp>
 #include <WIMAC/scheduler/Scheduler.hpp>
 #include <WIMAC/parameter/PHY.hpp>
 #include <WIMAC/parameter/PHY.hpp>
 #include <WIMAC/services/ConnectionManager.hpp>
+#include <WIMAC/services/InterferenceCache.hpp>
+#include <WIMAC/ConnectionIdentifier.hpp>
+
 
 using namespace wimac;
 using namespace wimac::scheduler;
@@ -51,7 +55,8 @@ RegistryProxyWiMAC::RegistryProxyWiMAC(wns::ldk::fun::FUN*, const wns::pyconfig:
 	  currentQoSFilter(ConnectionIdentifier::NoQoS),
 	  powerUT(config.get("powerCapabilitiesUT")),
 	  powerAP(config.get("powerCapabilitiesAP")),
-	  powerFRS(config.get("powerCapabilitiesFRS"))
+	  powerFRS(config.get("powerCapabilitiesFRS")),
+      numberOfPriorities(config.get<int>("numberOfPriorities"))
 {
 	//phyModeMapper.reset(wns::service::phy::phymode::createPhyModeMapper(config.getView("phyModeMapper")));// obsolete
 }
@@ -61,10 +66,10 @@ RegistryProxyWiMAC::getUserForCID(wns::scheduler::ConnectionID cid) {
 	assure(connManager, "No valid connection manager");
 
 	// wimax-address of the station
-	service::ConnectionManager::ConnectionIdentifierPtr wimacCIDPtr =
+	ConnectionIdentifierPtr wimacCIDPtr =
 		connManager->getConnectionWithID( ConnectionIdentifier::CID(cid) );
 
-	assure(wimacCIDPtr != service::ConnectionManager::ConnectionIdentifierPtr(), "Invalid CID Ptr");
+	assure(wimacCIDPtr != ConnectionIdentifierPtr(), "Invalid CID Ptr");
 
 	///\todo Differenzierung subscriber_ / baseStation
 	ConnectionIdentifier::StationID peerStationId = 0;
@@ -101,7 +106,7 @@ RegistryProxyWiMAC::getUserForCID(wns::scheduler::ConnectionID cid) {
 	else  //Normal Compound
 	{
 		Component* peerLayer2 = dynamic_cast<wimac::Component*>
-			( layer2->getStationManager()->getStationByID(peerStationId) );
+			( TheStationManager::getInstance()->getStationByID(peerStationId) );
 		assure( peerLayer2, "Invalid peer layer pointer");
 		assure( peerLayer2->getNode(), "No valid Node pointer in peer FUN");
 
@@ -116,7 +121,7 @@ RegistryProxyWiMAC::getPeerAddressForCID(wns::scheduler::ConnectionID cid)
 {
     wns::scheduler::UserID user = getUserForCID(cid);
     wns::service::dll::UnicastAddress peerAddress
-      = layer2->getStationManager()->getStationByNode(user)->getDLLAddress();
+      = TheStationManager::getInstance()->getStationByNode(user)->getDLLAddress();
     return peerAddress;
 }
 
@@ -145,7 +150,7 @@ RegistryProxyWiMAC::getConnectionsForUser(const wns::scheduler::UserID user) {
 		LOG_INFO("Connection ID: ", (*it)->getID());
 	}
 
-	for (service::ConnectionManager::ConnectionIdentifiers::iterator iter = CIDs.begin();
+	for (ConnectionIdentifiers::iterator iter = CIDs.begin();
 		 iter != CIDs.end(); ++iter)
 		connections.push_back(wns::scheduler::ConnectionID((*iter)->getID()));
 
@@ -218,7 +223,7 @@ RegistryProxyWiMAC::getNameForUser(const wns::scheduler::UserID user)
 	if (userId2StationId.find(user) == userId2StationId.end())
 		return std::string("not yet known");
 
-	Component* peerLayer2 = dynamic_cast<wimac::Component*>( layer2->getStationManager()->getStationByID(userId2StationId[user]) );
+	Component* peerLayer2 = dynamic_cast<wimac::Component*>( TheStationManager::getInstance()->getStationByID(userId2StationId[user]) );
 	assure(peerLayer2, "Could not get peer layer for user");
 
 	return peerLayer2->getName();
@@ -258,9 +263,9 @@ wns::CandI RegistryProxyWiMAC::estimateTxSINRAt(const wns::scheduler::UserID use
 	// lookup the results reported by the receiving subscriber station in the
 	// local cache
 	wns::Power interference =
-		layer2->getManagementService<dll::services::management::InterferenceCache>("interferenceCache")->getAveragedInterference(user);
+		layer2->getManagementService<service::InterferenceCache>("interferenceCache")->getAveragedInterference(user);
 	wns::Power carrier =
-		layer2->getManagementService<dll::services::management::InterferenceCache>("interferenceCache")->getAveragedCarrier(user);
+		layer2->getManagementService<service::InterferenceCache>("interferenceCache")->getAveragedCarrier(user);
 
 	return wns::CandI(carrier, interference);
 }
@@ -268,11 +273,10 @@ wns::CandI RegistryProxyWiMAC::estimateTxSINRAt(const wns::scheduler::UserID use
 wns::CandI RegistryProxyWiMAC::estimateRxSINROf(const wns::scheduler::UserID user){
 
 	// lookup the results previously reported by us to the remote side
-	dll::services::management::InterferenceCache* remoteCache =
-		layer2->
-		getStationManager()->
+	service::InterferenceCache* remoteCache =
+		TheStationManager::getInstance()->
 		getStationByNode(user)->
-		getManagementService<dll::services::management::InterferenceCache>("interferenceCache");
+		getManagementService<service::InterferenceCache>("interferenceCache");
 
 	wns::Power carrier = remoteCache->getAveragedCarrier(getMyUserID());
 	wns::Power interference = remoteCache->getAveragedInterference(getMyUserID());
@@ -282,7 +286,7 @@ wns::CandI RegistryProxyWiMAC::estimateRxSINROf(const wns::scheduler::UserID use
 
 wns::Power
 RegistryProxyWiMAC::estimateInterferenceStdDeviation(const wns::scheduler::UserID user) {
-	return layer2->getManagementService<dll::services::management::InterferenceCache>("interferenceCache")->getInterferenceDeviation(user);
+	return layer2->getManagementService<service::InterferenceCache>("interferenceCache")->getInterferenceDeviation(user);
 }
 
 wns::scheduler::Bits
@@ -294,7 +298,7 @@ RegistryProxyWiMAC::getQueueSizeLimitPerConnection() {
 wns::service::dll::StationType
 RegistryProxyWiMAC::getStationType(const wns::scheduler::UserID user)
 {
-	wns::service::dll::StationType stationType = layer2->getStationManager()->getStationByNode(user)->getStationType();
+	wns::service::dll::StationType stationType = TheStationManager::getInstance()->getStationByNode(user)->getStationType();
 	return stationType;
 	/*
 	std::map<wns::scheduler::UserID, ConnectionIdentifier::StationID>::const_iterator station =
@@ -302,7 +306,7 @@ RegistryProxyWiMAC::getStationType(const wns::scheduler::UserID user)
 	assure(station != userId2StationId.end(), "User not yet registered");
 
 	Component* userLayer2 =
-		dynamic_cast<wimac::Component*>( layer2->getStationManager()->getStationByID(station->second) );
+		dynamic_cast<wimac::Component*>( TheStationManager::getInstance()->getStationByID(station->second) );
 
 	std::string stationType = wns::service::dll::StationTypes::toString( userLayer2->getStationType() );
 	if( stationType == "AP" )
@@ -338,9 +342,9 @@ RegistryProxyWiMAC::filterListening( wns::scheduler::UserSet users )
 		 it != users.end(); ++it)
 	{
 		wimac::ConnectionIdentifier::StationID uID;
-		uID = layer2->getStationManager()->getStationByNode(*it)->getID();
+		uID = TheStationManager::getInstance()->getStationByNode(*it)->getID();
 
-		service::ConnectionManager::ConnectionIdentifierPtr ci (
+		ConnectionIdentifierPtr ci (
 			connManager->getBasicConnectionFor( uID ) );
 
 		assure( ci->valid_, "RegistryProxyWiMAC::filterListening: no ConnectionIdentifier exist for this user!");
@@ -373,7 +377,7 @@ RegistryProxyWiMAC::filterQoSbased( wns::scheduler::UserSet users )
 
 		ConnectionIdentifier::List cids = connManager->getAllCIForSS(toDestination);
 
-		for (service::ConnectionManager::ConnectionIdentifiers::const_iterator cidIter = cids.begin();
+		for (ConnectionIdentifiers::const_iterator cidIter = cids.begin();
 			 cidIter != cids.end(); ++cidIter)
 		{
 			if ((*cidIter)->qos_ == currentQoSFilter)
@@ -414,8 +418,20 @@ RegistryProxyWiMAC::filterReachable( wns::scheduler::UserSet users )
 	return users;
 }
 
+wns::scheduler::UserSet
+RegistryProxyWiMAC::filterReachable( wns::scheduler::UserSet users, const int frameNr )
+{
+    return filterReachable(users);
+}
+
 wns::scheduler::ConnectionSet
 RegistryProxyWiMAC::filterReachable(wns::scheduler::ConnectionSet connections)
+{
+       return connections;
+}
+
+wns::scheduler::ConnectionSet
+RegistryProxyWiMAC::filterReachable(wns::scheduler::ConnectionSet connections, const int frameNr)
 {
        return connections;
 }
@@ -435,15 +451,15 @@ RegistryProxyWiMAC::getActiveULUsers() const
 }
 
 int
-RegistryProxyWiMAC::getTotalNumberOfUsers(wns::scheduler::UserID user) const
+RegistryProxyWiMAC::getTotalNumberOfUsers(wns::scheduler::UserID user)
 {
-/*	service::ConnectionManagerInterface::ConnectionIdentifiers conns = connManager->getAllBasicConnections();
+/*	ConnectionIdentifiers conns = connManager->getAllBasicConnections();
 	int count = 0;
-	for (service::ConnectionManagerInterface::ConnectionIdentifiers::iterator it = conns.begin();
+	for (ConnectionIdentifiers::iterator it = conns.begin();
 		it != conns.end();
 		++it )
 	{
-		if (layer2->getStationManager()->getStationByID((*it)->subscriberStation_)->getNode() == user)
+		if (TheStationManager::getInstance()->getStationByID((*it)->subscriberStation_)->getNode() == user)
 		{
 			++count;
 		}
@@ -477,7 +493,7 @@ RegistryProxyWiMAC::getPowerCapabilities(const wns::scheduler::UserID user) cons
 {
 	wns::service::dll::StationType stationType;
 	if (user!=NULL) { // peer known
-	  stationType = layer2->getStationManager()->getStationByNode(user)->getStationType();
+	  stationType = TheStationManager::getInstance()->getStationByNode(user)->getStationType();
 	} else { // peer unknown. assume peer=UT
 	  stationType = wns::service::dll::StationTypes::UT();
 	}
@@ -510,16 +526,9 @@ RegistryProxyWiMAC::getPowerCapabilities() const
 
 // This is QoS/priority related
 int
-RegistryProxyWiMAC::getNumberOfQoSClasses()
-{
-	return wns::service::qos::NUMBEROFQOSCLASSES;
-}
-
-// This is QoS/priority related
-int
 RegistryProxyWiMAC::getNumberOfPriorities()
 {
-  return 1; // TODO: no QoS yet.
+  return numberOfPriorities;
 }
 
 //const wns::service::phy::phymode::PhyModeInterfacePtr
@@ -530,13 +539,14 @@ RegistryProxyWiMAC::getNumberOfPriorities()
 
 // This is QoS/priority related
 wns::scheduler::ConnectionList&
-RegistryProxyWiMAC::getCIDListForPriority(int /*priority*/)
+RegistryProxyWiMAC::getCIDListForPriority(int priority)
 {
-       wns::scheduler::ConnectionList connList;
-       wns::scheduler::ConnectionID cid = 0;
-       connList.push_front(cid);
-       wns::scheduler::ConnectionList& c = connList;
-       return c; // no good idea to return ptr/ref to temporary object
+        /*if(priority == wns::service::qos::QoSClasses::CONVERSATIONAL)
+        {
+            return connManager->getAllConnections(); 
+        }
+        else
+            return wns::scheduler::ConnectionList();  */   
 }
 
 
@@ -545,20 +555,28 @@ RegistryProxyWiMAC::getCIDListForPriority(int /*priority*/)
 wns::scheduler::ConnectionSet
 RegistryProxyWiMAC::getConnectionsForPriority(int priority)
 {
-	wns::scheduler::ConnectionSet result;
+    wns::scheduler::ConnectionSet result;
 
-	//MESSAGE_SINGLE(NORMAL, logger, "getConnectionsforPriority("<<priority<<")");
-	assure(priority>=0 && priority<getNumberOfPriorities(),"invalid priority "<<priority);
-	/*
-	for ( wns::scheduler::ConnectionList::iterator iter = connectionsForPriority[priority].begin();
-		  iter != connectionsForPriority[priority].end(); ++iter)
-	{
-	  ConnectionID cid = *iter;
-	  result.insert(cid);
-	  MESSAGE_SINGLE(NORMAL, logger, "getConnectionsforPriority(): added cid=" << cid);
-	}
-	*/
-	return result; // TODO: QOS for WiMAX
+    //MESSAGE_SINGLE(NORMAL, logger, "getConnectionsforPriority("<<priority<<")");
+    assure(priority>=0 && priority<getNumberOfPriorities(),"invalid priority "<<priority);
+    /*
+      for ( wns::scheduler::ConnectionList::iterator iter = connectionsForPriority[priority].begin();
+      iter != connectionsForPriority[priority].end(); ++iter)
+      {
+      ConnectionID cid = *iter;
+      result.insert(cid);
+      MESSAGE_SINGLE(NORMAL, logger, "getConnectionsforPriority(): added cid=" << cid);
+      }
+    */
+    if(priority == 0) // 0 is highest priority and also priority of the one and only default QoSClass UNDEFINED
+    {
+        ConnectionIdentifier::List CIDs = connManager->getAllConnections();
+
+        for (ConnectionIdentifiers::iterator iter = CIDs.begin();
+             iter != CIDs.end(); ++iter)
+            result.insert(wns::scheduler::ConnectionID((*iter)->getID()));
+    }
+    return result; // TODO: QOS for WiMAX
 }
 
 int

@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,29 +23,32 @@
  *
  ******************************************************************************/
 
+
 #ifndef WIMAC_FRAME_MAPCOMMAND_H
 #define WIMAC_FRAME_MAPCOMMAND_H
 
+#include <WNS/ldk/Command.hpp>
+#include <WNS/CandI.hpp>
+
 namespace wimac {
 
-	class MapCommand
-		: public wns::ldk::Command
-	{
-	public:
-		struct Local {
-			simTimeType mapDuration;
-			size_t numBursts;
-		} local;
-		struct Peer {
-			wns::scheduler::MapInfoCollectionPtr mapInfo;
-			simTimeType phaseDuration;
-			int baseStationID;
-		} peer;
-		struct Magic {
-			wns::CandI estimatedCandI;
-		} magic;
-	};
-
+    class MapCommand:
+        public wns::ldk::Command
+    {
+    public:
+        struct {
+            wns::simulator::Time mapDuration;
+            size_t numBursts;
+        } local;
+        struct {
+            wns::scheduler::MapInfoCollectionPtr mapInfo;
+            wns::simulator::Time phaseDuration;
+            int baseStationID;
+        } peer;
+        struct {
+            wns::CandI estimatedCandI;
+        } magic;
+    };
 }
 #endif
 

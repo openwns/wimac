@@ -25,10 +25,9 @@
  *
  ******************************************************************************/
 
-#ifndef WIMAC_MACR_PHYUSER_HPP
-#define WIMAC_MACR_PHYUSER_HPP
 
-
+#ifndef WIMAC_PHYUSER_HPP
+#define WIMAC_PHYUSER_HPP
 
 #include <WNS/node/Node.hpp>
 #include <WNS/probe/bus/ContextCollector.hpp>
@@ -54,148 +53,164 @@
 #include <WIMAC/PhyUserCommand.hpp>
 
 
+#include <WNS/service/phy/phymode/PhyModeMapperInterface.hpp>
+
 namespace wns { namespace node{
-	class Node;
+    class Node;
 }}
 
 namespace wns { namespace ldk { namespace fcf {
-	class FrameBuilder;
+    class FrameBuilder;
 }}}
 
 namespace wimac {
-	class ConnectionClassifier;
-	class Layer2;
-	class InterferenceCache;
 
-	/**
-	 * @brief The PhyUser receives all incoming compounds.
-	 *
-	 * @todo The PhyUser should not control the FrameBuilder. The PhyUser is a
-	 * passive element of the FUN.
-	 *
-	 * @ingroup frameConfigurationFramework
-	 */
+    namespace service {
+        class ConnectionManager;
+        class InterferenceCache;
+    }
 
-	class PhyUser :
-		public virtual wns::ldk::FunctionalUnit,
-		public virtual wns::service::phy::ofdma::Handler,
-		public wns::ldk::CommandTypeSpecifier< PhyUserCommand >,
-		public wns::ldk::HasReceptor<>,
-		public wns::ldk::HasConnector<>,
-		public wns::ldk::HasDeliverer<>,
-		public wns::Cloneable<PhyUser>,
-		public wns::ldk::fcf::NewFrameObserver,
-		public wimac::CIRMeasureInterface
-	{
-		enum States {initial, receiving, measuring};
+    class ConnectionClassifier;
+    class Layer2;
+    class InterferenceCache;
 
-	public:
-		PhyUser(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config);
-		PhyUser( const PhyUser& rhs );
+    /**
+     * @brief The PhyUser receives all incoming compounds.
+     *
+     * @todo The PhyUser should not control the FrameBuilder. The PhyUser is a
+     * passive element of the FUN.
+     *
+     * @ingroup frameConfigurationFramework
+     */
+
+    class PhyUser :
+        public virtual wns::ldk::FunctionalUnit,
+        public virtual wns::service::phy::ofdma::Handler,
+        public wns::ldk::CommandTypeSpecifier< PhyUserCommand >,
+        public wns::ldk::HasReceptor<>,
+        public wns::ldk::HasConnector<>,
+        public wns::ldk::HasDeliverer<>,
+        public wns::Cloneable<PhyUser>,
+        public wns::ldk::fcf::NewFrameObserver,
+        public wimac::CIRMeasureInterface
+    {
+        enum States {initial, receiving, measuring};
+
+    public:
+        PhyUser(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config);
+        PhyUser( const PhyUser& rhs );
 		virtual ~PhyUser();
 
-		// CompoundHandlerInterface
-		virtual bool doIsAccepting(const wns::ldk::CompoundPtr& compound) const;
-		virtual void doSendData(const wns::ldk::CompoundPtr& sdu);
-		virtual void doOnData(const wns::ldk::CompoundPtr& compound);
-		virtual void doWakeup();
+        // CompoundHandlerInterface
+        virtual bool doIsAccepting(const wns::ldk::CompoundPtr& compound) const;
+        virtual void doSendData(const wns::ldk::CompoundPtr& sdu);
+        virtual void doOnData(const wns::ldk::CompoundPtr& compound);
+        virtual void doWakeup();
 
-		// Interface to lower layer (phy)
-		/** @name wns::service::phy::ofdma::Handler:  Interface to lower layer
-		 * (OFDMAPhy) */
-		virtual void
-		onData(wns::osi::PDUPtr pdu, wns::service::phy::power::PowerMeasurementPtr rxPowerMeasurement);
+        // Interface to lower layer (phy)
+        /**
+         * @name wns::service::phy::ofdma::Handler: Interface to lower
+         * layer (OFDMAPhy)
+         */
+        virtual void
+        onData(wns::SmartPtr<wns::osi::PDU>,
+               wns::service::phy::power::PowerMeasurementPtr);
 
-		// Handling of the services
-		virtual void
-		setNotificationService(wns::service::Service* phy);
+        // Handling of the services
+        virtual void
+        setNotificationService(wns::service::Service* phy);
 
-		virtual wns::service::phy::ofdma::Notification*
-		getNotificationService() const;
+        virtual wns::service::phy::ofdma::Notification*
+        getNotificationService() const;
 
-		virtual void
-		setDataTransmissionService(wns::service::Service* phy);
+        virtual void
+        setDataTransmissionService(wns::service::Service* phy);
 
-		virtual wns::service::phy::ofdma::DataTransmission*
-		getDataTransmissionService() const;
+        virtual wns::service::phy::ofdma::DataTransmission*
+        getDataTransmissionService() const;
 
-		virtual void
-		setMACAddress(const wns::service::dll::UnicastAddress& address);
+        virtual void
+        setMACAddress(const wns::service::dll::UnicastAddress& address);
 
-		void onFUNCreated();
+        void onFUNCreated();
 
-		// CIRMeassuring Interface
-		virtual void startMeasuring();
-		virtual wimac::CIRMeasureInterface::MeasureValues stopMeasuring();
+        // CIRMeassuring Interface
+        virtual void startMeasuring();
+        virtual wimac::CIRMeasureInterface::MeasureValues stopMeasuring();
 
-		// NewFrameObserver Interface
-		void messageNewFrame();
+        // NewFrameObserver Interface
+        void messageNewFrame();
 
-		void
-		setRxFrequency(wns::service::phy::ofdma::Tune tune);
+        void
+        setRxFrequency(wns::service::phy::ofdma::Tune tune);
 
-		void
-		setTxFrequency(wns::service::phy::ofdma::Tune tune);
+        void
+        setTxFrequency(wns::service::phy::ofdma::Tune tune);
 
-	private:
+    private:
 
-		bool filter( const wns::ldk::CompoundPtr& compound);
-		void storeMValue(MValue mValue);
+        bool filter( const wns::ldk::CompoundPtr& compound);
+        void storeMValue(MValue mValue);
 
-		States state_;
-		States oldState_;
+        States state_;
+        States oldState_;
 
-		// point in time when last C/I measurement was written to
-		// interference cache
-		simTimeType cacheEntryTimeStamp;
-		// \todo make max waiting time of 1.0 second configurable
-		const simTimeType maxAgeCacheEntry;
+        // point in time when last C/I measurement was written to
+        // interference cache
+        wns::simulator::Time cacheEntryTimeStamp;
 
-		// Flag to indicate that this frame could not be received completely.
-		// For this flag we need a time stamp to assure that we are
-		// in the next frame.
-		simTimeType waitOneFrameRx_;
-		simTimeType waitOneFrameTx_;
+        /**
+         * @todo make max waiting time of 1.0 second configurable
+         */
+        const wns::simulator::Time maxAgeCacheEntry;
 
-		CIRMeasureInterface::MeasureValues measureValues_;
+        // Flag to indicate that this frame could not be received completely.
+        // For this flag we need a time stamp to assure that we are
+        // in the next frame.
+        wns::simulator::Time waitOneFrameRx_;
+        wns::simulator::Time waitOneFrameTx_;
 
-		struct{
-            
-			wns::probe::bus::ContextCollectorPtr interferenceSDMA;
-			wns::probe::bus::ContextCollectorPtr carrierSDMA;
-			wns::probe::bus::ContextCollectorPtr cirSDMA;
-			wns::probe::bus::ContextCollectorPtr deltaPHYModeSDMA;
-			wns::probe::bus::ContextCollectorPtr deltaInterferenceSDMA;
-			wns::probe::bus::ContextCollectorPtr deltaCarrierSDMA;
-			wns::probe::bus::ContextCollectorPtr interferenceFrameHead;
-			wns::probe::bus::ContextCollectorPtr cirFrameHead;
-			wns::probe::bus::ContextCollectorPtr interferenceContention;
-			wns::probe::bus::ContextCollectorPtr cirContention;
-		} probes_;
+        CIRMeasureInterface::MeasureValues measureValues_;
 
-		simTimeType safetyFraction;
-		wns::events::scheduler::Interface* es;
+        struct{
 
-		wns::service::dll::UnicastAddress address;
-		wns::service::phy::ofdma::DataTransmission* dataTransmission;
-		wns::service::phy::ofdma::Notification* notificationService;
+            wns::probe::bus::ContextCollectorPtr interferenceSDMA;
+            wns::probe::bus::ContextCollectorPtr carrierSDMA;
+            wns::probe::bus::ContextCollectorPtr cirSDMA;
+            wns::probe::bus::ContextCollectorPtr deltaPHYModeSDMA;
+			wns::probe::bus::ContextCollectorPtr PHYModeSDMA;
+            wns::probe::bus::ContextCollectorPtr deltaInterferenceSDMA;
+            wns::probe::bus::ContextCollectorPtr deltaCarrierSDMA;
+            wns::probe::bus::ContextCollectorPtr interferenceFrameHead;
+            wns::probe::bus::ContextCollectorPtr cirFrameHead;
+            wns::probe::bus::ContextCollectorPtr interferenceContention;
+            wns::probe::bus::ContextCollectorPtr cirContention;
+            wns::probe::bus::ContextCollectorPtr pathloss;
+        } probes_;
 
-		wns::service::phy::ofdma::Tune tune_;
+        wns::simulator::Time safetyFraction;
+        wns::events::scheduler::Interface* es;
 
-		struct Friends {
-			std::string interferenceCacheName;
-			std::string connectionManagerName;
-			std::string frameBuilderName;
-			std::string connectionClassifierName;
+        wns::service::dll::UnicastAddress address;
+        wns::service::phy::ofdma::DataTransmission* dataTransmission;
+        wns::service::phy::ofdma::Notification* notificationService;
 
-			wimac::Component* layer;
-			dll::services::management::InterferenceCache* interferenceCache;
-			service::ConnectionManager* connectionManager;
-			wns::ldk::fcf::FrameBuilder* frameBuilder;
-			ConnectionClassifier* connectionClassifier;
-		} friends_;
+        wns::service::phy::ofdma::Tune tune_;
 
-	};
+        struct Friends {
+            std::string interferenceCacheName;
+            std::string connectionManagerName;
+            std::string frameBuilderName;
+            std::string connectionClassifierName;
+
+            wimac::Component* layer;
+            service::InterferenceCache* interferenceCache;
+            service::ConnectionManager* connectionManager;
+            wns::ldk::fcf::FrameBuilder* frameBuilder;
+            ConnectionClassifier* connectionClassifier;
+        } friends_;
+
+    };
 }
 
 

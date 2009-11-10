@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -26,8 +24,8 @@
  ******************************************************************************/
 
 /**
- * \file
- * \author Karsten Klagges <kks@comnets.rwth-aachen.de>
+ * @file
+ * @author Karsten Klagges <kks@comnets.rwth-aachen.de>
  */
 #ifndef WIMAC_CLASSIFIER_HPP
 #define WIMAC_CLASSIFIER_HPP
@@ -44,138 +42,160 @@
 
 
 namespace wns {
-	namespace ldk {
+    namespace ldk {
 
-		class CommandPool;
+        class CommandPool;
+    }
+}
 
-	}
-}
-namespace dll {
-	class UpperConvergence;
-}
 namespace wimac {
+    class UpperConvergence;
 
-namespace service {
-	class ConnectionManager;
-}
+    namespace service {
+        class ConnectionManager;
+    }
 
-	class Component;
+    class Component;
 
+    /**
+     * @brief The ConnectionClassifier classify compounds by using the
+     * ConnectionManager.
+     *
+     * The ConnectionClassifier can't inherit from
+     * wns::ldk::Classifier at the moment.
+     *
+     * \li The ClassificationPolicy use the ConnectionManager. => For
+     * every compound, it calls the expensive getManagementService
+     * function to get the ConnectionManager.
+     *
+     * \li We need two different classify methods for incomming and
+     * outgoing compounds.
+     */
+    class ConnectionClassifier :
+        public virtual wns::ldk::FunctionalUnit,
+        public wns::ldk::CommandTypeSpecifier< wns::ldk::ClassifierCommand >,
+        public wns::ldk::HasReceptor<>,
+        public wns::ldk::HasConnector<>,
+        public wns::ldk::HasDeliverer<>,
+        public wns::Cloneable< ConnectionClassifier >
+    {
+    public:
+        ConnectionClassifier( wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config );
+        virtual void doOnData( const wns::ldk::CompoundPtr& compound);
+        virtual void doSendData( const wns::ldk::CompoundPtr& compound);
 
+        virtual
+        wns::ldk::ClassificationID
+        classifyIncoming( const wns::ldk::CompoundPtr& compound );
 
-	/// The ConnectionClassifier classify compounds by using the ConnectionManager.
-   	class ConnectionClassifier :
-		virtual public wns::ldk::FunctionalUnit,
-		public wns::ldk::CommandTypeSpecifier< wns::ldk::ClassifierCommand >,
-		public wns::ldk::HasReceptor<>,
-		public wns::ldk::HasConnector<>,
-		public wns::ldk::HasDeliverer<>,
-		public wns::Cloneable< ConnectionClassifier >
-	{
-    /// Comment: The ConnectinClassifier can't inherit from
-    ///          wns::ldk::Classifier at the moment.
-    ///          1) The ClassificationPolicy use the ConnectionManager.
-    ///             => For every compound, it calls the expensive
-    ///             getManagementService function to get the ConnectionManager.
-    ///          2) We need two different classify methods for incomming and
-    ///             outgoing compounds.
-	public:
-		ConnectionClassifier( wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config );
-		virtual void doOnData( const wns::ldk::CompoundPtr& compound);
-		virtual void doSendData( const wns::ldk::CompoundPtr& compound);
+        virtual
+        wns::ldk::ClassificationID
+        classifyOutgoing( const wns::ldk::CompoundPtr& compound );
 
-		virtual
-		wns::ldk::ClassificationID classifyIncoming( const wns::ldk::CompoundPtr& compound );
-		virtual
-		wns::ldk::ClassificationID classifyOutgoing( const wns::ldk::CompoundPtr& compound );
+        virtual
+        wns::ldk::CommandPool*
+        createReply(const wns::ldk::CommandPool* original) const;
 
-		virtual wns::ldk::CommandPool*
-		createReply(const wns::ldk::CommandPool* original) const;
+    private:
+        virtual
+        void
+        doWakeup(){ getReceptor()->wakeup(); }
 
-	private:
-		virtual void
-		doWakeup(){ getReceptor()->wakeup(); }
+        virtual 
+        bool
+        doIsAccepting(const wns::ldk::CompoundPtr& compound) const;
 
-		virtual bool
-		doIsAccepting(const wns::ldk::CompoundPtr& compound) const;
+        void
+        onFUNCreated();
 
-		void
-		onFUNCreated();
+        struct {
+            UpperConvergence* upperConvergence;
+            service::ConnectionManager* connectionManager;
+            Component* component;
+        } friends_;
 
-		struct {
-			dll::UpperConvergence* upperConvergence;
-			service::ConnectionManager* connectionManager;
-			wimac::Component* layer;
-		} friends_;
+    };
 
-	};
+    /**
+     * @brief A Classifier mock, to get access to the ClassifierCommand.
+     */
+    class ClassifierMock :
+        public ConnectionClassifier,
+        public wns::Cloneable< ClassifierMock >
+    {
+    public:
+        ClassifierMock( wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config) :
+            ConnectionClassifier(fun, config)
+        {}
 
+        virtual void
+        doOnData( const wns::ldk::CompoundPtr&)
+        {
+            assure(0, "This is only a mock");
+        }
 
+        virtual void
+        doSendData( const wns::ldk::CompoundPtr&)
+        {
+            assure(0, "This is only a mock");
+        }
 
-	/// A Classifier mock, to get access to the ClassifierCommand.
-   	class ClassifierMock :
-		public ConnectionClassifier,
-		public wns::Cloneable< ClassifierMock >
-	{
-	public:
-		ClassifierMock( wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config)
-			: ConnectionClassifier(fun, config)
-		{};
+        virtual
+        wns::ldk::ClassificationID
+        classifyIncoming( const wns::ldk::CompoundPtr& )
+        {
+            assure(0, "This is only a mock");
+            return wns::ldk::ClassificationID();
+        }
 
-		virtual void doOnData( const wns::ldk::CompoundPtr&)
-		{	assure(0, "This is only a mock"); }
-		virtual void doSendData( const wns::ldk::CompoundPtr&)
-		{	assure(0, "This is only a mock"); }
+        virtual
+        wns::ldk::ClassificationID
+        classifyOutgoing( const wns::ldk::CompoundPtr& )
+        {
+            assure(0, "This is only a mock");
+            return wns::ldk::ClassificationID();
+        }
 
-		virtual
-		wns::ldk::ClassificationID classifyIncoming( const wns::ldk::CompoundPtr& )
-		{
-			assure(0, "This is only a mock");
-			return wns::ldk::ClassificationID();
-              }
+        virtual
+        wns::ldk::CommandPool*
+        createReply(const wns::ldk::CommandPool*) const
+        {
+            assure(0, "This is only a mock");
+            return NULL;
+        }
 
-		virtual
-		wns::ldk::ClassificationID classifyOutgoing( const wns::ldk::CompoundPtr& )
-		{
-			assure(0, "This is only a mock");
-			return wns::ldk::ClassificationID();
-              }
+        virtual
+        wns::CloneableInterface*
+        clone() const
+        {
+            return wns::Cloneable<ClassifierMock>::clone();
+        }
 
-		virtual wns::ldk::CommandPool*
-		createReply(const wns::ldk::CommandPool*) const
-		{
-			assure(0, "This is only a mock");
-			return NULL;
-		};
+    private:
+        virtual 
+        void
+        doWakeup()
+        {
+            assure(0, "This is only a mock");
+        }
 
-		virtual wns::CloneableInterface* clone() const
-			{
-				return wns::Cloneable<ClassifierMock>::clone();
-			}
+        virtual
+        bool
+        doIsAccepting(const wns::ldk::CompoundPtr&) const
+        {
+            assure(0, "This is only a mock");
+            return false;
+        }
 
-	private:
-		virtual void
-		doWakeup()
-		{	assure(0, "This is only a mock"); }
+        void
+        onFUNCreated(){}
 
-		virtual bool
-		doIsAccepting(const wns::ldk::CompoundPtr&) const
-		{
-			assure(0, "This is only a mock");
-			return false;
-		}
-
-		void
-		onFUNCreated(){}
-
-		struct {
-			dll::UpperConvergence* upperConvergence;
-			service::ConnectionManager* connectionManager;
-			wimac::Component* layer;
-		} friends_;
-
-	};
-
+        struct {
+            UpperConvergence* upperConvergence;
+            service::ConnectionManager* connectionManager;
+            wimac::Component* layer;
+        } friends_;
+    };
 }
 
 #endif

@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,168 +23,217 @@
  *
  ******************************************************************************/
 
+
 #include <WIMAC/Component.hpp>
-
-#include <boost/bind.hpp>
-
-#include <WNS/rng/RNGen.hpp>
-
-#include <WNS/ldk/fcf/FrameBuilder.hpp>
-#include <WNS/ldk/buffer/Buffer.hpp>
-#include <WNS/ldk/FlowSeparator.hpp>
-#include <WIMAC/ConnectionKey.hpp>
-#include <WNS/service/dll/StationTypes.hpp>
-#include <WNS/service/phy/ofdma/Handler.hpp>
-#include <WNS/service/phy/ofdma/DataTransmission.hpp>
-
-#include <DLL/StationManager.hpp>
-
-#include <WIMAC/Logger.hpp>
-#include <WIMAC/PhyUser.hpp>
-#include <WIMAC/services/ControlPlaneManager.hpp>
-#include <WIMAC/services/ControlPlaneManagerSimple.hpp>
-#include <WIMAC/services/DeadStationDetect.hpp>
-
 
 #include <cstdlib>
 #include <sstream>
 
+#include <boost/bind.hpp>
+
+#include <WNS/rng/RNGen.hpp>
+#include <WNS/ldk/fcf/FrameBuilder.hpp>
+#include <WNS/ldk/buffer/Buffer.hpp>
+#include <WNS/ldk/fun/Main.hpp>
+#include <WNS/ldk/utils.hpp>
+#include <WNS/service/phy/ofdma/Handler.hpp>
+#include <WNS/service/phy/ofdma/DataTransmission.hpp>
+#include <WNS/service/dll/StationTypes.hpp>
+
+#include <WIMAC/ConnectionKey.hpp>
+#include <WIMAC/Logger.hpp>
+#include <WIMAC/PhyUser.hpp>
+#include <WIMAC/services/ConnectionManager.hpp>
+#include <WIMAC/services/ControlPlaneManager.hpp>
+#include <WIMAC/services/ControlPlaneManagerSimple.hpp>
+#include <WIMAC/services/DeadStationDetect.hpp>
+#include <WIMAC/StationManager.hpp>
+#include <WIMAC/UpperConvergence.hpp>
+
 using namespace wimac;
 
 STATIC_FACTORY_REGISTER_WITH_CREATOR(Component,
-									 wns::node::component::Interface,
-									 "wimac.Component",
-									 wns::node::component::ConfigCreator);
-
+                                     wns::node::component::Interface,
+                                     "wimac.Component",
+                                     wns::node::component::ConfigCreator);
 
 
 class StartControlPlaneManagerSS
 {
 public:
-	StartControlPlaneManagerSS(wimac::service::ControlPlaneManagerInterface* cpm,
-							   ConnectionIdentifier::StationID associateTo,
-							   ConnectionIdentifier::QoSCategory qosCategory) :
-		controlPlaneManagerSS_(cpm),
-		associateTo_(associateTo),
-		qosCategory_(qosCategory)
-	{}
+    StartControlPlaneManagerSS(wimac::service::ControlPlaneManagerInterface* cpm,
+                               ConnectionIdentifier::StationID associateTo,
+                               int qosCategory) :
+        controlPlaneManagerSS_(cpm),
+        associateTo_(associateTo),
+        qosCategory_(qosCategory)
+    {}
 
-	virtual void execute()
-	{
-		controlPlaneManagerSS_->start(associateTo_, qosCategory_);
-	}
+    virtual void execute()
+    {
+        controlPlaneManagerSS_->start(associateTo_, qosCategory_);
+    }
 
 private:
-	service::ControlPlaneManagerInterface* controlPlaneManagerSS_;
-	ConnectionIdentifier::StationID associateTo_;
-	ConnectionIdentifier::QoSCategory qosCategory_;
+    service::ControlPlaneManagerInterface* controlPlaneManagerSS_;
+    ConnectionIdentifier::StationID associateTo_;
+    int qosCategory_;
 };
 
 
-Component::Component(wns::node::Interface* _node, const wns::pyconfig::View& _config) :
-    dll::Layer2(_node, _config, NULL),
-        //wimac::WithStationType(_config),
-    associateTo_(dll::Layer2::invalidStationID),
-	qosCategory_(ConnectionIdentifier::NoQoS),
-	randomStartDelayMax_(_config.get<simTimeType>("randomStartDelayMax"))
+Component::Component(wns::node::Interface* node, const wns::pyconfig::View& config) :
+    wns::node::component::Component(node, config),
+    associateTo_(0),
+    qosCategory_(ConnectionIdentifier::NoQoS),
+    randomStartDelayMax_(config.get<wns::simulator::Time>("randomStartDelayMax")),
+    stationType_(wns::service::dll::StationTypes::fromString(config.get<std::string>("stationType"))),
+    id_(config.get<unsigned int>("stationID")),
+    address_(config.get<wns::service::dll::UnicastAddress>("address")),
+    ring_(config.get<unsigned int>("ring"))
 {
-	LOG_INFO( "Creating station ", _node->getName(), " with station ID ", stationID,
-			  " and station type ", type );
+    LOG_INFO( "Creating station ", node->getName(), " with station ID ", id_,
+              " and station type ", wns::service::dll::StationTypes::toString(stationType_) );
 
-	if ( !_config.isNone("associateTo") )
-		associateTo_ = _config.get<StationID>("associateTo");
+    if ( !config.isNone("associateTo") )
+        associateTo_ = config.get<StationID>("associateTo");
 
-	// get qosCategory
-	std::string qosCategory = config.get<std::string>("qosCategory");
-	if (qosCategory == "Signaling"){
-		qosCategory_ = ConnectionIdentifier::Signaling;
-	}else if (qosCategory == "UGS"){
-		qosCategory_ = ConnectionIdentifier::UGS;
-	}else if (qosCategory == "rtPS"){
-		qosCategory_ = ConnectionIdentifier::rtPS;
-	}else if (qosCategory ==  "nrtPS"){
-		qosCategory_ = ConnectionIdentifier::nrtPS;
-	}else if (qosCategory ==  "BE"){
-		qosCategory_ = ConnectionIdentifier::BE;
-	}else{
-		qosCategory_ = ConnectionIdentifier::NoQoS;
-	}
+    // get qosCategory
+    std::string qosCategory = config.get<std::string>("qosCategory");
+    if (qosCategory == "Signaling"){
+        qosCategory_ = ConnectionIdentifier::Signaling;
+    }else if (qosCategory == "UGS"){
+        qosCategory_ = ConnectionIdentifier::UGS;
+    }else if (qosCategory == "rtPS"){
+        qosCategory_ = ConnectionIdentifier::rtPS;
+    }else if (qosCategory ==  "nrtPS"){
+        qosCategory_ = ConnectionIdentifier::nrtPS;
+    }else if (qosCategory ==  "BE"){
+        qosCategory_ = ConnectionIdentifier::BE;
+    }else{
+        qosCategory_ = ConnectionIdentifier::NoQoS;
+    }
 
+    // build FUN
+    fun_ = new wns::ldk::fun::Main(this);
+    wns::ldk::configureFUN(fun_, config.get<wns::pyconfig::View>("fun"));
 
+    // fire up control and management Services
+    { // do control services
+        for (int ii = 0; ii<config.len("controlServices"); ++ii){
+            wns::pyconfig::View controlServiceView = config.get("controlServices",ii);
+            std::string serviceName = controlServiceView.get<std::string>("serviceName");
+            std::string creatorName = controlServiceView.get<std::string>("__plugin__");
+            wns::ldk::ControlServiceCreator* serviceCreator = wns::ldk::ControlServiceFactory::creator(creatorName);
+            wns::ldk::ControlServiceInterface* service = serviceCreator->create(getCSR(), controlServiceView);
+            addControlService(serviceName, service);
+            LOG_INFO(" Registered Control Service: " , serviceName);
+        }
+        // do management services @todo pab: get rid of copy and paste patterns
+        for (int ii = 0; ii<config.len("managementServices"); ++ii){
+            wns::pyconfig::View managementServiceView = config.get("managementServices",ii);
+            std::string serviceName = managementServiceView.get<std::string>("serviceName");
+            std::string creatorName = managementServiceView.get<std::string>("__plugin__");
+            wns::ldk::ManagementServiceCreator* serviceCreator = wns::ldk::ManagementServiceFactory::creator(creatorName);
+            wns::ldk::ManagementServiceInterface* service = serviceCreator->create(getMSR(), managementServiceView);
+            addManagementService(serviceName, service);
+            LOG_INFO(" Registered Management Service: ", serviceName);
+        }
+    }
+
+    getNode()->getContextProviderCollection().
+        addProvider(wns::probe::bus::contextprovider::Callback
+                    ("MAC.CellId", boost::bind(&wimac::Component::getCellID, this ) ) );
+    getNode()->getContextProviderCollection().
+        addProvider(wns::probe::bus::contextprovider::Callback
+                    ("MAC.Id", boost::bind(&wimac::Component::getID, this ) ) );
+    getNode()->getContextProviderCollection().
+        addProvider(wns::probe::bus::contextprovider::Callback
+                    ("MAC.Ring", boost::bind(&wimac::Component::getRing, this ) ) );
+    getNode()->getContextProviderCollection().
+        addProvider(wns::probe::bus::contextprovider::Callback
+                    ("MAC.StationType", boost::bind(&wimac::Component::getStationType, this ) ) );
+
+    // global station registry
+    TheStationManager::getInstance()->registerStation(id_, address_, this);
 }
 
 void
 Component::doStartup()
 {
-    dll::Layer2::doStartup();
-    getNode()->getContextProviderCollection().
-        addProvider(wns::probe::bus::contextprovider::Callback("MAC.CellId", boost::bind(&wimac::Component::getCellID, this ) ) );
 }
 
-Component::~Component()
+unsigned int
+Component::getCellID() const
 {
-}
+    if ( getStationType() == wns::service::dll::StationTypes::AP() )
+    {
+        return getID();
+    } else
+    {
+        ConnectionIdentifier::Ptr ci;
 
+        ci = getManagementService<service::ConnectionManager>
+            ("connectionManager")->getConnectionWithID(0);
 
-uint32_t
-Component::getCellID()
-{
-	if ( getStationType() == wns::service::dll::StationTypes::AP() )
-	{
-		return getID();
-	} else
-	{
-		ConnectionIdentifier::Ptr ci;
+        if( ci )
+        {
+            Component* associatedWith = dynamic_cast<wimac::Component*>
+                ( TheStationManager::getInstance()->getStationByID(ci->baseStation_) );
+            assure(associatedWith, "Station is not associated with a WiMAC station");
 
-		ci = getManagementService<service::ConnectionManager>
-			("connectionManager")->getConnectionWithID(0);
-
-		if( ci )
-		{
-			Component* associatedWith = dynamic_cast<wimac::Component*>
-				( getStationManager()->getStationByID(ci->baseStation_) );
-			assure(associatedWith, "Station is not associated with a WiMAC station");
-
-			return associatedWith->getCellID();
-		}
-		return 0;
-	}
+            return associatedWith->getCellID();
+        }
+        return 0;
+    }
 }
 
 
 void
 Component::onNodeCreated()
 {
-	// get service names of the lower layer
-	std::string transServiceName = config.get<std::string>("phyDataTransmission");
-	std::string notifyServiceName = config.get<std::string>("phyNotification");
+    // get service names of the lower layer
+     std::string transServiceName = getConfig().get<std::string>("phyDataTransmission");
+     std::string notifyServiceName = getConfig().get<std::string>("phyNotification");
 
-	// set services in PhyUser to communicate with lower layer
-	PhyUser* phyUser = getFUN()->findFriend<PhyUser*>("phyUser");
+    // set services in PhyUser to communicate with lower layer
+    PhyUser* phyUser = getFUN()->findFriend<PhyUser*>("phyUser");
+    phyUser->setMACAddress( getMACAddress() );
+
+    if(!getConfig().isNone("upperConvergenceName"))
+    {
+        std::string upperConvergenceName = getConfig().get<std::string>("upperConvergenceName");
+        UpperConvergence* upperConvergence =
+            getFUN()->findFriend<UpperConvergence*>(upperConvergenceName);
+
+        // register UpperConvergence as the DLL DataTransmissionService
+        addService(getConfig().get<std::string>("dataTransmission"), upperConvergence);
+        addService(getConfig().get<std::string>("notification"), upperConvergence);
+        upperConvergence->setMACAddress(address_);
+    }
+
 	phyUser->setDataTransmissionService(
 			getService<wns::service::phy::ofdma::DataTransmission*>( transServiceName ) );
 	phyUser->setNotificationService(
 			getService<wns::service::phy::ofdma::Notification*>( notifyServiceName ) );
-	phyUser->setMACAddress( address );
 
-	fun->onFUNCreated();
-	getMSR()->onMSRCreated();
-	getCSR()->onCSRCreated();
+    getFUN()->onFUNCreated();
+    getMSR()->onMSRCreated();
+    getCSR()->onCSRCreated();
 
-	// Start the Framebuilder and set it to pause state for synchronising the
-	// periodically event of all stations. Afterwards the PhyUser controls
-	// the FrameBuilder by the startMeasuring and stopMeasuring methods.
-	wns::ldk::fcf::FrameBuilder* frameBuilder = getFUN()->findFriend<wns::ldk::fcf::FrameBuilder*>("frameBuilder");
-	frameBuilder->start();
-	frameBuilder->pause();
+    // Start the Framebuilder and set it to pause state for synchronizing the
+    // periodically event of all stations. Afterwards the PhyUser controls
+    // the FrameBuilder by the startMeasuring and stopMeasuring methods.
+    wns::ldk::fcf::FrameBuilder* frameBuilder =
+        getFUN()->findFriend<wns::ldk::fcf::FrameBuilder*>("frameBuilder");
+    frameBuilder->start();
+    frameBuilder->pause();
 
-	// Set PhyUser receiving for AP
-	if( getStationType() == wns::service::dll::StationTypes::AP() )
-	{
-		phyUser->startMeasuring();
-		phyUser->stopMeasuring();
-	}
-
+    // Set PhyUser receiving for AP
+    if( getStationType() == wns::service::dll::StationTypes::AP() )
+    {
+        phyUser->startMeasuring();
+        phyUser->stopMeasuring();
+    }
 }
 
 void
@@ -202,51 +249,72 @@ Component::onShutdown()
 service::ConnectionManager*
 Component::getConnectionManagerMaster()
 {
-	Component* associatedWith = dynamic_cast<wimac::Component*>
-		( dll::TheStationManager::getInstance()->getStationByID(associateTo_) );
+    Component* associatedWith = dynamic_cast<wimac::Component*>
+        ( TheStationManager::getInstance()->getStationByID(associateTo_) );
 
-	if ( !associatedWith ) {
-		std::stringstream error;
-		error << getMSR()->getLayer()->getName() << " has not found the station it is associated with";
-		throw wns::Exception( error.str() );
-	}
+    if ( !associatedWith ) {
+        std::stringstream error;
+        error << getMSR()->getLayer()->getName() << " has not found the station it is associated with";
+        throw wns::Exception( error.str() );
+    }
 
-	LOG_TRACE(getName(),
-			 ": associatedWith: ", associatedWith->getStationType());
+    LOG_TRACE(getName(),
+              ": associatedWith: ", associatedWith->getStationType());
 
-	if ( associatedWith->getStationType() == wns::service::dll::StationTypes::AP() )
-		return associatedWith
-			->getManagementService<service::ConnectionManager>("connectionManager");
-	else
-		return associatedWith
-			->getConnectionManagerMaster();
+    if ( associatedWith->getStationType() == wns::service::dll::StationTypes::AP() )
+        return associatedWith
+            ->getManagementService<service::ConnectionManager>("connectionManager");
+    else
+        return associatedWith
+            ->getConnectionManagerMaster();
 }
 
 int
-Component::getNumberOfQueuedPDUs(service::ConnectionManager::ConnectionIdentifiers cis)
+Component::getNumberOfQueuedPDUs(ConnectionIdentifiers cis)
 {
-	int queuedPDUs = 0;
-	for(service::ConnectionManager::ConnectionIdentifiers::const_iterator conn = cis.begin();
-		conn != cis.end();
-		++conn)
-	 {
-		 assure((*conn)->direction_ != ConnectionIdentifier::Downlink,
-				"Component::getNumberOfQueuedPDUs(...) works for uplink PDUs only");
-		 wns::ldk::FlowSeparator* bufferSep = getFUN()->findFriend<wns::ldk::FlowSeparator*>("bufferSep");
-		 wns::ldk::ConstKeyPtr key(new ConnectionKey((*conn)->cid_));
-		 wns::ldk::buffer::Buffer* buffer = dynamic_cast<wns::ldk::buffer::Buffer*>(bufferSep->getInstance(key));
-		 if(buffer)
-			 queuedPDUs += buffer->getSize();
-	 }
-	if (getFUN()->knowsFunctionalUnit("upRelayInject"))
-	{
-		wns::ldk::buffer::Buffer* relayInject =
-			getFUN()->findFriend<wns::ldk::buffer::Buffer*>("upRelayInject");
-		queuedPDUs += relayInject->getSize();
-		LOG_INFO("Added ", relayInject->getSize(),
-				 " PDUs to the number of total PDUs waiting for beeing transmitted");
-	}
-	LOG_INFO( getName(), " with station ID ", stationID,
-			  " and station type ", type, " has queued PDUS ", queuedPDUs );
-	return queuedPDUs;
+    int queuedPDUs = 0;
+    for(ConnectionIdentifiers::const_iterator conn = cis.begin();
+        conn != cis.end();
+        ++conn)
+    {
+        assure((*conn)->direction_ != ConnectionIdentifier::Downlink,
+               "Component::getNumberOfQueuedPDUs(...) works for uplink PDUs only");
+        wns::ldk::FlowSeparator* bufferSep =
+            getFUN()->findFriend<wns::ldk::FlowSeparator*>("bufferSep");
+        wns::ldk::ConstKeyPtr key(new ConnectionKey((*conn)->cid_));
+        wns::ldk::buffer::Buffer* buffer =
+            dynamic_cast<wns::ldk::buffer::Buffer*>(bufferSep->getInstance(key));
+        if(buffer)
+            queuedPDUs += buffer->getSize();
+    }
+    if (getFUN()->knowsFunctionalUnit("upRelayInject"))
+    {
+        wns::ldk::buffer::Buffer* relayInject =
+            getFUN()->findFriend<wns::ldk::buffer::Buffer*>("upRelayInject");
+        queuedPDUs += relayInject->getSize();
+        LOG_INFO("Added ", relayInject->getSize(),
+                 " PDUs to the number of total PDUs waiting for beeing transmitted");
+    }
+    LOG_INFO( getName(), " with station ID ", id_,
+              " and station type ", wns::service::dll::StationTypes::toString(stationType_),
+              " has queued PDUS ", queuedPDUs );
+    return queuedPDUs;
+}
+
+void
+Component::doVisit(wns::probe::bus::IContext& context) const
+{
+    contextProviders_.fillContext(context);
+}
+
+wns::ldk::fun::Main*
+Component::getFUN()
+{
+    return fun_;
+}
+
+std::string
+Component::getName() const
+{
+    return getNode()->getName();
 }

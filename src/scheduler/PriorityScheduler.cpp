@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,6 +23,7 @@
  *
  ******************************************************************************/
 
+
 #include <WIMAC/scheduler/PriorityScheduler.hpp>
 #include <WIMAC/scheduler/RegistryProxyWiMAC.hpp>
 #include <WIMAC/PhyUser.hpp>
@@ -39,19 +38,19 @@
 
 STATIC_FACTORY_REGISTER_WITH_CREATOR(
 	wimac::scheduler::PriorityScheduler,
-	wimac::scheduler::SchedulerInterface,
+	wimac::scheduler::Interface,
 	"wimac.scheduler.PriorityScheduler",
-	wns::ldk::FUNConfigCreator );
+        wimac::FUConfigCreator );
 
 using namespace wimac::scheduler;
 
-PriorityScheduler::PriorityScheduler(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config)
-	: Scheduler(fun, config)
+PriorityScheduler::PriorityScheduler(wns::ldk::FunctionalUnit* parent, const wns::pyconfig::View& config)
+	: Scheduler(parent, config)
 {
 }
 
 // void
-// PriorityScheduler::callBack( unsigned int fSlot, simTimeType startTime, simTimeType endTime, wns::scheduler::UserID user,
+// PriorityScheduler::callBack( unsigned int fSlot, wns::simulator::Time startTime, wns::simulator::Time endTime, wns::scheduler::UserID user,
 // 							 const wns::ldk::CompoundPtr& pdu, float cidColor, unsigned int beam,
 // 							 wns::service::phy::ofdma::PatternPtr pattern, wns::scheduler::MapInfoEntryPtr burst,
 // 							 wns::scheduler::PHYmode phyMode, bool measureInterference, wns::Power requestedTxPower,

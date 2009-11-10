@@ -25,13 +25,64 @@
 #
 ###############################################################################
 
-from openwns.pyconfig import Sealed
-from openwns.pyconfig import Frozen
-from openwns.pyconfig import attrsetter
-import dll.CompoundSwitch
+from openwns.pyconfig import Sealed, Frozen, attrsetter
 
 
-class RelayDirection(dll.CompoundSwitch.Filter):
+class CompoundSwitch(Sealed):
+    __plugin__="wimac.compoundSwitch.CompoundSwitch"
+    name = "wimac.compoundSwitch.CompoundSwitch"
+    onDataFilters = None
+    sendDataFilters = None
+
+    def __init__(self, **kw):
+        self.onDataFilters = []
+        self.sendDataFilters = []
+        attrsetter(self, kw)
+
+
+class Filter(Sealed):
+    __plugin__="wimac.compoundSwitch.Filter"
+    name = None
+    def __init__(self, name):
+        self.name = name
+
+
+
+######### special filters implementation ###################
+class FilterAll(Filter):
+    __plugin__="wimac.compoundSwitch.filter.FilterAll"
+
+    def __init__(self,name,**kw):
+        super(FilterAll, self).__init__(name)
+        attrsetter(self, kw)
+
+
+class FilterNone(Filter):
+    __plugin__="wimac.compoundSwitch.filter.FilterNone"
+
+    def __init__(self,name,**kw):
+        super(FilterNone, self).__init__(name)
+        attrsetter(self, kw)
+
+
+class FilterFilterName(Filter):
+    __plugin__="wimac.compoundSwitch.filter.FilterFilterName"
+
+    def __init__(self,name,**kw):
+        super(FilterFilterName, self).__init__(name)
+        attrsetter(self, kw)
+
+
+class FilterCommand(Filter):
+    __plugin__="wimac.compoundSwitch.filter.FilterCommand"
+    commandProvider = None
+
+    def __init__(self, name, commandProvider, **kw):
+        super(FilterCommand, self).__init__(name)
+        self.commandProvider = commandProvider
+        attrsetter(self, kw)
+
+class RelayDirection(Filter):
     __plugin__ = 'wimac.compoundSwitch.filter.RelayDirection'
     direction = None
 

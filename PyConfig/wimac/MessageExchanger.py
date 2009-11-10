@@ -34,10 +34,7 @@
 
 """
 
-from openwns.pyconfig import Frozen
-from openwns.pyconfig import Sealed
-from openwns.pyconfig import attrsetter
-
+from openwns.pyconfig import Frozen, Sealed, attrsetter
 
 class Map(Sealed):
         messageType = None

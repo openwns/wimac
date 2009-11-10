@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,64 +23,69 @@
  *
  ******************************************************************************/
 
+
 #include <WIMAC/PhyUser.hpp>
 
-#include <WIMAC/Classifier.hpp>
-#include <WIMAC/Component.hpp>
-#include <WIMAC/Logger.hpp>
-#include <WIMAC/ConnectionIdentifier.hpp>
+#include <cmath>
+
 #include <WNS/service/phy/ofdma/DataTransmission.hpp>
-#include <DLL/StationManager.hpp>
 #include <WNS/service/dll/StationTypes.hpp>
 #include <WNS/rng/RNGen.hpp>
-
 #include <WNS/ldk/fun/FUN.hpp>
 #include <WNS/ldk/fcf/FrameBuilder.hpp>
 #include <WNS/pyconfig/View.hpp>
 #include <WNS/probe/bus/ContextProviderCollection.hpp>
 #include <WNS/probe/bus/utils.hpp>
 
-#include <cmath>
+
+#include <WIMAC/Classifier.hpp>
+#include <WIMAC/ConnectionIdentifier.hpp>
+#include <WIMAC/Component.hpp>
+#include <WIMAC/Logger.hpp>
+#include <WIMAC/services/InterferenceCache.hpp>
+#include <WIMAC/StationManager.hpp>
+#include <WIMAC/services/ConnectionManager.hpp>
 
 using namespace wimac;
 
 STATIC_FACTORY_REGISTER_WITH_CREATOR(PhyUser, wns::ldk::FunctionalUnit, "wimac.PhyUser", wns::ldk::FUNConfigCreator);
 
 PhyUser::PhyUser(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config) :
-	wns::ldk::CommandTypeSpecifier<PhyUserCommand>(fun),
-	wns::ldk::HasReceptor<>(),
-	wns::ldk::HasConnector<>(),
-	wns::ldk::HasDeliverer<>(),
-	wns::Cloneable<PhyUser>(),
-	wns::ldk::fcf::NewFrameObserver(dynamic_cast<wns::ldk::FunctionalUnit*>(this)->getName()),
-	wimac::CIRMeasureInterface(),
-	state_(PhyUser::initial),
-	oldState_(state_),
-	cacheEntryTimeStamp(-1),
-	maxAgeCacheEntry(1.0),
-	waitOneFrameRx_(-1),
-	waitOneFrameTx_(-1),
-	tune_(),
-	friends_()
+    wns::ldk::CommandTypeSpecifier<PhyUserCommand>(fun),
+    wns::ldk::HasReceptor<>(),
+    wns::ldk::HasConnector<>(),
+    wns::ldk::HasDeliverer<>(),
+    wns::Cloneable<PhyUser>(),
+    wns::ldk::fcf::NewFrameObserver(dynamic_cast<wns::ldk::FunctionalUnit*>(this)->getName()),
+    wimac::CIRMeasureInterface(),
+    state_(PhyUser::initial),
+    oldState_(state_),
+    cacheEntryTimeStamp(-1),
+    maxAgeCacheEntry(1.0),
+    waitOneFrameRx_(-1),
+    waitOneFrameTx_(-1),
+
+    tune_(),
+    friends_()
 {
-	friends_.interferenceCacheName = "interferenceCache";
-	friends_.connectionManagerName = "connectionManager";
-	friends_.frameBuilderName = "frameBuilder";
-	friends_.connectionClassifierName = "classifier";
+    friends_.interferenceCacheName = "interferenceCache";
+    friends_.connectionManagerName = "connectionManager";
+    friends_.frameBuilderName = "frameBuilder";
+    friends_.connectionClassifierName = "classifier";
 
-	friends_.layer = NULL;
-	friends_.interferenceCache = NULL;
-	friends_.connectionManager = NULL;
-	friends_.frameBuilder = NULL;
-	friends_.connectionClassifier = NULL;
+    friends_.layer = NULL;
+    friends_.interferenceCache = NULL;
+    friends_.connectionManager = NULL;
+    friends_.frameBuilder = NULL;
+    friends_.connectionClassifier = NULL;
 
 
-	tune_.frequency = config.get<double>("centerFrequency");
-	tune_.bandwidth = config.get<double>("bandwidth");
-	tune_.numberOfSubCarrier = config.get<int>("numberOfSubCarrier");
+    tune_.frequency = config.get<double>("centerFrequency");
+    tune_.bandwidth = config.get<double>("bandwidth");
+    tune_.numberOfSubCarrier = config.get<int>("numberOfSubCarrier");
 
-	// Probes configure
-    wns::probe::bus::ContextProviderCollection* cpcParent = &fun->getLayer()->getContextProviderCollection();
+    // Probes configure
+	wns::probe::bus::ContextProviderCollection* cpcParent = &fun->getLayer()->getContextProviderCollection();
 
     wns::probe::bus::ContextProviderCollection cpc(cpcParent);
 
@@ -101,6 +104,9 @@ PhyUser::PhyUser(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config) :
     probes_.deltaCarrierSDMA = 
         wns::probe::bus::collector(cpc, config, "deltaCProbeName");
 
+    probes_.PHYModeSDMA = 
+        wns::probe::bus::collector(cpc, config, "phyModeProbeName");
+
     probes_.deltaPHYModeSDMA = 
         wns::probe::bus::collector(cpc, config, "deltaPhyProbeName");
 
@@ -115,11 +121,15 @@ PhyUser::PhyUser(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config) :
 
     probes_.cirContention = 
         wns::probe::bus::collector(cpc, config, "cirContentionProbeName");
+
+    probes_.pathloss = 
+        wns::probe::bus::collector(cpc, config, "pathlossProbeName");
+
 }
 
 
 PhyUser::PhyUser( const PhyUser& rhs ):
-	wns::ldk::CompoundHandlerInterface( rhs ),
+	wns::ldk::CompoundHandlerInterface<FunctionalUnit>( rhs ),
 	wns::ldk::CommandTypeSpecifierInterface( rhs ),
 	wns::ldk::HasReceptorInterface( rhs ),
 	wns::ldk::HasConnectorInterface( rhs ),
@@ -166,7 +176,10 @@ PhyUser::PhyUser( const PhyUser& rhs ):
 	probes_.deltaPHYModeSDMA = wns::probe::bus::ContextCollectorPtr(
         new wns::probe::bus::ContextCollector(
             *rhs.probes_.deltaPHYModeSDMA));
-	probes_.deltaInterferenceSDMA = wns::probe::bus::ContextCollectorPtr(
+    probes_.PHYModeSDMA = wns::probe::bus::ContextCollectorPtr(
+    new wns::probe::bus::ContextCollector(
+        *rhs.probes_.PHYModeSDMA));
+    probes_.deltaInterferenceSDMA = wns::probe::bus::ContextCollectorPtr(
         new wns::probe::bus::ContextCollector(
             *rhs.probes_.deltaInterferenceSDMA ));
 	probes_.deltaCarrierSDMA = wns::probe::bus::ContextCollectorPtr(
@@ -184,9 +197,10 @@ PhyUser::PhyUser( const PhyUser& rhs ):
 	probes_.cirContention = wns::probe::bus::ContextCollectorPtr(
         new wns::probe::bus::ContextCollector(
             *rhs.probes_.cirContention ));
+    probes_.pathloss = wns::probe::bus::ContextCollectorPtr(
+        new wns::probe::bus::ContextCollector(
+            *rhs.probes_.pathloss ));
 }
-
-
 PhyUser::PhyUser::~PhyUser()
 {}
 
@@ -208,10 +222,10 @@ PhyUser::doSendData(const wns::ldk::CompoundPtr& compound)
 
 void PhyUser::onFUNCreated()
 {
-	friends_.layer = dynamic_cast<wimac::Component*>( getFUN()->getLayer() );
-	assure(friends_.layer, "must be part of wimac::Component");
-	friends_.interferenceCache = getFUN()->getLayer()
-		->getManagementService<dll::services::management::InterferenceCache>(friends_.interferenceCacheName);
+    friends_.layer = dynamic_cast<wimac::Component*>( getFUN()->getLayer() );
+    assure(friends_.layer, "must be part of wimac::Component");
+    friends_.interferenceCache = getFUN()->getLayer()
+        ->getManagementService<service::InterferenceCache>(friends_.interferenceCacheName);
 
 	friends_.connectionManager = getFUN()->getLayer()
 		->getManagementService<service::ConnectionManager>(friends_.connectionManagerName);
@@ -258,93 +272,115 @@ PhyUser::doOnData(const wns::ldk::CompoundPtr& compound)
 
 void
 PhyUser::onData(wns::osi::PDUPtr pdu,
-		wns::service::phy::power::PowerMeasurementPtr rxPowerMeasurement)
+        wns::service::phy::power::PowerMeasurementPtr rxPowerMeasurement)
 {
-	wns::ldk::CompoundPtr compound = wns::staticCast<wns::ldk::Compound>(pdu);
-
+    wns::ldk::CompoundPtr compound = wns::staticCast<wns::ldk::Compound>(pdu);
     if(!getFUN()->getProxy()->commandIsActivated(
         compound->getCommandPool(), this))      
             return;
 
-	PhyUserCommand* puCommand = getCommand( compound->getCommandPool() );
+    PhyUserCommand* puCommand = getCommand( compound->getCommandPool() );
 
-	// store measured signal into PhyUserCommand
-	wns::Power rxPower          = rxPowerMeasurement->getRxPower();
-	wns::Power interference     = rxPowerMeasurement->getInterferencePower();
-	wns::Power omniInterference = rxPowerMeasurement->getOmniInterferencePower();
-	puCommand->local.rxPower_   = rxPower;
-	puCommand->local.interference_ = interference;
+    // store measured signal into PhyUserCommand
+    wns::Power rxPower          = rxPowerMeasurement->getRxPower();
+    wns::Power txPower          = rxPowerMeasurement->getTxPower();
+    wns::Power interference     = rxPowerMeasurement->getInterferencePower();
+    wns::Power omniInterference = rxPowerMeasurement->getOmniInterferencePower();
+    puCommand->local.rxPower_   = rxPower;
+    //puCommand->local.txPower_   = txPower;
+    puCommand->local.interference_ = interference;
 
-	// This frame couldn't be received, we aren't synchronised
-	if ( waitOneFrameRx_ > 0 )
-		return;
+    // This frame couldn't be received, we aren't synchronised
+    if ( waitOneFrameRx_ > 0 )
+        return;
 
-	// Only proceed on filtered compounds
-	if ( !filter( compound ) )
-		return;
+    // Only proceed on filtered compounds
+    if ( !filter( compound ) )
+        return;
 
-	if ( state_ == PhyUser::receiving )
-	{
-		if ( puCommand->peer.measureInterference_ )
-		{   // only for flagged transmissions
-			wns::Power iInterPlusNoise;
-			if(interference > puCommand->getEstimatedIintra()){
-				iInterPlusNoise = interference - puCommand->getEstimatedIintra();
-			}else{
-				iInterPlusNoise = wns::Power::from_mW(0.0);
-				LOG_INFO(getFUN()->getName(), " PhyUser: write iInterPlusNoise = null to interferenceCache");
-			}
+    if ( state_ == PhyUser::receiving )
+    {
+        if ( puCommand->peer.measureInterference_ )
+        {   // only for flaged transmissions
+            // store C and I in sender's cache
+            // The remote interferenceCache stores the averaged noise plus inter-cell
+            // interference and the carrier signal strength separated by usedID.
+            puCommand->magic.sourceComponent_
+                ->getManagementService<service::InterferenceCache>
+                ("interferenceCache")
+                ->storeCarrier( friends_.layer->getNode(),
+                                rxPower,
+                                service::InterferenceCache::Remote );
 
-			// store C and I in sender's cache
-			// The remote interferenceCache stores the averaged noise plus inter-cell
-			// interference and the carrier signal strength separated by usedID.
-			puCommand->magic.sourceComponent_
-				->getManagementService<dll::services::management::InterferenceCache>
-				("interferenceCache")
-			  ->storeMeasurements( friends_.layer->getNode(),
-					       rxPowerMeasurement,
-					       dll::services::management::InterferenceCache::Remote );
-			cacheEntryTimeStamp = wns::simulator::getEventScheduler()->getTime();
+            wns::Power iInterPlusNoise;
+            if(interference > puCommand->getEstimatedIintra()){
+                iInterPlusNoise = interference - puCommand->getEstimatedIintra();
+            }else{
+                iInterPlusNoise = wns::Power::from_mW(0.0);
+                LOG_INFO(getFUN()->getName(), " PhyUser: write iInterPlusNoise = null to interferenceCache");
+            }
 
-			LOG_INFO(getFUN()->getName(), " wrote interference cache entry to sender ( ",
-					 puCommand->magic.sourceComponent_->getFUN()->getName(), " )");
-		}
+            puCommand->magic.sourceComponent_
+                ->getManagementService<service::InterferenceCache>
+                ("interferenceCache")
+                ->storeInterference( friends_.layer->getNode(),
+                                     iInterPlusNoise,
+                                     service::InterferenceCache::Remote );
+
+            cacheEntryTimeStamp = wns::simulator::getEventScheduler()->getTime();
+
+            LOG_INFO(getFUN()->getName(), " wrote interference cache entry to sender ( ",
+                     puCommand->magic.sourceComponent_->getFUN()->getName(), " )");
+        }
 
 
-		// Probes put
-		if (!puCommand->peer.destination_ && !puCommand->magic.contentionAccess_ && puCommand->magic.frameHead_)
-		{ // Probe frameHead
-			probes_.interferenceFrameHead->put( interference.get_dBm() );
-			probes_.cirFrameHead->put( rxPower.get_dBm() - interference.get_dBm() );
+        // Probes put
+        if (!puCommand->peer.destination_ && !puCommand->magic.contentionAccess_ && puCommand->magic.frameHead_)
+        { // Probe frameHead
+            probes_.interferenceFrameHead->put( interference.get_dBm() );
+            probes_.cirFrameHead->put( rxPower.get_dBm() - interference.get_dBm() );
 
-			if(cacheEntryTimeStamp + maxAgeCacheEntry < wns::simulator::getEventScheduler()->getTime()){
-				// write frame head C/I into interference cache
-				puCommand->magic.sourceComponent_
-					->getManagementService<dll::services::management::InterferenceCache>
-					("interferenceCache")
-				  ->storeMeasurements( friends_.layer->getNode(),
-						       rxPowerMeasurement,
-						       dll::services::management::InterferenceCache::Remote );
+            if(cacheEntryTimeStamp + maxAgeCacheEntry < wns::simulator::getEventScheduler()->getTime()){
+                // write frame head C/I into interference cache
+                puCommand->magic.sourceComponent_
+                    ->getManagementService<service::InterferenceCache>
+                    ("interferenceCache")
+                    ->storeCarrier( friends_.layer->getNode(),
+                                    rxPower,
+                                    service::InterferenceCache::Remote );
 
-				LOG_INFO(getFUN()->getName(), " wrote FCH interference cache entry to sender ( ",
-						 puCommand->magic.sourceComponent_->getFUN()->getName(), " )");
 
-			}
-		}
-		else if(!puCommand->peer.destination_ && !puCommand->magic.contentionAccess_ && !puCommand->magic.frameHead_)
-		{ // Probe Broadcast transmissions without frameHead
-			// Probe nothing
-		}
-		else if(puCommand->peer.destination_ && puCommand->magic.contentionAccess_ && !puCommand->magic.frameHead_)
-		{ // Probe contention based access
-			probes_.interferenceContention->put( interference.get_dBm() );
-			probes_.cirContention->put( rxPower.get_dBm() - interference.get_dBm() );
-		}
-		else if(puCommand->peer.destination_ && !puCommand->magic.contentionAccess_ && !puCommand->magic.frameHead_)
-		{ // Probe SDMA transmitted
-			probes_.interferenceSDMA->put( interference.get_dBm() );
-			probes_.carrierSDMA->put( rxPower.get_dBm() );
-			probes_.cirSDMA->put( rxPower.get_dBm() - interference.get_dBm() );
+                puCommand->magic.sourceComponent_
+                    ->getManagementService<service::InterferenceCache>
+                    ("interferenceCache")
+                    ->storeInterference( friends_.layer->getNode(),
+                                         ( interference ),
+                                         service::InterferenceCache::Remote );
+
+                cacheEntryTimeStamp = wns::simulator::getEventScheduler()->getTime();
+
+                LOG_INFO(getFUN()->getName(), " wrote FCH interference cache entry to sender ( ",
+                         puCommand->magic.sourceComponent_->getFUN()->getName(), " )");
+
+            }
+        }
+        else if(!puCommand->peer.destination_ && !puCommand->magic.contentionAccess_ && !puCommand->magic.frameHead_)
+        { // Probe Broadcast transmissions without frameHead
+            // Probe nothing
+        }
+        else if(puCommand->peer.destination_ && puCommand->magic.contentionAccess_ && !puCommand->magic.frameHead_)
+        { // Probe contention based access
+            probes_.interferenceContention->put( interference.get_dBm() );
+            probes_.cirContention->put( rxPower.get_dBm() - interference.get_dBm() );
+        }
+        else if(puCommand->peer.destination_ && !puCommand->magic.contentionAccess_ && !puCommand->magic.frameHead_)
+        { // Probe SDMA transmitted
+            probes_.interferenceSDMA->put( interference.get_dBm() );
+            probes_.carrierSDMA->put( rxPower.get_dBm() );
+            probes_.cirSDMA->put( rxPower.get_dBm() - interference.get_dBm() );
+            probes_.pathloss->put( txPower.get_dBm() - rxPower.get_dBm());
+            LOG_INFO( "pathloss from PhyUser:",txPower.get_dBm() - rxPower.get_dBm());
+      
 			// TODO: puCommand->peer.phyModePtr
 			/*
 			unsigned int phyModeIndex =
@@ -365,47 +401,47 @@ PhyUser::onData(wns::osi::PDUPtr pdu,
 		//Deliver compound
 		doOnData(compound);
 
-	}
-	else if (state_ == PhyUser::measuring) {
-		if (   puCommand->magic.sourceComponent_->getStationType() == wns::service::dll::StationTypes::AP()
-			   || puCommand->magic.sourceComponent_->getStationType() == wns::service::dll::StationTypes::FRS() ) {
+    }
+    else if (state_ == PhyUser::measuring) {
+        if (   puCommand->magic.sourceComponent_->getStationType() == wns::service::dll::StationTypes::AP()
+               || puCommand->magic.sourceComponent_->getStationType() == wns::service::dll::StationTypes::FRS() ) {
 
-			//Only measure PDUs from AP() or FRS()
-			if (!puCommand->peer.destination_ && !puCommand->magic.contentionAccess_ && puCommand->magic.frameHead_) {
+            //Only measure PDUs from AP() or FRS()
+            if (!puCommand->peer.destination_ && !puCommand->magic.contentionAccess_ && puCommand->magic.frameHead_) {
 
-				// Only measure frameHead
-				MValue mValue;
-				mValue.timeStamp = wns::simulator::getEventScheduler()->getTime();
-				mValue.station = puCommand->magic.sourceComponent_;
-				mValue.tune = dataTransmission->getRxTune();
-				mValue.cir = wns::Ratio::from_dB(rxPower.get_dBm()
-												 - interference.get_dBm());
+                // Only measure frameHead
+                MValue mValue;
+                mValue.timeStamp = wns::simulator::getEventScheduler()->getTime();
+                mValue.station = puCommand->magic.sourceComponent_;
+                mValue.tune = dataTransmission->getRxTune();
+                mValue.cir = wns::Ratio::from_dB(rxPower.get_dBm()
+                                                 - interference.get_dBm());
 
-				std::ostringstream log;
-				log << getFUN()->getName()
-					<< ": Measuring Compound [ "
-					<< mValue.station->getName()
-					<< "; f:" << mValue.tune.frequency
-					<< " MHz; C/I= " << rxPower.get_dBm()
-					<< " / " << interference.get_dBm()
-					<< " = " << rxPower / interference
-					<< " ]";
-				LOG_INFO( log.str() );
+                std::ostringstream log;
+                log << getFUN()->getName()
+                    << ": Measuring Compound [ "
+                    << mValue.station->getName()
+                    << "; f:" << mValue.tune.frequency
+                    << " MHz; C/I= " << rxPower.get_dBm()
+                    << " / " << interference.get_dBm()
+                    << " = " << rxPower / interference
+                    << " ]";
+                LOG_INFO( log.str() );
 
-				if( mValue.cir.get_dB() > 0 ) {
-					// Only store values with a usable cir
-					this->storeMValue(mValue);
-				}
+                if( mValue.cir.get_dB() > 0 ) {
+                    // Only store values with a usable cir
+                    this->storeMValue(mValue);
+                }
 
-			}
-		}
-	}
-	else if (state_ == PhyUser::initial) {
-		// Do nothing in initial state
-	}
-	else {
-		assure(0,"wimac::frame::PhyUser: has no state. State is obligatory! \n");
-	}
+            }
+        }
+    }
+    else if (state_ == PhyUser::initial) {
+        // Do nothing in initial state
+    }
+    else {
+        assure(0,"wimac::frame::PhyUser: has no state. State is obligatory! \n");
+    }
 }
 
 void
@@ -521,15 +557,15 @@ PhyUser::setTxFrequency(wns::service::phy::ofdma::Tune tune)
 void
 PhyUser::startMeasuring()
 {
-	assure(state_ == PhyUser::receiving || state_ == PhyUser::initial || state_ == PhyUser::measuring,
-		"PhyUser::startMeasuring: startMeasuring can only be called when PhyUser is in initial, measuring or receiving state.");
+    assure(state_ == PhyUser::receiving || state_ == PhyUser::initial || state_ == PhyUser::measuring,
+        "PhyUser::startMeasuring: startMeasuring can only be called when PhyUser is in initial, measuring or receiving state.");
 
-	LOG_INFO( friends_.layer->getName(),": Start measuring!" );
+    LOG_INFO( friends_.layer->getName(),": Start measuring!" );
 
-	state_ = PhyUser::measuring;
-	friends_.frameBuilder->pause();
-	tune_ = dataTransmission->getRxTune();
-	measureValues_.clear();
+    state_ = PhyUser::measuring;
+    friends_.frameBuilder->pause();
+    tune_ = dataTransmission->getRxTune();
+    measureValues_.clear();
 }
 
 
@@ -542,12 +578,12 @@ PhyUser::stopMeasuring()
 
 	LOG_INFO( friends_.layer->getName(),": Stop measuring!" );
 
-	state_ = PhyUser::receiving;
-	friends_.frameBuilder->start();
-	this->setRxFrequency(tune_);
-	CIRMeasureInterface::MeasureValues measureValues = measureValues_;
-	measureValues_.clear();
-	return measureValues;
+    state_ = PhyUser::receiving;
+    friends_.frameBuilder->start();
+    this->setRxFrequency(tune_);
+    CIRMeasureInterface::MeasureValues measureValues = measureValues_;
+    measureValues_.clear();
+    return measureValues;
 }
 
 
@@ -582,75 +618,75 @@ PhyUser::messageNewFrame()
 
 bool PhyUser::filter( const wns::ldk::CompoundPtr& compound)
 {
-	PhyUserCommand* phyCommand = getCommand( compound->getCommandPool() );
+    PhyUserCommand* phyCommand = getCommand( compound->getCommandPool() );
 
 
-	// reject own compounds
-	if ( phyCommand->peer.source_ == friends_.layer->getNode() )
-		return false;
+    // reject own compounds
+    if ( phyCommand->peer.source_ == friends_.layer->getNode() )
+        return false;
 
 
-	if ( state_ == PhyUser::receiving )
-	{
-		// SS should receive all broadcasts
-		if( friends_.layer->getStationType() != wns::service::dll::StationTypes::AP() )
-		{
-			ConnectionIdentifier::Ptr rngCI;
-			rngCI = friends_.connectionManager->getConnectionWithID(0);
-			assure(rngCI ,
-				   "PhyUser::filter: Can't filter Compounds without ConnectionIdentifier with CID=0");
+    if ( state_ == PhyUser::receiving )
+    {
+        // SS should receive all broadcasts
+        if( friends_.layer->getStationType() != wns::service::dll::StationTypes::AP() )
+        {
+            ConnectionIdentifier::Ptr rngCI;
+            rngCI = friends_.connectionManager->getConnectionWithID(0);
+            assure(rngCI ,
+                   "PhyUser::filter: Can't filter Compounds without ConnectionIdentifier with CID=0");
 
-			if ( !phyCommand->peer.destination_       //broadcast
-				 && ( phyCommand->magic.sourceComponent_->getID()
-					  == rngCI->baseStation_ )                // from our BaseStation
-				)
-			{
-				return true;
-			}
-		}
+            if ( !phyCommand->peer.destination_       //broadcast
+                 && ( phyCommand->magic.sourceComponent_->getID()
+                      == rngCI->baseStation_ )                // from our BaseStation
+                )
+            {
+                return true;
+            }
+        }
 
         // Receive all compounds for us
-		if ( phyCommand->peer.destination_ )  //no broadcast
-		{
-			if ( phyCommand->peer.destination_ == friends_.layer->getNode() ) //for us
-			{
-				// return true;
+        if ( phyCommand->peer.destination_ )  //no broadcast
+        {
+            if ( phyCommand->peer.destination_ == friends_.layer->getNode() ) //for us
+            {
+                // return true;
 
-				wns::ldk::ClassifierCommand* cCommand;
-				cCommand = friends_.connectionClassifier->getCommand(compound->getCommandPool());
+                wns::ldk::ClassifierCommand* cCommand;
+                cCommand = friends_.connectionClassifier->getCommand(compound->getCommandPool());
 
-				if(   (friends_.connectionManager->getConnectionWithID(cCommand->peer.id))
-				   || (cCommand->peer.id == 0) )
-				{   //Only receive compounds for a registered CID
-					///ToDo: (gra) This isn't a good behavoir and the wrong
-					///place for it. Compounds for an outdated / delted
-					///ConnectionIdentifier shouldn't be sent.
-					///It could happen, if the subscriber station does a
-					///reset and delete all ConnectionIdentifier. The base
-					///station doesn't know it and sends compounds on the old
-					///ConnectionIdentifiers.
-					return true;
-				}
-			}
-		}
+                if(   (friends_.connectionManager->getConnectionWithID(cCommand->peer.id))
+                   || (cCommand->peer.id == 0) )
+                {   //Only receive compounds for a registered CID
+                    ///ToDo: (gra) This isn't a good behavoir and the wrong
+                    ///place for it. Compounds for an outdated / delted
+                    ///ConnectionIdentifier shouldn't be sent.
+                    ///It could happen, if the subscriber station does a
+                    ///reset and delete all ConnectionIdentifier. The base
+                    ///station doesn't know it and sends compounds on the old
+                    ///ConnectionIdentifiers.
+                    return true;
+                }
+            }
+        }
 
-		return false;
+        return false;
 
-	}else
-	{
-		// Only accept broadcast
-		if ( !phyCommand->peer.destination_ )
-		{
-			return true;
-		}else
-		{
-			return false;
-		}
+    }else
+    {
+        // Only accept broadcast
+        if ( !phyCommand->peer.destination_ )
+        {
+            return true;
+        }else
+        {
+            return false;
+        }
 
-	}
+    }
 
-	assure( 0, " PhyUser::filter: Compound not catch by filter \n");
-	return false;
+    assure( 0, " PhyUser::filter: Compound not catch by filter \n");
+    return false;
 }
 
 

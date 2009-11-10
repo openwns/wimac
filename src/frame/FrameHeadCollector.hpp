@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -35,65 +33,73 @@
 #include <WNS/ldk/tools/UpUnconnectable.hpp>
 
 namespace wimac {
-	class Component;
-	class PhyUser;
+    class Component;
+    class PhyUser;
 
-	namespace service {
-		class ConnectionManager;
-	}
+    namespace service {
+        class ConnectionManager;
+    }
 }
 
 namespace wimac { namespace frame {
-	class BSDLScheduler;
+        class BSDLScheduler;
 
-	/// Command for the FrameHeadWriter and FrameHeadRetreiver.
-	class FrameHeadCommand :
-		public wns::ldk::Command
-	{
-	public:
-		struct {
-			simTimeType duration;
-		} local;
-		struct {
-			//MapInfoCollection mapInfo;
-			int baseStationID;
-		} peer;
-		struct {
-		} magic;
-	};
+        /**
+         * @brief Command for the FrameHeadWriter and FrameHeadRetreiver.
+         */
+        class FrameHeadCommand :
+            public wns::ldk::Command
+        {
+        public:
+            struct {
+                wns::simulator::Time duration;
+            } local;
+            struct {
+                //MapInfoType mapInfo;
+                int baseStationID;
+            } peer;
+            struct {
+            } magic;
+        };
 
-	/// The CompoundCollector for frame control headers.
-	class FrameHeadCollector :
-		public wns::ldk::fcf::CompoundCollector,
-		public wns::ldk::CommandTypeSpecifier<FrameHeadCommand>,
-		public wns::ldk::HasConnector<>,
-		public wns::ldk::HasReceptor<>,
-		public wns::ldk::tools::UpUnconnectable,
-		public wns::Cloneable<FrameHeadCollector>,
-		public wns::events::CanTimeout
-	{
-	public:
-		FrameHeadCollector( wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config );
+        /**
+         * @brief The CompoundCollector for frame control headers.
+         */
+        class FrameHeadCollector :
+            public wns::ldk::fcf::CompoundCollector,
+            public wns::ldk::CommandTypeSpecifier<FrameHeadCommand>,
+            public wns::ldk::HasConnector<>,
+            public wns::ldk::HasReceptor<>,
+            public wns::ldk::tools::UpUnconnectable,
+            public wns::Cloneable<FrameHeadCollector>,
+            public wns::events::CanTimeout
+        {
+        public:
+            FrameHeadCollector( wns::ldk::fun::FUN* fun,
+                                const wns::pyconfig::View& config );
 
-		void onFUNCreated();
+            void onFUNCreated();
 
-		void doOnData( const wns::ldk::CompoundPtr& );
+            void doOnData( const wns::ldk::CompoundPtr& );
 
-		void doStart(int);
-		void doStartCollection(int){}
-		void finishCollection(){}
+            void doStart(int);
+            void doStartCollection(int){}
+            void finishCollection(){}
 
-		virtual simTimeType getCurrentDuration() const { return getMaximumDuration(); };
+            virtual wns::simulator::Time getCurrentDuration() const
+            {
+                return getMaximumDuration();
+            }
 
-		void onTimeout();
+            void onTimeout();
 
-	private:
-		wimac::Component* layer_;
-		wimac::PhyUser* phyUser_;
-		wimac::service::ConnectionManager* connectionManager_;
-		wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface> phyMode_;
-	};
-
-}}
+        private:
+            wimac::Component* layer_;
+            wimac::PhyUser* phyUser_;
+            wimac::service::ConnectionManager* connectionManager_;
+            wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface> phyMode_;
+        };
+    }
+}
 #endif
 

@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,9 +23,10 @@
  *
  ******************************************************************************/
 
+
 /**
- * \file
- * \author Markus Grauer <gra@comnets.rwth-aachen.de>
+ * @file
+ * @author Markus Grauer <gra@comnets.rwth-aachen.de>
  */
 
 #ifndef WIMAC_CONTROLPLANE_MESSAGEEXCHANGER_HPP
@@ -51,204 +50,192 @@
 #include <time.h>
 
 namespace wimac{
-	class ConnectionClassifier;
+    class ConnectionClassifier;
 
-namespace controlplane{
+    namespace controlplane{
 
 
 
-/**
- *@todo (gra): It seems to be better, if only one management message Command exist
- *             for all ControlFUs. Members of the peer struct should be only the 
- *             ManagementMessageType and a Container with the specific message 
- *             informations.
- */
-class MessageExchangerCommand
-	: public wns::ldk::Command
-{
-public:
-	typedef int MessageType;
-	typedef int StationID;
-
-	struct ExchangeID{
-		ExchangeID()
-			: time(0),
-			  funName()
-			{}
-
-		bool operator==(const ExchangeID eID) const
-			{
-				return (time == eID.time) && (funName == eID.funName);
-			}
-
-		bool operator!=(const ExchangeID eID) const
-			{
-				return (time != eID.time) || (funName != eID.funName);
-			}
-
-		time_t time;
-		std::string funName;
-	};
-
-	MessageExchangerCommand()
-		{
-			peer.managementMessageType = -1;
-			peer.exchangeID = ExchangeID();
-			peer.peerID = -1;
-
-			magic.size = 0;
-		};
-
-	~MessageExchangerCommand()
-		{
-		};
-
-	virtual
-	Bit getSize() const
+        /**
+         *
+         * @todo (gra): It seems to be better, if only one management message
+         * Command exist for all ControlFUs. Members of the peer struct should
+         * be only the ManagementMessageType and a Container with the specific
+         * message informations.
+         */
+        class MessageExchangerCommand:
+            public wns::ldk::Command
         {
-			return magic.size;
-        }
+        public:
+            typedef int MessageType;
+            typedef int StationID;
 
-	struct {} local;
+            struct ExchangeID{
+                ExchangeID():
+                    time(0),
+                    funName()
+                {}
 
-	struct {
-		int managementMessageType;
-		ExchangeID exchangeID;
-		StationID peerID;
-	} peer;
+                bool operator==(const ExchangeID eID) const
+                {
+                    return (time == eID.time) && (funName == eID.funName);
+                }
 
-	struct {
-		Bit size;
-	} magic;
+                bool operator!=(const ExchangeID eID) const
+                {
+                    return (time != eID.time) || (funName != eID.funName);
+                }
 
-};
+                time_t time;
+                std::string funName;
+            };
 
+            MessageExchangerCommand()
+            {
+                peer.managementMessageType = -1;
+                peer.exchangeID = ExchangeID();
+                peer.peerID = -1;
+                magic.size = 0;
+            }
 
+            virtual
+            Bit getSize() const
+            {
+                return magic.size;
+            }
 
-/*********** MessageExchangerCallBackInterface ***************************************/
-class MessageExchangerCallBackInterface
-{
-public:
-	virtual ~MessageExchangerCallBackInterface()
-		{
-		}
+            struct {} local;
 
-	virtual void
-	resultMessageExchanger(std::string name, bool result) = 0;
+            struct {
+                int managementMessageType;
+                ExchangeID exchangeID;
+                StationID peerID;
+            } peer;
 
-};
+            struct {
+                Bit size;
+            } magic;
 
+        };
 
-/********************* MessageExchanger ****************************************/
-/**
- * @brief MessageExchanger exchanges messages between two peers.
- *
- */
-class MessageExchanger:
-	virtual public wns::ldk::FunctionalUnit,
-	public wns::ldk::CommandTypeSpecifier< MessageExchangerCommand >,
-	public wns::ldk::HasReceptor<>,
-	public wns::ldk::HasConnector<>,
-	public wns::ldk::HasDeliverer<>,
-	public wns::Cloneable< MessageExchanger >,
-	public wns::ldk::fcf::NewFrameObserver
-{
-	typedef int Frames;
-	typedef MessageExchangerCommand::MessageType MessageType;
-	typedef std::map<MessageType,Bit> Messages;
-	typedef ConnectionIdentifier::StationID StationID;
-	typedef ConnectionIdentifier::CID CID;
-	typedef ConnectionIdentifier::List ConnectionIdentifiers;
-	typedef ConnectionIdentifier::Ptr ConnectionIdentifierPtr;
+        class MessageExchangerCallBackInterface
+        {
+        public:
+            virtual ~MessageExchangerCallBackInterface()
+            {
+            }
 
-	struct PeerSet {
-		PeerSet():
-			exchangeID(	MessageExchangerCommand::ExchangeID() ),
-			remainTimerWaitingForReply(-1),
-			sendMessage()
-			{}
-
-		MessageExchangerCommand::ExchangeID exchangeID;
-		Frames remainTimerWaitingForReply;
-		Messages::const_iterator sendMessage;
-	};
-
-	typedef std::map<StationID, PeerSet> MessageExchanges;
-
-public:
-	MessageExchanger(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& );
-	~MessageExchanger(){};
-
-	void
-	start(MessageExchangerCallBackInterface* callBackInterface);
-
-	virtual bool
-	doIsAccepting(const wns::ldk::CompoundPtr&) const
-		{
-			assure (0,
-					"wimac::MessageExchanger: doIsAcception is not in use! \n");
-			return false;
-		} // doIsAccepting
+            virtual void
+            resultMessageExchanger(std::string name, bool result) = 0;
+        };
 
 
+        /**
+         * @brief MessageExchanger exchanges messages between two peers.
+         */
+        class MessageExchanger:
+            public virtual wns::ldk::FunctionalUnit,
+            public wns::ldk::CommandTypeSpecifier< MessageExchangerCommand >,
+            public wns::ldk::HasReceptor<>,
+            public wns::ldk::HasConnector<>,
+            public wns::ldk::HasDeliverer<>,
+            public wns::Cloneable< MessageExchanger >,
+            public wns::ldk::fcf::NewFrameObserver
+        {
+            typedef int Frames;
+            typedef MessageExchangerCommand::MessageType MessageType;
+            typedef std::map<MessageType,Bit> Messages;
+            typedef ConnectionIdentifier::StationID StationID;
+            typedef ConnectionIdentifier::CID CID;
+            typedef ConnectionIdentifier::List ConnectionIdentifiers;
+            typedef ConnectionIdentifier::Ptr ConnectionIdentifierPtr;
 
-	virtual void
-	doSendData(const wns::ldk::CompoundPtr&)
-		{
-			assure (0,
-					"wimac::MessageExchanger: doSendData is not in use! \n");
-		} // doSendData
+            struct PeerSet {
+                PeerSet():
+                    exchangeID( MessageExchangerCommand::ExchangeID() ),
+                    remainTimerWaitingForReply(-1),
+                    sendMessage()
+                {}
 
-	virtual void
-	doOnData(const wns::ldk::CompoundPtr& compound);
+                MessageExchangerCommand::ExchangeID exchangeID;
+                Frames remainTimerWaitingForReply;
+                Messages::const_iterator sendMessage;
+            };
 
-	virtual void
-	doWakeup();
+            typedef std::map<StationID, PeerSet> MessageExchanges;
 
-	virtual void
-	onFUNCreated();
+        public:
+            MessageExchanger(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& );
+            ~MessageExchanger(){};
 
-	/// NewFrameObserver
-	virtual void
-	messageNewFrame();
+            void
+            start(MessageExchangerCallBackInterface* callBackInterface);
 
+            virtual bool
+            doIsAccepting(const wns::ldk::CompoundPtr&) const
+            {
+                assure (0,
+                        "wimac::MessageExchanger: doIsAcception is not in use! \n");
+                return false;
+            }
 
-private:
-	void result(StationID peerID, bool result);
+            virtual void
+            doSendData(const wns::ldk::CompoundPtr&)
+            {
+                assure (0,
+                        "wimac::MessageExchanger: doSendData is not in use! \n");
+            }
 
-	wns::ldk::CompoundPtr createMessage(const StationID peerID, const MessageType messageType);
+            virtual void
+            doOnData(const wns::ldk::CompoundPtr& compound);
 
-	StationID getPeerID(const CID cid) const;
+            virtual void
+            doWakeup();
 
-	void clear();
+            virtual void
+            onFUNCreated();
 
-	MessageExchanges messageExchanges_;
-
-	MessageExchangerCallBackInterface* callBackInterface_;
-
-	std::list<wns::ldk::CompoundPtr> compoundQueue_;
-
-	wns::logger::Logger logger_;
-
-	//Static values from PyConfig
-	const int connectionType_;
-	const Frames timerWaitingForReply_;
-    Messages messages_;
-
-	struct{
-		std::string connectionManagerName;
-		std::string connectionClassifierName;
-		std::string newFrameProviderName;
-
-		service::ConnectionManager* connectionManager;
-		wimac::ConnectionClassifier* connectionClassifier;
-		wns::ldk::fcf::NewFrameProvider* newFrameProvider;
-	} friends_;
-};
+            /**
+             * @brief Callback of the NewFrameObserver.
+             */
+            virtual void
+            messageNewFrame();
 
 
-}} // controlplane // wimac
+        private:
+            void result(StationID peerID, bool result);
 
-#endif // NOT defined WIMAC_CONTROLPLANE_MESSAGEEXCHANGER_HPP
+            wns::ldk::CompoundPtr createMessage(const StationID peerID, const MessageType messageType);
+
+            StationID getPeerID(const CID cid) const;
+
+            void clear();
+
+            MessageExchanges messageExchanges_;
+
+            MessageExchangerCallBackInterface* callBackInterface_;
+
+            std::list<wns::ldk::CompoundPtr> compoundQueue_;
+
+            wns::logger::Logger logger_;
+
+            //Static values from PyConfig
+            const int connectionType_;
+            const Frames timerWaitingForReply_;
+            Messages messages_;
+
+            struct{
+                std::string connectionManagerName;
+                std::string connectionClassifierName;
+                std::string newFrameProviderName;
+
+                service::ConnectionManager* connectionManager;
+                wimac::ConnectionClassifier* connectionClassifier;
+                wns::ldk::fcf::NewFrameProvider* newFrameProvider;
+            } friends_;
+        };
+    }}
+
+#endif
 
 

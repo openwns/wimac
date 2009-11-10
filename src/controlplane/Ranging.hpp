@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -26,8 +24,8 @@
  ******************************************************************************/
 
 /**
- * \file
- * \author Markus Grauer <gra@comnets.rwth-aachen.de>
+ * @file
+ * @author Markus Grauer <gra@comnets.rwth-aachen.de>
  */
 
 #ifndef WIMAC_CONTROLPLANE_RANGING_HPP
@@ -47,257 +45,243 @@
 
 #include <WIMAC/MACHeader.hpp>
 #include <WIMAC/CIRMeasureInterface.hpp>
+#include <WIMAC/ConnectionIdentifier.hpp>
 
 
 namespace wimac {
 
-class PhyUser;
+    class PhyUser;
 
-namespace service {
-	class ConnectionManager;
-}
+    namespace service {
+        class ConnectionManager;
+    }
 
-namespace frame{
-	class ContentionCollector;
-}
+    namespace frame{
+        class ContentionCollector;
+    }
 
-namespace controlplane {
+    namespace controlplane {
 
 
 
-/**
- *@todo (gra): It seems to be better, if only one management message Command exist
- *             for all ControlFUs. Members of the peer struct should be only the 
- *             ManagementMessageType and a Container with the specific message 
- *             informations.
- */
-/********************* RangingCommand *******************************************/
-class RangingCommand :
-	public wns::ldk::Command
-{
-public:
-	typedef uint16_t TransactionID;
-
-	RangingCommand()
-		{
-			peer.managementMessageType = MACManagementMessage::UCD;
-			// UCD is wrong, but 0
-
-			peer.rng_req.transactionID = 0;
-			peer.rng_req.baseStation = 0;
-			peer.rng_req.subscriberStation = 0;
-
-			peer.rng_rsp.transactionID = 0;
-			peer.rng_rsp.baseStation = 0;
-			peer.rng_rsp.subscriberStation = 0;
-			peer.rng_rsp.basicCID = 0;
-			peer.rng_rsp.primaryManagementCID = 0;
-
-            magic.size = 0;
-		};
-
-	~RangingCommand()
-		{
-		};
-
-	virtual
-	Bit getSize() const
+        /**
+         * @todo (gra): It seems to be better, if only one management
+         * message Command exist for all ControlFUs. Members of the
+         * peer struct should be only the ManagementMessageType and a
+         * Container with the specific message informations.
+         */
+        class RangingCommand :
+                public wns::ldk::Command
         {
-			return magic.size;
-        }
+        public:
+            typedef unsigned int TransactionID;
 
-	struct {} local;
+            RangingCommand()
+            {
+                peer.managementMessageType = MACManagementMessage::UCD;
+                // UCD is wrong, but 0
 
-	struct {
-		MACManagementMessage::ManagementMessageType managementMessageType;
+                peer.rng_req.transactionID = 0;
+                peer.rng_req.baseStation = 0;
+                peer.rng_req.subscriberStation = 0;
 
-		struct RNG_REQ{
-			///Unique identifier for this transaction
-			TransactionID transactionID;
-			ConnectionIdentifier::StationID baseStation;
-			ConnectionIdentifier::StationID subscriberStation; // Own ID
-		} rng_req;
+                peer.rng_rsp.transactionID = 0;
+                peer.rng_rsp.baseStation = 0;
+                peer.rng_rsp.subscriberStation = 0;
+                peer.rng_rsp.basicCID = 0;
+                peer.rng_rsp.primaryManagementCID = 0;
 
-		struct RNG_RSP{
-			///Unique identifier for this transaction
-			TransactionID transactionID;
-			ConnectionIdentifier::StationID baseStation;
-			ConnectionIdentifier::StationID subscriberStation;
-			ConnectionIdentifier::CID basicCID;
-			ConnectionIdentifier::CID primaryManagementCID;
-		} rng_rsp;
+                magic.size = 0;
+            }
 
-	} peer;
+            virtual
+            Bit getSize() const
+            {
+                return magic.size;
+            }
 
-	struct {
-		Bit size;
-	} magic;
+            struct {} local;
 
-};
+            struct {
+                MACManagementMessage::ManagementMessageType managementMessageType;
 
+                struct RNG_REQ{
+                    ///Unique identifier for this transaction
+                    TransactionID transactionID;
+                    ConnectionIdentifier::StationID baseStation;
+                    ConnectionIdentifier::StationID subscriberStation; // Own ID
+                } rng_req;
 
+                struct RNG_RSP{
+                    ///Unique identifier for this transaction
+                    TransactionID transactionID;
+                    ConnectionIdentifier::StationID baseStation;
+                    ConnectionIdentifier::StationID subscriberStation;
+                    ConnectionIdentifier::CID basicCID;
+                    ConnectionIdentifier::CID primaryManagementCID;
+                } rng_rsp;
 
-/********** RangingCallBackInterface *****************************************/
-class RangingCallBackInterface
-{
-public:
-	virtual ~RangingCallBackInterface()
-		{
-		}
+            } peer;
 
-	virtual void
-	resultRanging(bool result) = 0;
+            struct {
+                Bit size;
+            } magic;
 
-};
-
-class Ranging :
-	virtual public wns::ldk::FunctionalUnit,
-	public wns::ldk::CommandTypeSpecifier< RangingCommand >,
-	public wns::ldk::HasReceptor<>,
-	public wns::ldk::HasConnector<>,
-	public wns::ldk::tools::UpUnconnectable
-{
-public:
-	Ranging(wns::ldk::fun::FUN*, const wns::pyconfig::View&);
-};
-
-
-/********************* RangingBS ***********************************************/
-    /**
-	 * @brief RangingBS implementation for message exchange in the Base Station.
-	 * @author Markus Grauer<gra@comnets.rwth-aachen.de>
-	 *
-     * - RangingBS reacts on an RNG_REQ(base station ID, subscriber station ID)
-     *   from RangingSS with an RNG_RSP(subscriber station ID, PM-CID)
-	 */
-
-
-class RangingBS:
-	public Ranging,
-	public wns::Cloneable< RangingBS >
-{
-public:
-	RangingBS(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& );
-
-	virtual void
-	doOnData(const wns::ldk::CompoundPtr& compound);
-
-	virtual void
-	doWakeup();
-
-	virtual void
-	onFUNCreated();
-
-private:
-
-	void doOnRNG_REQ(const wns::ldk::CompoundPtr& compound);
-
-	std::list<wns::ldk::CompoundPtr> compoundQueue_;
-
-
-	//Static values from PyConfig
-    Bit rng_rspPDUSize_;
-
-	struct{
-		std::string connectionManagerName;
-		std::string connectionClassifierName;
-
-		service::ConnectionManager* connectionManager;
-		FunctionalUnit* connectionClassifier;
-	} friends_;
-
-};
+        };
 
 
 
-/************** RangingSS *****************************************************/
-    /**
-	 * @brief RangingSS implementation for message exchange in the
-	 *        Subscriber Station.
-	 * @author Markus Grauer <gra@comnets.rwth-aachen.de>
-	 *
-     * - Start RangingSS with function range( base station, callBackInterface)
-     * - Sends an RNG_REQ(base station ID,subscriber station ID)
-	 * - Receives an RNG_RSP(subscriber station ID, PM-CID)
-	 *
-	 */
+        /********** RangingCallBackInterface *****************************************/
+        class RangingCallBackInterface
+        {
+        public:
+            virtual ~RangingCallBackInterface()
+            {
+            }
+
+            virtual void
+            resultRanging(bool result) = 0;
+
+        };
+
+        class Ranging :
+            public virtual wns::ldk::FunctionalUnit,
+            public wns::ldk::CommandTypeSpecifier< RangingCommand >,
+            public wns::ldk::HasReceptor<>,
+            public wns::ldk::HasConnector<>,
+            public wns::ldk::tools::UpUnconnectable
+        {
+        public:
+            Ranging(wns::ldk::fun::FUN*, const wns::pyconfig::View&);
+        };
 
 
-class RangingSS :
-	public Ranging,
-	public wns::Cloneable< RangingSS >,
-	public wns::ldk::fcf::NewFrameObserver
-{
-public:
+        /**
+         * @brief RangingBS implementation for message exchange in the Base Station.
+         *
+         * @author Markus Grauer<gra@comnets.rwth-aachen.de>
+         *
+         * RangingBS reacts on an RNG_REQ(base station ID, subscriber
+         * station ID) from RangingSS with an RNG_RSP(subscriber
+         * station ID, PM-CID)
+         */
+        class RangingBS:
+            public Ranging,
+            public wns::Cloneable< RangingBS >
+        {
+        public:
+            RangingBS(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& );
 
-	RangingSS(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config);
+            virtual void
+            doOnData(const wns::ldk::CompoundPtr& compound);
 
+            virtual void
+            doWakeup();
 
-	void
-	start(wns::service::phy::ofdma::Tune tune,
-		  ConnectionIdentifier::StationID baseStation,
-		  RangingCallBackInterface* callBackInterface);
+            virtual void
+            onFUNCreated();
 
-	virtual void
-	doOnData(const wns::ldk::CompoundPtr& compound);
+        private:
 
-	virtual void
-	doWakeup();
+            void doOnRNG_REQ(const wns::ldk::CompoundPtr& compound);
 
-	virtual void
-	onFUNCreated();
-
-	virtual void
-	messageNewFrame();
-
-private:
-
-	void doOnRNG_RSP(const wns::ldk::CompoundPtr& compound);
-
-	void resultRanging(bool result);
-
-	void sendContentionAccess(const wns::ldk::CompoundPtr compound);
-
-	RangingCommand::TransactionID activeTransactionID_;
-	RangingCommand::TransactionID highestTransactionID_;
-
-	ConnectionIdentifier::Frames remainTimerWaitingForRSP_;
-	int remainNumberOfRetries_;
-
-	std::list<wns::ldk::CompoundPtr> compoundQueue_;
-	RangingCallBackInterface* callBackInterface_;
-	wns::ldk::CompoundPtr rngCompound_;
+            std::list<wns::ldk::CompoundPtr> compoundQueue_;
 
 
-	///brief Pointer to the used Uniform Distribution.
-	wns::distribution::StandardUniform rngDis_;
+            //Static values from PyConfig
+            Bit rng_rspPDUSize_;
 
-	//Static values from PyConfig
-	Bit rng_reqPDUSize_;
-	ConnectionIdentifier::Frames timerWaitingForRSP_;
-	int numberOfRetries_;
-	int boWindowSizeMin_;
-	int boWindowSizeMax_;
+            struct{
+                std::string connectionManagerName;
+                std::string connectionClassifierName;
+
+                service::ConnectionManager* connectionManager;
+                FunctionalUnit* connectionClassifier;
+            } friends_;
+
+        };
+
+        /**
+         * @brief RangingSS implementation for message exchange in the
+         * Subscriber Station.
+         *
+         * @author Markus Grauer <gra@comnets.rwth-aachen.de>
+         *
+         * \li Start RangingSS with function range( base station, callBackInterface)
+         * \li Sends an RNG_REQ(base station ID,subscriber station ID)
+         * \li Receives an RNG_RSP(subscriber station ID, PM-CID)
+         *
+         */
+        class RangingSS :
+            public Ranging,
+            public wns::Cloneable< RangingSS >,
+            public wns::ldk::fcf::NewFrameObserver
+        {
+        public:
+
+            RangingSS(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config);
+
+            void
+            start(wns::service::phy::ofdma::Tune tune,
+                  ConnectionIdentifier::StationID baseStation,
+                  RangingCallBackInterface* callBackInterface);
+
+            virtual void
+            doOnData(const wns::ldk::CompoundPtr& compound);
+
+            virtual void
+            doWakeup();
+
+            virtual void
+            onFUNCreated();
+
+            virtual void
+            messageNewFrame();
+
+        private:
+
+            void doOnRNG_RSP(const wns::ldk::CompoundPtr& compound);
+
+            void resultRanging(bool result);
+
+            void sendContentionAccess(const wns::ldk::CompoundPtr compound);
+
+            RangingCommand::TransactionID activeTransactionID_;
+            RangingCommand::TransactionID highestTransactionID_;
+
+            ConnectionIdentifier::Frames remainTimerWaitingForRSP_;
+            int remainNumberOfRetries_;
+
+            std::list<wns::ldk::CompoundPtr> compoundQueue_;
+            RangingCallBackInterface* callBackInterface_;
+            wns::ldk::CompoundPtr rngCompound_;
 
 
-	struct{
-		std::string connectionManagerName;
-		std::string connectionClassifierName;
-		std::string phyUserName;
-		std::string newFrameProviderName;
-		std::string rngCompoundCollectorName;
+            /// Pointer to the used Uniform Distribution.
+            wns::distribution::StandardUniform rngDis_;
 
-		service::ConnectionManager* connectionManager;
-		wns::ldk::FunctionalUnit* connectionClassifier;
-		PhyUser* phyUser;
-		wns::ldk::fcf::NewFrameProvider* newFrameProvider;
-		frame::ContentionCollector* rngCompoundCollector;
-	} friends_;
-};
+            //Static values from PyConfig
+            Bit rng_reqPDUSize_;
+            ConnectionIdentifier::Frames timerWaitingForRSP_;
+            int numberOfRetries_;
+            int boWindowSizeMin_;
+            int boWindowSizeMax_;
 
 
-}}  // controlplane // wimac
+            struct{
+                std::string connectionManagerName;
+                std::string connectionClassifierName;
+                std::string phyUserName;
+                std::string newFrameProviderName;
+                std::string rngCompoundCollectorName;
 
-#endif // NOT defined WIMAC_RANGING_HPP
+                service::ConnectionManager* connectionManager;
+                wns::ldk::FunctionalUnit* connectionClassifier;
+                PhyUser* phyUser;
+                wns::ldk::fcf::NewFrameProvider* newFrameProvider;
+                frame::ContentionCollector* rngCompoundCollector;
+            } friends_;
+        };
+    }}
 
-
+#endif

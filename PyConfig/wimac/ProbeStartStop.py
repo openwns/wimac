@@ -29,9 +29,7 @@
 
 """
 
-from openwns.pyconfig import Sealed
-from openwns.pyconfig import attrsetter
-
+from openwns.pyconfig import Sealed, attrsetter
 
 class ProbeStartStop(Sealed):
     """

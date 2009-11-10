@@ -25,18 +25,18 @@
 #
 ###############################################################################
 
-from openwns.pyconfig import Sealed
-from openwns.pyconfig import attrsetter
+from openwns.pyconfig import Sealed, attrsetter
 
 class PhyUser(Sealed):
     __plugin__ = 'wimac.PhyUser'
     centerFrequency = None
     bandwidth = None
     numberOfSubCarrier = None
-    
+        
     iProbeName = None
     cirProbeName = None
     cProbeName = None
+    phyModeProbeName = None
     deltaPhyProbeName = None
     deltaIProbeName = None
     deltaCProbeName = None
@@ -44,11 +44,13 @@ class PhyUser(Sealed):
     cirFCHProbeName = None
     iContentionProbeName = None
     cirContentionProbeName = None
+    pathlossProbeName = None
 
     def __init__(self, **kw):
         self.iProbeName = "wimac.interferenceSDMA"
         self.cirProbeName = "wimac.cirSDMA"
         self.cProbeName = "wimac.carrierSDMA"
+        self.phyModeProbeName = "wimac.PHYModeSDMA"
         self.deltaPhyProbeName = "wimac.deltaPHYModeSDMA"
         self.deltaIProbeName = "wimac.deltaInterferenceSDMA"
         self.deltaCProbeName = "wimac.deltaCarrierSDMA"
@@ -56,4 +58,6 @@ class PhyUser(Sealed):
         self.cirFCHProbeName = "wimac.cirFrameHead"
         self.iContentionProbeName = "wimac.interferenceContention"
         self.cirContentionProbeName = "wimac.cirContention"      
+        self.pathlossProbeName = "wimac.pathloss"      
         attrsetter(self, kw)
+

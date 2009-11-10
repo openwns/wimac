@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,51 +23,43 @@
  *
  ******************************************************************************/
 
+#ifndef WIMAC_RESOURCE_ALLOCATION_HPP
+#define WIMAC_RESOURCE_ALLOCATION_HPP
+
+#include <map>
+
+#include <SmartPtr.hpp>
+
+#include <WNS/resource/Job.hpp>
+
+namespace wimac {
+namespace resource {
+
 /**
- * \file
- * \author Markus Grauer <gra@comnets.rwth-aachen.de>
+ * @brief The Allocation represents a resource allocation.
+ *
+ * The Allocation represents a resource allocation of a job on
+ * resource units. For this, the allocation keeps a list of pairs of
+ * UnitIDs and Bits.
  */
+class Allocation
+{
+public:
+    /**
+     * @brief Create an allocation for job.
+     */
+    Allocation(const wns::SmartPtr<wimac::resource::Job> job);
 
+    /**
+     * @brief Allocate size bits of the resource unit with the job.
+     */
+    void allocate(int jobID, const Bit& size);
 
-#ifndef WIMAC_BUFFER_HPP
-#define WIMAC_BUFFER_HPP
-
-#include <WNS/ldk/buffer/Dropping.hpp>
-#include <WNS/probe/bus/ContextCollector.hpp>
-#include <WNS/Cloneable.hpp>
-
-
-namespace wimac{
-
-/********************* BufferDropping****************************************/
-/**
-* @brief BufferDropping is inherit from wns::ldk::buffer::dropping::Dropping
-*        to add more Probes.
-*
-*/
-
-	class BufferDropping :
-		public wns::ldk::buffer::Dropping,
-		public wns::Cloneable<BufferDropping>
-	{
-	public:
-		BufferDropping(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config);
-		BufferDropping(const BufferDropping& other);
-		virtual ~BufferDropping();
-
-		virtual wns::CloneableInterface* clone() const
-			{
-				return wns::Cloneable<BufferDropping>::clone();
-			}
-
-
-	private:
-		//Probes putter
-		wns::probe::bus::ContextCollectorPtr resetedBitsProbe_;
-		wns::probe::bus::ContextCollectorPtr resetedCompoundsProbe_;
-	};
-
-
+private:
+    std::list<int> jobs_;
+    Bit unallocated_;
+};
+}
 }
 
 #endif

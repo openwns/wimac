@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -45,8 +43,8 @@ namespace wimac { namespace scheduler {
 		callBack(wns::scheduler::MapInfoEntryPtr mapInfoEntry);
 	  /*
 		void callBack(unsigned int fSlot,
-			      simTimeType startTime,
-			      simTimeType endTime,
+			      wns::simulator::Time startTime,
+			      wns::simulator::Time endTime,
 			      wns::scheduler::UserID user,
 			      const wns::ldk::CompoundPtr& pdu,
 			      float cidColor,

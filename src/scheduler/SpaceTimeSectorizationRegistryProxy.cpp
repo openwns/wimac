@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,6 +23,7 @@
  *
  ******************************************************************************/
 
+
 #include <WIMAC/scheduler/SpaceTimeSectorizationRegistryProxy.hpp>
 #include <WIMAC/scheduler/RegistryProxyWiMAC.hpp>
 
@@ -35,7 +34,11 @@
 using namespace wimac;
 using namespace wimac::scheduler;
 
-STATIC_FACTORY_REGISTER_WITH_CREATOR(SpaceTimeSectorizationRegistryProxy, wns::scheduler::RegistryProxyInterface, "SpaceTimeSectorizationRegistryProxy", wns::ldk::FUNConfigCreator);
+STATIC_FACTORY_REGISTER_WITH_CREATOR(
+    SpaceTimeSectorizationRegistryProxy,
+    wns::scheduler::RegistryProxyInterface,
+    "SpaceTimeSectorizationRegistryProxy",
+    wns::ldk::FUNConfigCreator);
 
 SpaceTimeSectorizationRegistryProxy::SpaceTimeSectorizationRegistryProxy(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& pyConfig)
 	: RegistryProxyWiMAC(fun, pyConfig),
@@ -59,8 +62,8 @@ SpaceTimeSectorizationRegistryProxy::filterReachable( wns::scheduler::UserSet us
 	wns::scheduler::UserSet filteredUsers;
 	filteredUsers.clear();
 
-	simTimeType frameDuration = frameBuilder->getFrameDuration();
-	simTimeType currentTime = wns::simulator::getEventScheduler()->getTime();
+	wns::simulator::Time frameDuration = frameBuilder->getFrameDuration();
+	wns::simulator::Time currentTime = wns::simulator::getEventScheduler()->getTime();
 
 	//A 'group' corresponds to SSs residing in the same sector.
 	//example: if 'numberOfSectors' equals 2, 'group' can be {0, 1}
