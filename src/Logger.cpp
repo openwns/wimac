@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,19 +23,26 @@
  *
  ******************************************************************************/
 
+
 #include <WIMAC/Logger.hpp>
+#ifndef _MSC_VER
 #include <cxxabi.h>
+#endif
 
 const std::string
 wimac::demangledTypename( const std::string& nativeName)
 {
-	const size_t max = 1024;
-	char buf[max + 1];
-	size_t length = max;
-	int result;
+#ifdef _MSC_VER
+    return nativeName;
+#else
+    const size_t max = 1024;
+    char buf[max + 1];
+    size_t length = max;
+    int result;
 
-	abi::__cxa_demangle( nativeName.c_str(), buf, &length, &result);
-	buf[length] = '\0';
-	return buf;
+    abi::__cxa_demangle( nativeName.c_str(), buf, &length, &result);
+    buf[length] = '\0';
+    return buf;
+#endif
 }
 

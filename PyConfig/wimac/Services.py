@@ -25,21 +25,32 @@
 #
 ###############################################################################
 
-import dll.Services
+import openwns.logger
 
-class ConnectionManager(dll.Services.Service):
+class QueueManager(object):
+    __plugin__ = "wimac.services.QueueManager"
+    connectionManagerServiceName = None
+    logger = None
+    
+    def __init__(self, 
+            serviceName = "queueManager", 
+            cmServiceName = "connectionManager", 
+            parentLogger = None):
+        self.serviceName = serviceName
+        self.connectionManagerServiceName = cmServiceName
+        self.logger = openwns.logger.Logger("WIMAC", "QueueManager", True, parentLogger);
+      
+
+class ConnectionManager():
     __plugin__ = 'wimac.services.ConnectionManager'
-    nameInServiceFactory = __plugin__
-
     fuReseter = None
 
     def __init__(self, serviceName, fuReseter):
         self.serviceName = serviceName
         self.fuReseter = fuReseter
 
-class ConnectionControl(dll.Services.Service):
+class ConnectionControl():
     __plugin__ = 'wimac.services.ConnectionControl'
-    nameInServiceFactory = __plugin__
 
     associatedWith = None
     def __init__(self, serviceName):
@@ -48,3 +59,35 @@ class ConnectionControl(dll.Services.Service):
     def associateTo(self, destination):
         self.associatedWith = destination
                 
+class ConstantValue(object):
+    __plugin__ = 'wimac.services.InterferenceCache.ConstantValue'
+    
+    averageCarrier = None
+    averageInterference = None
+    deviationCarrier = None
+    deviationInterference = None
+    averagePathloss = None
+
+class Complain(object):
+    __plugin__ = 'wimac.services.InterferenceCache.Complain'
+
+
+class InterferenceCache(object):
+    __plugin__ = 'wimac.services.InterferenceCache'
+
+    alphaLocal = None
+    alphaRemote= None
+    notFoundStrategy = None
+
+    def __init__(self, serviceName, alphaLocal, alphaRemote):
+        self.serviceName = serviceName
+        self.alphaLocal = alphaLocal
+        self.alphaRemote = alphaRemote
+        self.notFoundStrategy = ConstantValue()
+
+class InterferenceCacheDropin(InterferenceCache):
+    def __init__(self):
+        super(InterferenceCacheDropin,self).__init__(serviceName = "INTERFERENCECACHE",
+                                                     alphaLocal  = 0.2,
+                                                     alphaRemote = 0.05)
+        self.notFoundStrategy = Complain()

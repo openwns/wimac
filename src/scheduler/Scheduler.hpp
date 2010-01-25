@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,6 +23,7 @@
  *
  ******************************************************************************/
 
+
 #ifndef WIMAC_SCHEDULER_SCHEDULER_HPP
 #define WIMAC_SCHEDULER_SCHEDULER_HPP
 
@@ -39,168 +38,194 @@
 #include <WNS/scheduler/SchedulerTypes.hpp>
 #include <WNS/Observer.hpp>
 #include <WNS/probe/bus/ContextCollector.hpp>
+#include <WNS/scheduler/strategy/StrategyInterface.hpp>
 
 #include <WIMAC/Classifier.hpp>
 #include <WIMAC/scheduler/PDUWatchProviderObserver.hpp>
 #include <WIMAC/Logger.hpp>
-#include <WIMAC/scheduler/SchedulerInterface.hpp>
+#include <WIMAC/scheduler/Interface.hpp>
 #include <WIMAC/services/ConnectionManager.hpp>
 
 namespace wns {
-	namespace ldk {
-		class FunctionalUnit;
-		class Receptor;
-	}
+    namespace ldk {
+        class FunctionalUnit;
+        class Receptor;
+    }
 
-	namespace scheduler {
+    namespace scheduler {
 
-		class RegistryProxyInterface;
-		class CallBackInterface;
+        class RegistryProxyInterface;
+        class CallBackInterface;
 
-		namespace queue {
-			class QueueInterface;
-		}
+        namespace queue {
+            class QueueInterface;
+        }
 
-		namespace strategy {
-			class StrategyInterface;
-		}
+//         namespace strategy {
+//             class StrategyResultPtr;
+//             class StrategyInterface;
+//         }
 
-		namespace grouper {
-			class GroupingProviderInterface;
-		}
-	}
+        namespace grouper {
+            class GroupingProviderInterface;
+        }
+    }
 
-	namespace service { namespace phy { namespace ofdma {
-		class DataTransmission;
-	}}}
+    namespace service { namespace phy { namespace ofdma {
+                class DataTransmission;
+            }
+        }
+    }
 }
 
 namespace wimac {
-	class PhyUser;
+    class PhyUser;
+    namespace frame {
+        class MapHandlerInterface;
+    }
 }
 namespace wimac { namespace scheduler {
-	class Callback;
-	class PseudoBWRequestGenerator;
-	class RegistryProxyWiMAC;
+        class Callback;
+        class PseudoBWRequestGenerator;
+        class RegistryProxyWiMAC;
 
-	/**
-	 * @brief The scheduler aggregates the scheduler components.
-	 *
-	 * The Scheduler aggregates the strategy, the grouper, the queue, the
-	 * registry proxy, the callback and the pseudo packet generator if
-	 * necessary.
-	 */
-	class Scheduler :
-		public wimac::scheduler::SchedulerInterface,
-		public wns::scheduler::MapInfoProviderInterface,
-		public wns::Cloneable<Scheduler>,
-		public wimac::scheduler::PDUWatchProvider,
-		public wns::Observer<wimac::service::ConnectionDeletedNotification>
-	{
-	public:
-		Scheduler(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config);
+        /**
+         * @brief The scheduler aggregates the scheduler components.
+         *
+         * The Scheduler aggregates the strategy, the grouper, the queue, the
+         * registry proxy, the callback and the pseudo packet generator if
+         * necessary.
+         */
+        class Scheduler :
+            public virtual wimac::scheduler::Interface,
+            public wns::scheduler::MapInfoProviderInterface,
+            public wns::Cloneable<Scheduler>,
+            public wimac::scheduler::PDUWatchProvider,
+            public wns::Observer<wimac::service::ConnectionDeletedNotification>
+        {
+        public:
+            Scheduler(wns::ldk::FunctionalUnit* parent, const wns::pyconfig::View& config);
 
-		~Scheduler();
+            ~Scheduler();
 
-		void schedule(const wns::ldk::CompoundPtr&);
-		void startScheduling();
-		void finishScheduling(){}
-		void deliverSchedule(wns::ldk::Connector*);
+            void schedule(const wns::ldk::CompoundPtr&);
+            void startScheduling();
+            void finishScheduling(){}
+            void deliverSchedule(wns::ldk::Connector*);
 
-		void resetAllQueues();
+            void resetAllQueues();
 
-		void resetCID(ConnectionIdentifier::CID cid);
+            void resetCID(ConnectionIdentifier::CID cid);
 
-		void finishCollection();
+            void finishCollection();
 
-		///\todo Remove me when I have found a better testing work-around
-		void setProvider(wns::service::phy::ofdma::DataTransmission* _ofdmaProvider);
+            ///\todo Remove me when I have found a better testing work-around
+            void setProvider(wns::service::phy::ofdma::DataTransmission* _ofdmaProvider);
 
-		void setFUN(wns::ldk::fun::FUN*);
+            void setFUN(wns::ldk::fun::FUN*);
 
-		void setReceptor(wns::ldk::Receptor* receptor)
-		{ receptor_ = receptor; }
+            void setReceptor(wns::ldk::Receptor* receptor)
+            { receptor_ = receptor; }
 
-		void setDuration(double duration)
-		{ duration_ = duration; }
+            void setDuration(const wns::simulator::Time& duration)
+            { duration_ = duration; }
 
-		double getDuration() const
-		{ return duration_; }
+            wns::simulator::Time getDuration() const
+            { return duration_; }
 
-		// For MapInfoProviderInterface
-		wns::scheduler::MapInfoCollectionPtr getMapInfo() const;
-		int getNumBursts() const;
+            // For MapInfoProviderInterface
+            wns::scheduler::SchedulingMapPtr getSchedulingMap() const;
+            wns::scheduler::MapInfoCollectionPtr getMapInfo() const 
+            {
+                assure(0, "getMapInfo() should not be called anymore");
+                return wns::scheduler::MapInfoCollectionPtr();
+            }
+            int getNumBursts() const;
 
+            void notifyAboutConnectionDeleted(const ConnectionIdentifier);
 
-		void notifyAboutConnectionDeleted(const ConnectionIdentifier);
+            /**
+            * @bried Returns a pointer to the queue of the current scheduling strategy.
+            */
+            wns::scheduler::queue::QueueInterface* 
+            getQueue() const;
 
-	protected:
-		void setupPlotting();
-		void handleBroadcast();
+        protected:
+            void setupPlotting();
+            void handleBroadcast();
 
-		bool plotFrames;
+            bool plotFrames;
 
-		struct {
-			wns::scheduler::grouper::GroupingProviderInterface* grouper;
-			wns::scheduler::queue::QueueInterface* queue;
-			wns::scheduler::strategy::StrategyInterface* strategy;
-			// we have special WiMAC extensions to the registry proxy so don't
-			// use the wns::scheduler::RegistryProxyInterface* version here
-			wimac::scheduler::RegistryProxyWiMAC* registry;
-			wimac::scheduler::Callback* callback;
-			wimac::scheduler::PseudoBWRequestGenerator* pseudoGenerator;
-		} colleagues;
+            struct {
+                wns::scheduler::grouper::GroupingProviderInterface* grouper;
+                wns::scheduler::queue::QueueInterface* queue;
+                wns::scheduler::strategy::StrategyInterface* strategy;
+                // we have special WiMAC extensions to the registry proxy so don't
+                // use the wns::scheduler::RegistryProxyInterface* version here
+                wimac::scheduler::RegistryProxyWiMAC* registry;
+                wimac::scheduler::Callback* callback;
+                wimac::scheduler::PseudoBWRequestGenerator* pseudoGenerator;
+            } colleagues;
 
-		simTimeType usedSlotDuration;
-		simTimeType offsetInSlot;
-		unsigned int freqChannels;
-		unsigned int maxBeams;
-		bool beamforming;
-		bool uplink;
+            wns::simulator::Time usedSlotDuration;
+            wns::simulator::Time offsetInSlot;
+            unsigned int freqChannels;
+            unsigned int maxBeams;
+            bool beamforming;
+            int numberOfTimeSlots_;
+            bool uplink;
+	    bool alwaysAcceptIfQueueAccepts;
 
-		struct Friends
-		{
-			wns::ldk::CommandTypeSpecifier<wns::ldk::ClassifierCommand>* classifier;
-			wimac::PhyUser* phyUser;
-		} friends_;
+            struct Friends
+            {
+                wns::ldk::CommandTypeSpecifier<wns::ldk::ClassifierCommand>* classifier;
+                wimac::PhyUser* phyUser;
+            } friends_;
 
-		wns::logger::Logger logger;
-		std::vector<boost::filesystem::fstream*> plotFiles;
-
-
-	private:
-		bool doIsAccepting(const wns::ldk::CompoundPtr& compound) const;
-		void doStart(int);
-
-		void putProbe(int bits, int compounds);
-
-		wns::service::phy::ofdma::DataTransmission* ofdmaProvider;
-		std::string strategyName;
-		std::string grouperName;
-		std::string queueName;
-		std::string registryName;
-		std::string callbackName;
-		double duration_;
-
-		int pduCount;
-		int frameNo;
-
-		wns::pyconfig::View pyConfig;
-
-		std::string outputDir;
-
-		// Probes
-		wns::probe::bus::ContextCollectorPtr resetedBitsProbe;
-		wns::probe::bus::ContextCollectorPtr resetedCompoundsProbe;
-
-		wns::ldk::fun::FUN* fun_;
-		wns::ldk::Receptor* receptor_;
-		bool accepting_;
-	};
+            wns::logger::Logger logger;
+            std::vector<boost::filesystem::fstream*> plotFiles;
 
 
+        private:
+            bool doIsAccepting(const wns::ldk::CompoundPtr& compound) const;
+            void doStart(int);
 
-}} // namespace wimac::scheduler
-#endif // WIMAC_SCHEDULER_SCHEDULER_HPP
+            void putProbe(int bits, int compounds);
+
+            wns::service::phy::ofdma::DataTransmission* ofdmaProvider;
+            std::string strategyName;
+            std::string grouperName;
+            std::string queueName;
+            std::string registryName;
+            std::string callbackName;
+            wns::simulator::Time duration_;
+
+            wimac::frame::MapHandlerInterface* mapHandler_;
+            std::string mapHandlerName_;
+
+            int pduCount;
+            int frameNo;
+
+            wns::pyconfig::View pyConfig;
+
+            std::string outputDir;
+
+            /** @brief there are three positions for the scheduler... */
+            wns::scheduler::SchedulerSpotType schedulerSpot_;
+
+            // Probes
+            wns::probe::bus::ContextCollectorPtr resetedBitsProbe;
+            wns::probe::bus::ContextCollectorPtr resetedCompoundsProbe;
+
+            wns::scheduler::strategy::StrategyResultPtr strategyResult_;
+
+            wns::ldk::FunctionalUnit* parent_;
+            wns::ldk::Receptor* receptor_;
+            bool accepting_;
+            double slotDuration;
+        };
+    }
+}
+#endif
 
 

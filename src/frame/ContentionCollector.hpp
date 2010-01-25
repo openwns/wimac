@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,6 +23,7 @@
  *
  ******************************************************************************/
 
+
 #ifndef WIMAC_FRAME_CONTENTIONCOLLECTOR_H
 #define WIMAC_FRAME_CONTENTIONCOLLECTOR_H
 
@@ -37,85 +36,89 @@
 
 namespace wimac {
 
-namespace service{
-	class ConnectionManager;
-}
-	class Component;
-	class ConnectionClassifier;
-	class PhyUser;
-namespace frame {
+    namespace service{
+        class ConnectionManager;
+    }
+    class Component;
+    class ConnectionClassifier;
+    class PhyUser;
+    namespace frame {
 
 
-/// A CompoundCollector that collects multiple compounds.
-class ContentionCollector :
-	public wns::ldk::fcf::CompoundCollector,
-	public wns::ldk::CommandTypeSpecifier<wns::ldk::EmptyCommand>,
-	public wns::ldk::HasConnector<>,
-	public wns::ldk::HasReceptor<>,
-	public wns::ldk::HasDeliverer<>,
-	public wns::Cloneable<ContentionCollector>,
-	public wns::events::CanTimeout,
-	public scheduler::PDUWatchProvider
+        /**
+         * @brief  A CompoundCollector that collects multiple compounds.
+         */
+        class ContentionCollector :
+            public wns::ldk::fcf::CompoundCollector,
+            public wns::ldk::CommandTypeSpecifier<wns::ldk::EmptyCommand>,
+            public wns::ldk::HasConnector<>,
+            public wns::ldk::HasReceptor<>,
+            public wns::ldk::HasDeliverer<>,
+            public wns::Cloneable<ContentionCollector>,
+            public wns::events::CanTimeout,
+            public scheduler::PDUWatchProvider
 
-{
-public:
-	ContentionCollector( wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config );
+        {
+        public:
+            ContentionCollector( wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config );
 
-	void doOnData( const wns::ldk::CompoundPtr& );
-	void doSendData( const wns::ldk::CompoundPtr& );
+            void doOnData( const wns::ldk::CompoundPtr& );
+            void doSendData( const wns::ldk::CompoundPtr& );
 
-	bool doIsAccepting( const wns::ldk::CompoundPtr& compound ) const;
+            bool doIsAccepting( const wns::ldk::CompoundPtr& compound ) const;
 
-	void doStart(int);
+            void doStart(int);
 
-	void onTimeout();
+            void onTimeout();
 
-	void doStartCollection(int);
-	void finishCollection(){ accepting_ = false; }
-	simTimeType getCurrentDuration() const { return accumulatedDuration_; }
+            void doStartCollection(int);
+            void finishCollection(){ accepting_ = false; }
+            wns::simulator::Time getCurrentDuration() const { return accumulatedDuration_; }
 
-	virtual void onFUNCreated();
+            virtual void onFUNCreated();
 
-	void setBackOff(int backOff);
-
-
-protected:
-
-	/// Calculate the duraction of this compound.
-	simTimeType getDuration(const wns::ldk::CompoundPtr&) const;
+            void setBackOff(int backOff);
 
 
-	bool accepting_;
+        protected:
 
-	int backOff_;
-	simTimeType maximumDuration_;
-	simTimeType accumulatedDuration_;
-
-	typedef std::deque<wns::ldk::CompoundPtr> Compounds;
-	Compounds compounds_;
-
-	Component* layer_;
-
-	struct
-	{
-		wimac::ConnectionClassifier* classifier_;
-		wimac::PhyUser* phyUser_;
-		service::ConnectionManager* connectionManager;
-	} friends_;
+            /**
+             * @brief Calculate the duraction of this compound.
+             */
+            wns::simulator::Time getDuration(const wns::ldk::CompoundPtr&) const;
 
 
-	// values from PyConfig
-	wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface> phyMode;
+            bool accepting_;
 
-	struct{
-		bool enabled;
-		int slotLengthInSymbols;
-		int numberOfSlots;
-	} contentionAccess_;
+            int backOff_;
+            wns::simulator::Time maximumDuration_;
+            wns::simulator::Time accumulatedDuration_;
 
-};
+            typedef std::deque<wns::ldk::CompoundPtr> Compounds;
+            Compounds compounds_;
 
-}
+            Component* layer_;
+
+            struct
+            {
+                wimac::ConnectionClassifier* classifier_;
+                wimac::PhyUser* phyUser_;
+                service::ConnectionManager* connectionManager;
+            } friends_;
+
+
+            // values from PyConfig
+            wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface> phyMode;
+
+            struct{
+                bool enabled;
+                int slotLengthInSymbols;
+                int numberOfSlots;
+            } contentionAccess_;
+
+        };
+
+    }
 }
 #endif
 

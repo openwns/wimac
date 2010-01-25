@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,6 +23,7 @@
  *
  ******************************************************************************/
 
+
 #ifndef WIMAC_ERRORMODELLINGTEST_HPP
 #define WIMAC_ERRORMODELLINGTEST_HPP
 
@@ -33,107 +32,105 @@
 
 
 #include <WIMAC/ErrorModelling.hpp>
-#include <cppunit/extensions/HelperMacros.h>
+#include <WNS/cppunit/extensions/HelperMacros.h>
 #include <stdexcept>
-
+#include <WNS/ldk/fun/Main.hpp>
 
 
 namespace wimac{
 
-	using namespace wns::ldk;
+    using namespace wns::ldk;
 
-	class PHYModeProvider;
+    class PHYModeProvider;
 
-    /** \todo the error modelling has changed, modify this test to make it fit to the changes
+    /**
+     * @todo the error modelling has changed, modify this test to make it fit to the changes
      */
-	class ErrorModellingTest :
-		public CppUnit::TestFixture
-	{
-		CPPUNIT_TEST_SUITE(ErrorModellingTest);     // Anmeldung bim CPPUNIT_TEST_SUITE
-		CPPUNIT_TEST(TestPassThrough);
-		CPPUNIT_TEST(TestPHYModeBPSK12);            // TestFunktionenen Anmelden
-		CPPUNIT_TEST(TestPHYModeQPSK12);
-		CPPUNIT_TEST(TestPHYModeQPSK34);
-		CPPUNIT_TEST(TestPHYModeQAM16_12);
-		CPPUNIT_TEST(TestPHYModeQAM16_34);
-		CPPUNIT_TEST(TestPHYModeQAM64_23);
-		CPPUNIT_TEST(TestPHYModeQAM64_34);
-		CPPUNIT_TEST_SUITE_END();
+    class ErrorModellingTest :
+        public CppUnit::TestFixture
+    {
+        CPPUNIT_TEST_SUITE(ErrorModellingTest);
+        CPPUNIT_TEST(TestPassThrough);
+        CPPUNIT_TEST(TestPHYModeBPSK12);
+        CPPUNIT_TEST(TestPHYModeQPSK12);
+        CPPUNIT_TEST(TestPHYModeQPSK34);
+        CPPUNIT_TEST(TestPHYModeQAM16_12);
+        CPPUNIT_TEST(TestPHYModeQAM16_34);
+        CPPUNIT_TEST(TestPHYModeQAM64_23);
+        CPPUNIT_TEST(TestPHYModeQAM64_34);
+        CPPUNIT_TEST_SUITE_END();
 
-	public:
-		void setUp();
-		void tearDown();
+    public:
+        void setUp();
+        void tearDown();
 
         // Tests
-		void TestPassThrough();
-		void TestPHYModeBPSK12();
-		void TestPHYModeQPSK12();
-		void TestPHYModeQPSK34();
-		void TestPHYModeQAM16_12();
-		void TestPHYModeQAM16_34();
-		void TestPHYModeQAM64_23();
-		void TestPHYModeQAM64_34();
+        void TestPassThrough();
+        void TestPHYModeBPSK12();
+        void TestPHYModeQPSK12();
+        void TestPHYModeQPSK34();
+        void TestPHYModeQAM16_12();
+        void TestPHYModeQAM16_34();
+        void TestPHYModeQAM64_23();
+        void TestPHYModeQAM64_34();
 
 
-	private:
-		friend class ErrorModelling;
+    private:
+        friend class ErrorModelling;
 
-  		wns::ldk::Layer* layer;
-		wns::ldk::fun::Main* fun;
-		wns::ldk::tools::Stub* upper;
-		wimac::ErrorModelling* errormodelling;
-		wimac::PHYModeProvider* phymodeprovider;
+        wns::ldk::Layer* layer;
+        wns::ldk::fun::Main* fun;
+        wns::ldk::tools::Stub* upper;
+        wimac::ErrorModelling* errormodelling;
+        wimac::PHYModeProvider* phymodeprovider;
         wns::ldk::tools::Stub* cirprovider;
         wns::ldk::tools::Stub* lower;
 
-		std::map<double, double> cir2ser_BPSK12_;
-		std::map<double, double> cir2ser_QPSK12_;
-		std::map<double, double> cir2ser_QPSK34_;
-		std::map<double, double> cir2ser_QAM16_12_;
-		std::map<double, double> cir2ser_QAM16_34_;
-		std::map<double, double> cir2ser_QAM64_23_;
-		std::map<double, double> cir2ser_QAM64_34_;
+        std::map<double, double> cir2ser_BPSK12_;
+        std::map<double, double> cir2ser_QPSK12_;
+        std::map<double, double> cir2ser_QPSK34_;
+        std::map<double, double> cir2ser_QAM16_12_;
+        std::map<double, double> cir2ser_QAM16_34_;
+        std::map<double, double> cir2ser_QAM64_23_;
+        std::map<double, double> cir2ser_QAM64_34_;
 
-		void setUpUpper();
-		void setUpPHYModeProvider();
-	    void setUpCirProvider();
-		void setUpErrorModelling();
-		void setUpLower();
-		void ImportMappings();
-		void CreateSendCompound(int PacketSize, wimac::PHYTools::PHYMode PHYMode, double cir);
-		void PrintResults();
-		double Calculate(int CompoundNr);
-		void Test(int PacketSize, wimac::PHYTools::PHYMode PHYMode, int MapLength);
+        void setUpUpper();
+        void setUpPHYModeProvider();
+        void setUpCirProvider();
+        void setUpErrorModelling();
+        void setUpLower();
+        void ImportMappings();
+        void CreateSendCompound(int PacketSize, wimac::PHYTools::PHYMode PHYMode, double cir);
+        void PrintResults();
+        double Calculate(int CompoundNr);
+        void Test(int PacketSize, wimac::PHYTools::PHYMode PHYMode, int MapLength);
 
-		int PacketSize_;
-		int MapLength_;
+        int PacketSize_;
+        int MapLength_;
 
-	};
+    };
 
-	class PHYModeProvider:
-		public virtual wns::ldk::FunctionalUnit,
-		public wns::ldk::CommandTypeSpecifier< wimac::timing2::TimingCommand >,
-		public wns::ldk::HasReceptor<>,
-		public wns::ldk::HasConnector<>,
-		public wns::ldk::HasDeliverer<>,
-		public wns::Cloneable<PHYModeProvider>
+    class PHYModeProvider:
+        public virtual wns::ldk::FunctionalUnit,
+        public wns::ldk::CommandTypeSpecifier< wimac::timing2::TimingCommand >,
+        public wns::ldk::HasReceptor<>,
+        public wns::ldk::HasConnector<>,
+        public wns::ldk::HasDeliverer<>,
+        public wns::Cloneable<PHYModeProvider>
 
-	{
-	public:
-		PHYModeProvider( wns::ldk::fun::FUN* fun, wns::pyconfig::View& )
-			: CommandTypeSpecifier< wimac::timing2::TimingCommand >(fun)
-			{}
-		virtual ~PHYModeProvider() {}
-		virtual void onFUNCreated() {}
-		virtual bool doIsAccepting(const wns::ldk::CompoundPtr) { return false;}
-		virtual void doOnData(wns::ldk::CompoundPtr) {}
-		virtual void doSendData(wns::ldk::CompoundPtr) {}
-		virtual void doWakeup() {}
-
-	private:
-
-	};
+    {
+    public:
+        PHYModeProvider( wns::ldk::fun::FUN* fun, wns::pyconfig::View& )
+            : CommandTypeSpecifier< wimac::timing2::TimingCommand >(fun)
+        {}
+        virtual ~PHYModeProvider() {}
+        virtual void onFUNCreated() {}
+        virtual bool doIsAccepting(const wns::ldk::CompoundPtr) { return false;}
+        virtual void doOnData(wns::ldk::CompoundPtr) {}
+        virtual void doSendData(wns::ldk::CompoundPtr) {}
+        virtual void doWakeup() {}
+    };
 
 }
 
-#endif  //NOT defined ErrorModellingTEST_HPP
+#endif

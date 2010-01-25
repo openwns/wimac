@@ -30,14 +30,13 @@
 
 """
 
-import dll.Services
 from openwns.pyconfig import attrsetter
 
 import HandoverStrategy
 import ScanningStrategy
 
 
-class ControlPlaneManagerSS(dll.Services.Service):
+class ControlPlaneManagerSS(object):
     """This class
 
        self.qosPriority: Signaling, UGS, rtPS, nrtPS, BE

@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,9 +23,10 @@
  *
  ******************************************************************************/
 
+
 /**
- * \file
- * \author Markus Grauer <gra@comnets.rwth-aachen.de>
+ * @file
+ * @author Markus Grauer <gra@comnets.rwth-aachen.de>
  */
 
 #ifndef WIMAC_SERVICES_SCANNINGSTRATEGY_INTERUPTED_HPP
@@ -38,69 +37,72 @@
 
 
 namespace wimac {
-namespace service {
-namespace scanningStrategy{
+    class Component;
 
-/**
-* @brief Interupted Scanning Strategy
-* @author Markus Grauer <gra@comnets.rwth-aachen.de>
-* -
-* -
-* -
-*
-*/
-class Interupted
-	: public ScanningStrategy
+    namespace service {
+        namespace scanningStrategy{
 
+            /**
+             * @brief Interupted Scanning Strategy
+             * @author Markus Grauer <gra@comnets.rwth-aachen.de>
+             */
+            class Interupted :
+                public ScanningStrategy
+            {
+            public:
+                Interupted( VersusInterface* versusUnit,
+                            Component* layer,
+                            const wns::pyconfig::View& config);
 
-{
-public:
-	Interupted( VersusInterface* const versusUnit,
-				const dll::Layer2* layer,
-				const wns::pyconfig::View& config);
+                virtual
+                ~Interupted(){}
 
-	virtual
-	~Interupted(){}
+                /**
+                 * @brief ScanningStrategy Interface implementation
+                 */
+                virtual void
+                controlRSP();
 
-	/// ScanningStrategy Interface implementation
-	virtual void
-	controlRSP();
+                /**
+                 * @brief ScanningStrategy Interface implementation
+                 */
+                virtual void
+                abortScanning()
+                {
+                    assure(0, "Interupted::abortScanning: This functionality is not supported!");
+                }
 
-	/// ScanningStrategy Interface implementation
-	virtual void
-	abortScanning()
-		{
-			assure(0, "Interupted::abortScanning: This functionality is not supported!");
-		}
-
-    /// scanningStrategy::Interface Implementation
-	virtual void
-	setup(const Stations stationsToScan);
-
-
-private:
-
-	/// ScanningStrategy Interface implementation
-	virtual void
-	result(const MeasureValues& measureValuesOutput);
-
-	void
-	timerExecute();
-
-	void
-	scan();
-
-	Stations::const_iterator oldNextStationToScan_;
-	Stations::const_iterator nextStationToScan_;
-	CIRMeasureInterface::MeasureValues measuredValues_;
-
-	// Static values from PyConfig
-	const int maxNumberOfStationsToScan_;
-	const ConnectionIdentifier::Frames framesBetweenSubScanning_;
-};
-
-}}} // scanningStrategy::service::wimac
-
-#endif // WIMAC_SERVICES_SCANNINGSTRATEGY_INTERRUPTED_HPP
+                /**
+                 * @brief scanningStrategy::Interface Implementation
+                 */
+                virtual void
+                setup(const Stations stationsToScan);
 
 
+            private:
+
+                /**
+                 * @brief ScanningStrategy Interface implementation
+                 */
+                virtual void
+                result(const MeasureValues& measureValuesOutput);
+
+                void
+                timerExecute();
+
+                void
+                scan();
+
+                Stations::const_iterator oldNextStationToScan_;
+                Stations::const_iterator nextStationToScan_;
+                CIRMeasureInterface::MeasureValues measuredValues_;
+
+                // Static values from PyConfig
+                const int maxNumberOfStationsToScan_;
+                const ConnectionIdentifier::Frames framesBetweenSubScanning_;
+            };
+        }
+    }
+}
+
+#endif

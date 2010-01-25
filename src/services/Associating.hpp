@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,9 +23,10 @@
  *
  ******************************************************************************/
 
+
 /**
- * \file
- * \author Markus Grauer <gra@comnets.rwth-aachen.de>
+ * @file
+ * @author Markus Grauer <gra@comnets.rwth-aachen.de>
  */
 
 #ifndef WIMAC_SERVICES_ASSOCIATING_HPP
@@ -44,111 +43,110 @@
 #include <WIMAC/services/handoverStrategy/Interface.hpp>
 
 
-namespace wimac { namespace service {
+namespace wimac {
+    class Component;
+
+    namespace service {
 
 
-/********** AssociatingCallBackInterface ***********************************/
-class AssociatingCallBackInterface
-{
-public:
-	virtual ~AssociatingCallBackInterface()
-		{
-		}
+        class AssociatingCallBackInterface
+        {
+        public:
+            virtual ~AssociatingCallBackInterface()
+            {
+            }
 
-	virtual void
-	resultAssociating( const bool result, const double failure ) = 0;
+            virtual void
+            resultAssociating( const bool result, const double failure ) = 0;
+        };
 
-};
-
-
-
-/**
-	 * @brief Associating
-	 *
-	 *
-     *
+        /**
+         * @brief Associating
 	 */
+        class Associating :
+            public wimac::controlplane::RangingCallBackInterface,
+            public wimac::controlplane::MessageExchangerCallBackInterface,
+            public wimac::controlplane::SetupConnectionCallBackInterface
+        {
+            enum State{
+                None,
+                Ranging,
+                Regristration,
+                SetupConnection
+            };
 
-class Associating
-	: public wimac::controlplane::RangingCallBackInterface,
-	  public wimac::controlplane::MessageExchangerCallBackInterface,
-	  public wimac::controlplane::SetupConnectionCallBackInterface
-{
-	enum State{
-		None,
-		Ranging,
-		Regristration,
-		SetupConnection
-	};
-
-public:
-       typedef ConnectionIdentifier::QoSCategory  QoSCategory;
-
-
-	Associating(dll::Layer2* const layer,
-				AssociatingCallBackInterface* const callBack,
-				const  wns::pyconfig::View& config);
-
-	~Associating()
-		{
-		}
-
-	void
-	start(handoverStrategy::Interface::Station targetBaseStation, QoSCategory qosCategory);
+        public:
+            typedef ConnectionIdentifier::QoSCategory  QoSCategory;
 
 
-    /// RangingCallBackInterface implementation
-	virtual void
-	resultRanging(bool result);
+            Associating(Component* layer,
+                        AssociatingCallBackInterface* const callBack,
+                        const  wns::pyconfig::View& config);
 
 
-	/// MessageExchangeCallBackInterface implementation
-	virtual void
-	resultMessageExchanger(std::string name, bool result);
+            void
+            start(handoverStrategy::Interface::Station targetBaseStation,
+                  int qosCategory);
 
 
-	/// SetupConnectionCallBackInterface implementation
-	virtual void
-	resultSetupConnection(bool result);
+            /**
+             * @brief RangingCallBackInterface implementation
+             */
+            virtual void
+            resultRanging(bool result);
 
 
-	void
-	onMSRCreated();
+            /**
+             * @brief MessageExchangeCallBackInterface implementation
+             */
+            virtual void
+            resultMessageExchanger(std::string name, bool result);
 
 
-private:
-
-	void doNextStep(State state);
-
-	void result(bool result);
-
-
-	handoverStrategy::Interface::Station targetBaseStation_;
-
-	State state_;
-	int remainRetries_;
-	QoSCategory qosCategory_;
+            /**
+             * @brief SetupConnectionCallBackInterface implementation
+             */
+            virtual void
+            resultSetupConnection(bool result);
 
 
-	dll::Layer2* layer_;
-	AssociatingCallBackInterface* callBack_;
+            void
+            onMSRCreated();
 
-	// Static values from PyConfig
-	const int retries_;
 
-	struct{
-		std::string rangingProviderName;
-		std::string regristrationProviderName;
-		std::string setupConnectionProviderName;
+        private:
 
-		wimac::controlplane::RangingSS* rangingProvider;
-		wimac::controlplane::MessageExchanger* regristrationProvider;
-		wimac::controlplane::SetupConnectionSS* setupConnectionProvider;
-	} friends_;
+            void doNextStep(State state);
 
-};
+            void result(bool result);
 
-}} // service::wimac
+
+            handoverStrategy::Interface::Station targetBaseStation_;
+
+            State state_;
+            int remainRetries_;
+            int qosCategory_;
+
+
+            wimac::Component* layer_;
+            AssociatingCallBackInterface* callBack_;
+
+            // Static values from PyConfig
+            const int retries_;
+
+            struct{
+                std::string rangingProviderName;
+                std::string regristrationProviderName;
+                std::string setupConnectionProviderName;
+
+                wimac::controlplane::RangingSS* rangingProvider;
+                wimac::controlplane::MessageExchanger* regristrationProvider;
+                wimac::controlplane::SetupConnectionSS* setupConnectionProvider;
+            } friends_;
+
+        };
+    }
+}
 
 #endif // WIMAC_SERVICES_ASSOCIATING_HPP
 

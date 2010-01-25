@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,9 +23,10 @@
  *
  ******************************************************************************/
 
+
 /**
- * \file
- * \author Markus Grauer <gra@comnets.rwth-aachen.de>
+ * @file
+ * @author Markus Grauer <gra@comnets.rwth-aachen.de>
  */
 
 #ifndef WIMAC_SERVICES_DISSOCIATING_HPP
@@ -43,79 +42,72 @@
 namespace wimac { namespace service {
 
 
+        class DissociatingCallBackInterface
+        {
+        public:
+            virtual ~DissociatingCallBackInterface()
+            {
+            }
 
-/********** DissociatingCallBackInterface ***********************************/
-class DissociatingCallBackInterface
-{
-public:
-	virtual ~DissociatingCallBackInterface()
-		{
-		}
+            virtual void
+            resultDissociating( const handoverStrategy::Interface::Stations
+                                ackBaseStations )
+            = 0;
 
-	virtual void
-	resultDissociating( const handoverStrategy::Interface::Stations
-						ackBaseStations )
-		= 0;
-
-};
+        };
 
 
 
-/**
- * @brief Dissociating
- *
- *
- *
- */
+        /**
+         * @brief Dissociating
+         */
+        class Dissociating:
+            public wimac::controlplane::HandoverCallBackInterface
+        {
+        public:
 
-class Dissociating
-	: public wimac::controlplane::HandoverCallBackInterface
-{
-public:
+            Dissociating( Component* layer,
+                          DissociatingCallBackInterface* callBack,
+                          const  wns::pyconfig::View& config );
 
-	Dissociating( dll::Layer2* layer,
-				  DissociatingCallBackInterface* callBack,
-				  const  wns::pyconfig::View& config );
+            ~Dissociating()
+            {
+            }
 
-	~Dissociating()
-		{
-		}
+            void
+            start(const handoverStrategy::Interface::Stations targetBaseStations);
 
-	void
-	start(const handoverStrategy::Interface::Stations targetBaseStations);
+            /**
+             * @brief HandoverCallBackInterface implementation
+             */
+            virtual void
+            resultHandover(handoverStrategy::Interface::Stations newBaseStations);
 
-	/// HandoverCallBackInterface implementation
-	virtual void
-	resultHandover(handoverStrategy::Interface::Stations newBaseStations);
+            void
+            onMSRCreated();
 
-	void
-	onMSRCreated();
+        private:
 
+            void
+            dissociating();
 
-private:
+            int remainRetries_;
+            handoverStrategy::Interface::Stations targetBaseStations_;
 
-	void
-	dissociating();
+            wimac::Component* layer_;
+            DissociatingCallBackInterface* callBack_;
+            // Static values from PyConfig
+            const int retries_;
 
-	int remainRetries_;
-	handoverStrategy::Interface::Stations targetBaseStations_;
+            struct{
+                std::string handoverProviderName;
 
-	dll::Layer2* const layer_;
-	DissociatingCallBackInterface* callBack_;
-	// Static values from PyConfig
-	const int retries_;
+                wimac::controlplane::HandoverSS* handoverProvider;
+            } friends_;
 
-	struct{
-		std::string handoverProviderName;
-
-		wimac::controlplane::HandoverSS* handoverProvider;
-	} friends_;
-
-};
-
-
-}} // service::wimac
-
-#endif // WIMAC_SERVICES_DISSOCIATING_HPP
+        };
+    }
+}
+#endif
 
 

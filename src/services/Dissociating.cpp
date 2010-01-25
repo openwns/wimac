@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,66 +23,60 @@
  *
  ******************************************************************************/
 
+
 /**
- * \file
- * \author Markus Grauer <gra@comnets.rwth-aachen.de>
+ * @file
+ * @author Markus Grauer <gra@comnets.rwth-aachen.de>
  */
 
 #include <WIMAC/services/Dissociating.hpp>
 
-
-
 using namespace wimac::service;
 
 
-
-/********** ControlPlaneManager ***************************************************/
-Dissociating::Dissociating( dll::Layer2* layer,
-							DissociatingCallBackInterface* callBack,
-							const wns::pyconfig::View& config )
- 	: HandoverCallBackInterface(),
-	  remainRetries_(-1),
-	  targetBaseStations_(),
-	  layer_(layer),
-	  callBack_(callBack),
-	  retries_( config.get<int>("retries") ),
- 	  friends_()
+Dissociating::Dissociating( wimac::Component* layer,
+                            DissociatingCallBackInterface* callBack,
+                            const wns::pyconfig::View& config ):
+    HandoverCallBackInterface(),
+    remainRetries_(-1),
+    targetBaseStations_(),
+    layer_(layer),
+    callBack_(callBack),
+    retries_( config.get<int>("retries") ),
+    friends_()
 {
-	friends_.handoverProviderName = config.get<std::string>("handoverProvider");
-
-	friends_.handoverProvider = NULL;
+    friends_.handoverProviderName = config.get<std::string>("handoverProvider");
+    friends_.handoverProvider = NULL;
 }
-
-
 
 void
 Dissociating::start(const handoverStrategy::Interface::Stations
-					targetBaseStations)
+                    targetBaseStations)
 {
-	targetBaseStations_ = targetBaseStations;
+    targetBaseStations_ = targetBaseStations;
 
-	remainRetries_ = retries_;
+    remainRetries_ = retries_;
 
-	this->dissociating();
+    this->dissociating();
 }
 
 
 
 void
 Dissociating::resultHandover(handoverStrategy::Interface::Stations
-									  ackBaseStations)
+                             ackBaseStations)
 {
-	LOG_INFO( layer_->getName(),
-			  ": calling Dissociating::resultHandover().");
+    LOG_INFO( layer_->getName(),
+              ": calling Dissociating::resultHandover().");
 
-	if(ackBaseStations.empty())
-	{ // Handover failed
-		this->dissociating();
-		return;
-	}
+    if(ackBaseStations.empty())
+    { // Handover failed
+        this->dissociating();
+        return;
+    }
 
-	remainRetries_ = -1;
-	callBack_->resultDissociating(ackBaseStations);
+    remainRetries_ = -1;
+    callBack_->resultDissociating(ackBaseStations);
 }
 
 
@@ -92,37 +84,29 @@ Dissociating::resultHandover(handoverStrategy::Interface::Stations
 void
 Dissociating::onMSRCreated()
 {
-	friends_.handoverProvider = layer_->getFUN()->findFriend<wimac::controlplane::HandoverSS*>
-		(friends_.handoverProviderName);
+    friends_.handoverProvider = layer_->getFUN()->findFriend<wimac::controlplane::HandoverSS*>
+        (friends_.handoverProviderName);
 }
 
-
-
-/********** Private Functions ******************************/
 
 void
 Dissociating::dissociating()
 {
-	assure(remainRetries_ >= 0,
-		   "Dissociating::dissociating(): Retries must be activated!");
+    assure(remainRetries_ >= 0,
+           "Dissociating::dissociating(): Retries must be activated!");
 
-	if( remainRetries_ == 0 )
-	{  // go to initinal state
-		LOG_INFO(layer_->getName(), ": Dissociating failed ", retries_,
-				 " times.");
+    if( remainRetries_ == 0 )
+    {  // go to initinal state
+        LOG_INFO(layer_->getName(), ": Dissociating failed ", retries_,
+                 " times.");
 
-		remainRetries_ = -1;
-		callBack_->resultDissociating(
-			handoverStrategy::Interface::Stations() );
-		return;
-	}
+        remainRetries_ = -1;
+        callBack_->resultDissociating(
+            handoverStrategy::Interface::Stations() );
+        return;
+    }
 
+    remainRetries_--;
 
-	remainRetries_--;
-
-	friends_.handoverProvider->start(targetBaseStations_,this);
+    friends_.handoverProvider->start(targetBaseStations_,this);
 }
-
-
-
-

@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -26,8 +24,8 @@
  ******************************************************************************/
 
 /**
- * \file
- * \author Markus Grauer <gra@comnets.rwth-aachen.de>
+ * @file
+ * @author Markus Grauer <gra@comnets.rwth-aachen.de>
  */
 
 #ifndef WIMAC_SERVICES_CONTROLPLANEMANAGER_HPP
@@ -51,149 +49,153 @@
 
 namespace wimac { namespace service {
 
-class ConnectionManager;
+        class ConnectionManager;
 
-
-/**
-	 * @brief ControlPlaneManagerSS search peridicaly for better base station and do the
-	 *        handover by using:
-	 *
-     * - Scanning provider
-	 * - Handover provider
-     * - Ranging provider
-	 * - Regristration provider
-     * - SetupConnectionProvider
-     *
+        /**
+         * @brief ControlPlaneManagerSS search peridicaly for better
+         *        base station and do the handover by using:
+         *
+         * \li Scanning provider
+         * \li Handover provider
+         * \li Ranging provider
+         * \li Regristration provider
+         * \li SetupConnectionProvider
+         *
 	 */
+        class ControlPlaneManagerSS :
+            public ControlPlaneManagerInterface,
+            public wns::ldk::ManagementService,
+            public scanningStrategy::VersusInterface,
+            public AssociatingCallBackInterface,
+            public DissociatingCallBackInterface,
+            public wimac::EventSubject
+        {
+            enum State{
+                InitialScanning,
+                Scanning,
+                Associating,
+                Dissociating,
+                Associated,
+                Dissociated
+            };
 
-class ControlPlaneManagerSS
-	: public ControlPlaneManagerInterface,
-	  public wns::ldk::ManagementService,
-	  public scanningStrategy::VersusInterface,
-	  public AssociatingCallBackInterface,
-	  public DissociatingCallBackInterface,
-	  public wimac::EventSubject
-{
-	enum State{
-		InitialScanning,
-		Scanning,
-		Associating,
-		Dissociating,
-		Associated,
-		Dissociated
-	};
+            enum ScanningMode{
+                Initial,
+                Main
+            };
 
-	enum ScanningMode{
-		Initial,
-		Main
-	};
-
-public:
-	typedef CIRMeasureInterface::MeasureValues MeasureValues;
-
-
-	ControlPlaneManagerSS(wns::ldk::ManagementServiceRegistry* msr,
-						  const  wns::pyconfig::View& config);
-
-	~ControlPlaneManagerSS()
-		{
-			delete strategyHandover_;
-			strategyHandover_ = NULL;
-			delete strategyBestStation_;
-			strategyBestStation_ = NULL;
-			delete scanningStrategy_;
-			scanningStrategy_ = NULL;
-			delete associating_;
-			associating_= NULL;
-			delete dissociating_;
-			dissociating_ = NULL;
-		};
-
-	/// ControlPlaneManagerInterface implementation
-	void
-	start(StationID associateTo, QoSCategory QoSCategory);
-
-	/// scanningStrategy::VersusInterface implementation
-	virtual void
-	scanningStrategyControlREQ();
-
-	/// scanningStrategy::VersusInterface implementation
-	virtual void
-	scanningStrategyResult(const MeasureValues& measuredValues);
-
-	/// AssociatingCallBackInterface implementation
-	virtual void
-	resultAssociating(const bool result, const double failure);
-
-	/// DissociatingCallBackInterface implementation
-	virtual void
-	resultDissociating( const handoverStrategy::Interface::Stations
-						newBaseStations);
-
-	/// ControlPlaneManagerInterface implementation
-	void
-	onMSRCreated();
+        public:
+            typedef CIRMeasureInterface::MeasureValues MeasureValues;
 
 
+            ControlPlaneManagerSS(wns::ldk::ManagementServiceRegistry* msr,
+                                  const  wns::pyconfig::View& config);
 
-private:
-	void
-	stateInitinalScanning(const MeasureValues& measureValues);
+            ~ControlPlaneManagerSS()
+            {
+                delete strategyHandover_;
+                strategyHandover_ = NULL;
+                delete strategyBestStation_;
+                strategyBestStation_ = NULL;
+                delete scanningStrategy_;
+                scanningStrategy_ = NULL;
+                delete associating_;
+                associating_= NULL;
+                delete dissociating_;
+                dissociating_ = NULL;
+            }
 
-	void
-	stateScanning(const MeasureValues& measureValues);
+            /**
+             * @brief ControlPlaneManagerInterface implementation
+             */
+            void
+            start(StationID associateTo, int qosCategory);
 
-	void
-	doNextStep(const State state);
+            /**
+             * @brief scanningStrategy::VersusInterface implementation
+             */
+            virtual void
+            scanningStrategyControlREQ();
 
-	void
-	setScanningStrategy(const ScanningMode mode);
+            /**
+             * @brief scanningStrategy::VersusInterface implementation
+             */
+            virtual void
+            scanningStrategyResult(const MeasureValues& measuredValues);
 
+            /**
+             * @brief AssociatingCallBackInterface implementation
+             */
+            virtual void
+            resultAssociating(const bool result, const double failure);
 
-	State state_;
-	QoSCategory qosCategory_;
+            /**
+             * @brief DissociatingCallBackInterface implementation
+             */
+            virtual void
+            resultDissociating( const handoverStrategy::Interface::Stations
+                                newBaseStations);
 
-	handoverStrategy::Interface::Stations targetBaseStations_;
-	handoverStrategy::Interface::Stations ackBaseStations_;
+            /**
+             * @brief ControlPlaneManagerInterface implementation
+             */
+            void
+            onMSRCreated();
 
-	scanningStrategy::Interface* scanningStrategy_;
+        private:
+            void
+            stateInitinalScanning(const MeasureValues& measureValues);
 
-	//Probes
-	simTimeType startTimeHO_;
-	bool handover_;
-	double failure_;
-	wns::probe::bus::contextprovider::Variable probeAssociatedToContextProvider_;
-	wns::probe::bus::contextprovider::Variable probeQoSCategoryContextProvider_;
-	wns::probe::bus::ContextCollectorPtr probeHandoverDuration_;
-	wns::probe::bus::ContextCollectorPtr probeFailure_;
+            void
+            stateScanning(const MeasureValues& measureValues);
 
-	service::Associating* associating_;
-	service::Dissociating* dissociating_;
+            void
+            doNextStep(const State state);
 
-	// Static values from PyConfig
-	handoverStrategy::Interface* strategyHandover_;
-	handoverStrategy::Interface* strategyBestStation_;
-
-	const wns::pyconfig::View configScanningStrategyInitial_;
-	const wns::pyconfig::View configScanningStrategyMain_;
-
-	scanningStrategy::Interface::Stations stationsToScan_;
-	wns::service::phy::ofdma::Tune tuneSiding_;
-
-
-	struct{
-		std::string connectionManagerName;
-		std::string phyUserName;
-
-		wimac::service::ConnectionManager* connectionManager;
-		wimac::PhyUser* phyUser;
-	} friends_;
-
-};
-
-
-}} // service::wimac
-
-#endif // WIMAC_SERVICES_CONTROLPLANEMANAGER_HPP
+            void
+            setScanningStrategy(const ScanningMode mode);
 
 
+            State state_;
+            int qosCategory_;
+
+            handoverStrategy::Interface::Stations targetBaseStations_;
+            handoverStrategy::Interface::Stations ackBaseStations_;
+
+            scanningStrategy::Interface* scanningStrategy_;
+
+            //Probes
+            wns::simulator::Time startTimeHO_;
+            bool handover_;
+            double failure_;
+            wns::probe::bus::contextprovider::Variable probeAssociatedToContextProvider_;
+            wns::probe::bus::contextprovider::Variable probeQoSCategoryContextProvider_;
+            wns::probe::bus::ContextCollectorPtr probeHandoverDuration_;
+            wns::probe::bus::ContextCollectorPtr probeFailure_;
+
+            service::Associating* associating_;
+            service::Dissociating* dissociating_;
+
+            // Static values from PyConfig
+            handoverStrategy::Interface* strategyHandover_;
+            handoverStrategy::Interface* strategyBestStation_;
+
+            const wns::pyconfig::View configScanningStrategyInitial_;
+            const wns::pyconfig::View configScanningStrategyMain_;
+
+            scanningStrategy::Interface::Stations stationsToScan_;
+            wns::service::phy::ofdma::Tune tuneSiding_;
+
+
+            struct{
+                std::string connectionManagerName;
+                std::string phyUserName;
+                
+                wimac::service::ConnectionManager* connectionManager;
+                wimac::PhyUser* phyUser;
+            } friends_;
+        };
+    }
+}
+
+#endif

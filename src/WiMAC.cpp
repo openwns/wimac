@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,25 +23,24 @@
  *
  ******************************************************************************/
 
-#include <WIMAC/WiMAC.hpp>
-#include <WIMAC/Logger.hpp>
-#include <WIMAC/parameter/PHY.hpp>
 
-#include <DLL/StationManager.hpp>
+#include <WIMAC/WiMAC.hpp>
+
 #include <WNS/pyconfig/Parser.hpp>
 #include <WNS/pyconfig/View.hpp>
+
+#include <WIMAC/Logger.hpp>
+#include <WIMAC/parameter/PHY.hpp>
+#include <WIMAC/StationManager.hpp>
 
 using namespace wimac;
 
 STATIC_FACTORY_REGISTER_WITH_CREATOR(WiMAC, wns::module::Base, "wimac", wns::PyConfigViewCreator);
 
 WiMAC::WiMAC(const wns::pyconfig::View& _pyConfigView) :
-	wns::module::Module<WiMAC>(_pyConfigView)
+    wns::module::Module<WiMAC>(_pyConfigView)
 {
-	LOG_INFO( "creating module: WiMAC" );
-//	version = wns::VersionInformation(BUILDVINFO);
-	// Register a service if this module provides a service
-	//MODULE_REGISTER_SERVICE(SomeService, "SomeService", ProjNameModule::getSomeService);
+    LOG_INFO( "creating module: WiMAC" );
 }
 
 void WiMAC::configure()
@@ -57,12 +54,6 @@ void WiMAC::configure()
         pyco = getPyConfigView().getView("parametersPHY");
         parameter::ThePHY::getInstance()->init(pyco);
     }
-}
-
-dll::StationManager*
-WiMAC::getStationManager()
-{
-	return dll::TheStationManager::getInstance();
 }
 
 void WiMAC::startUp()

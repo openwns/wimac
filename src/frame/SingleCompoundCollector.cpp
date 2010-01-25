@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -30,22 +28,21 @@
 #include <WNS/ldk/Compound.hpp>
 #include <WNS/ldk/Deliverer.hpp>
 #include <WNS/ldk/fcf/FrameBuilder.hpp>
-#include <WNS/service/dll/StationTypes.hpp>
 
 #include <WIMAC/Classifier.hpp>
 #include <WIMAC/services/ConnectionManager.hpp>
 #include <WIMAC/Component.hpp>
-#include <DLL/StationManager.hpp>
+#include <WIMAC/StationManager.hpp>
 
 #include <WIMAC/PhyAccessFunc.hpp>
 #include <WIMAC/PhyUser.hpp>
 #include <WIMAC/parameter/PHY.hpp>
 
 STATIC_FACTORY_REGISTER_WITH_CREATOR(
-	wimac::frame::SingleCompoundCollector,
-	wns::ldk::FunctionalUnit,
-	"wimac.frame.SingleCompoundCollector",
-	wns::ldk::FUNConfigCreator );
+    wimac::frame::SingleCompoundCollector,
+    wns::ldk::FunctionalUnit,
+    "wimac.frame.SingleCompoundCollector",
+    wns::ldk::FUNConfigCreator );
 
 using namespace wimac;
 using namespace wimac::frame;
@@ -53,127 +50,128 @@ using namespace wimac::frame;
 
 void SingleCompoundCollector::doOnData( const wns::ldk::CompoundPtr& compound )
 {
-	getDeliverer()->getAcceptor( compound )->onData( compound );
+    getDeliverer()->getAcceptor( compound )->onData( compound );
 }
 
 bool SingleCompoundCollector::doIsAccepting( const wns::ldk::CompoundPtr& ) const
 {
-	return accepting_ && !compound_;
+    return accepting_ && !compound_;
 }
 
 void SingleCompoundCollector::doSendData( const wns::ldk::CompoundPtr& compound )
 {
-	wns::ldk::ClassifierCommand* clcom =
-		friends_.classifier_->getCommand( compound->getCommandPool() );
+    wns::ldk::ClassifierCommand* clcom =
+        friends_.classifier_->getCommand( compound->getCommandPool() );
 
-	Component::StationIDType destinationID = -1;
+    Component::StationID destinationID = -1;
 
-	service::ConnectionManager::ConnectionIdentifierPtr connection =
-		component_->getManagementService<service::ConnectionManager>("connectionManager")
-		->getConnectionWithID( clcom->peer.id );
+    ConnectionIdentifierPtr connection =
+        component_->getManagementService<service::ConnectionManager>("connectionManager")
+        ->getConnectionWithID( clcom->peer.id );
 
-	std::string stationType = wns::service::dll::StationTypes::toString( component_->getStationType() );
-	// das geht auch "stringfrei": switch(layer_->getStationType()) { ...
-	if( stationType == "AP" )
-	{
-		destinationID =
-			connection->subscriberStation_;
-	}
-	else if( stationType == "UT" )
-	{
-		destinationID =
-			connection->baseStation_;
-	}
-	assure( destinationID != -1, "unknown station type" );
+    std::string stationType = StationType::toString( component_->getStationType() );
+    if( stationType == "AP" )
+    {
+        destinationID =
+            connection->subscriberStation_;
+    }
+    else if( stationType == "UT" )
+    {
+        destinationID =
+            connection->baseStation_;
+    }
+    else
+    {
+        throw wns::Exception("Unknown station type in SingleCompoundCollector");
+    }
+
+    PhyUserCommand* phyUserCommand =
+        friends_.phyUser_->activateCommand( compound->getCommandPool() );
 
 
-	PhyUserCommand* phyUserCommand =
-		friends_.phyUser_->activateCommand( compound->getCommandPool() );
+    wns::node::Interface* destination =
+        TheStationManager::getInstance()->
+        getStationByID( destinationID )->getNode();
 
+    double dataRate =
+        phyMode->getDataRate();
 
-	wns::node::Interface* destination =
-		dynamic_cast<wimac::Component*>(getFUN()->getLayer())
-		->getStationManager()->getStationByID( destinationID )->getNode();
+    double transmissionDuration =
+        compound->getLengthInBits() / dataRate;
+    wns::simulator::Time now ( wns::simulator::getEventScheduler()->getTime() );
 
-	double dataRate =
-		phyMode->getDataRate();
+    OmniUnicastPhyAccessFunc* func = new OmniUnicastPhyAccessFunc;
+    func->destination_ = destination;
+    func->transmissionStart_ = now;
+    func->transmissionStop_ = now + transmissionDuration;
+    func->subBand_ = 0;
+    assureNotNull(phyMode.getPtr());
+    func->phyMode_ = phyMode;
 
-	double transmissionDuration =
-		compound->getLengthInBits() / dataRate;
-	simTimeType now ( wns::simulator::getEventScheduler()->getTime() );
+    phyUserCommand->local.pAFunc_.reset( func );
+    phyUserCommand->peer.cellID_ = component_->getCellID();
+    phyUserCommand->peer.source_ = component_->getNode();
+    phyUserCommand->peer.phyModePtr = phyMode;
+    phyUserCommand->magic.sourceComponent_ = component_;
 
-	OmniUnicastPhyAccessFunc* func = new OmniUnicastPhyAccessFunc;
-	func->destination_ = destination;
-	func->transmissionStart_ = now;
-	func->transmissionStop_ = now + transmissionDuration;
-	func->subBand_ = 0;
-	assureNotNull(phyMode.getPtr());
-	func->phyMode_ = phyMode;
+    getConnector()->getAcceptor( compound )->sendData( compound );
 
-	phyUserCommand->local.pAFunc_.reset( func );
-	phyUserCommand->peer.cellID_ = component_->getCellID();
-	phyUserCommand->peer.source_ = component_->getNode();
-	phyUserCommand->peer.phyModePtr = phyMode;
-	phyUserCommand->magic.sourceComponent_ = component_;
+    assure( getCurrentDuration() >= compound->getLengthInBits() / dataRate,
+            "Transmission of compound would exceed phase duration");
 
-	getConnector()->getAcceptor( compound )->sendData( compound );
+    LOG_INFO("setting destination of compound to: ",
+             TheStationManager::getInstance()->
+             getStationByID( destinationID )->getName() );
 
-	assure( getCurrentDuration() >= compound->getLengthInBits() / dataRate,
-			"Transmission of compound would exceed phase duration");
-
-	LOG_INFO("setting destination of compound to: ",
-			 dynamic_cast<wimac::Component*>(getFUN()->getLayer())
-			 ->getStationManager()->getStationByID( destinationID )->getName() );
-
-	compound_ = compound;
+    compound_ = compound;
 }
 
 void SingleCompoundCollector::doStart(int mode)
 {
-	switch (mode)
-	{
-	case CompoundCollector::Sending:
-		assure( !compound_, "compound of last frame not sent yet" );
-		accepting_ = true;
-		getReceptor()->wakeup();
+    switch (mode)
+    {
+    case CompoundCollector::Sending:
+        assure( !compound_, "compound of last frame not sent yet" );
+        accepting_ = true;
+        getReceptor()->wakeup();
 
-		if ( compound_ )
-		{
-			getConnector()->getAcceptor( compound_ )->sendData( compound_ );
-			compound_ = wns::SmartPtr<wns::ldk::Compound>();
-		}
-		break;
-	case CompoundCollector::Receiving:
+        if ( compound_ )
+        {
+            getConnector()->getAcceptor( compound_ )->sendData( compound_ );
+            compound_ = wns::SmartPtr<wns::ldk::Compound>();
+        }
+        break;
+    case CompoundCollector::Receiving:
 
-		break;
-	default:
-		throw wns::Exception("Unknown mode in CompoundCollector");
-	}
+        break;
+    default:
+        throw wns::Exception("Unknown mode in CompoundCollector");
+    }
 }
 
 
-simTimeType SingleCompoundCollector::getCurrentDuration() const
+wns::simulator::Time SingleCompoundCollector::getCurrentDuration() const
 {
-	if ( !compound_ )
-		return 0.0;
+    if ( !compound_ )
+        return 0.0;
 
-	double dataRate =
-		phyMode->getDataRate();
+    double dataRate =
+        phyMode->getDataRate();
 
-	Bit compoundSize =
-		compound_->getLengthInBits() + getFrameBuilder()->getOpcodeSize();
-	return compoundSize / dataRate;
+    Bit compoundSize =
+        compound_->getLengthInBits() + getFrameBuilder()->getOpcodeSize();
+    return compoundSize / dataRate;
 }
 
 void SingleCompoundCollector::onFUNCreated()
 {
-	wns::ldk::fcf::CompoundCollector::onFUNCreated();
+    wns::ldk::fcf::CompoundCollector::onFUNCreated();
 
-	friends_.classifier_ =
-		getFUN()->findFriend<wimac::ConnectionClassifier*>("classifier");
-	friends_.phyUser_ =
-		getFUN()->findFriend<wimac::PhyUser*>("phyuser");
-	CompoundCollector::onFUNCreated();
+    friends_.classifier_ =
+        getFUN()->findFriend<wimac::ConnectionClassifier*>("classifier");
+    friends_.phyUser_ =
+        getFUN()->findFriend<wimac::PhyUser*>("phyuser");
+    CompoundCollector::onFUNCreated();
 }
 
 

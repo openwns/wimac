@@ -2,7 +2,7 @@
  * This file is part of openWNS (open Wireless Network Simulator)
  * _____________________________________________________________________________
  *
- * Copyright (C) 2004-2009
+ * Copyright (C) 2004-2007
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
  * phone: ++49-241-80-27910,
@@ -25,43 +25,18 @@
  *
  ******************************************************************************/
 
-#ifndef WIMAC_SCHEDULER_PRIORITYULCALLBACK_HPP
-#define WIMAC_SCHEDULER_PRIORITYULCALLBACK_HPP
+#include <WIMAC/PhyMode.hpp>
 
-#include <WNS/scheduler/CallBackInterface.hpp>
+using namespace wimac;
 
-#include <WIMAC/scheduler/ULCallback.hpp>
+PhyMode::PhyMode()
+{
+}
 
-namespace wimac { namespace scheduler {
-
-	class PriorityULCallback :
-		virtual public wns::scheduler::CallBackInterface,
-		public ULCallback
-	{
-
-		PriorityULCallback(wns::ldk::fun::FUN*, const wns::pyconfig::View&);
-
-		void
-		callBack(wns::scheduler::MapInfoEntryPtr mapInfoEntry);
-	  /*
-		void callBack(unsigned int fSlot,
-			      simTimeType startTime,
-			      simTimeType endTime,
-			      wns::scheduler::UserID user,
-			      const wns::ldk::CompoundPtr& pdu,
-			      float cidColor,
-			      unsigned int beam,
-			      wns::service::phy::ofdma::PatternPtr pattern,
-			      wns::scheduler::MapInfoEntryPtr burst,
-			      const wns::service::phy::phymode::PhyModeInterface& phyMode,
-			      bool measureInterference,
-			      wns::Power requestedTxPower,
-			      wns::CandI estimatedCandI) = 0;
-	  */
-	};
-
-}}
-#endif
-
-
-
+Bit
+PhyMode::symbolCapacity() const
+{
+    boost::rational<int> cap = modulation_.capacity() * code_.rate();
+    assure(cap.denominator() ==1, "Weird bit capacity in phy mode");
+    return cap.numerator();
+}

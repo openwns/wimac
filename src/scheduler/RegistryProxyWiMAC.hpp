@@ -69,12 +69,13 @@ namespace wimac { namespace scheduler {
 		wns::Power estimateInterferenceStdDeviation(const wns::scheduler::UserID user);
 		wns::scheduler::Bits getQueueSizeLimitPerConnection();
 		int getStationType(const wns::scheduler::UserID user);
-		virtual wns::scheduler::UserSet filterReachable( wns::scheduler::UserSet users );
-		virtual wns::scheduler::ConnectionSet filterReachable(wns::scheduler::ConnectionSet connections); // added to RegistryProxyInterface
+        virtual wns::scheduler::UserSet filterReachable( wns::scheduler::UserSet users ); // soon obsolete
+		virtual wns::scheduler::UserSet filterReachable( wns::scheduler::UserSet users, const int frameNr );
+		virtual wns::scheduler::ConnectionSet filterReachable(wns::scheduler::ConnectionSet connections, const int frameNr );
 		virtual wns::scheduler::PowerMap calcULResources(const wns::scheduler::UserSet&, uint32_t) const;
 		virtual wns::scheduler::UserSet getActiveULUsers() const;
 		/**@brief returns one for UTs, and #connected UTs in case of RNs */
-		virtual int getTotalNumberOfUsers(const wns::scheduler::UserID user) const;
+		virtual int getTotalNumberOfUsers(const wns::scheduler::UserID user);
 		void switchFilterTo(int qos);
 
 		/** @brief get the ChannelsQualities (CQI) on all the subbands of the user.
@@ -101,7 +102,6 @@ namespace wimac { namespace scheduler {
 
 		virtual wns::scheduler::PowerCapabilities
 		getPowerCapabilities() const;
-
 
 		/** @brief gets the number of QoS classes (for QoS Scheduling) **/
 		int
@@ -159,6 +159,10 @@ namespace wimac { namespace scheduler {
 		wns::scheduler::PowerCapabilities powerUT;
 		wns::scheduler::PowerCapabilities powerAP;
 		wns::scheduler::PowerCapabilities powerFRS;
+
+        int numberOfPriorities;
+        wns::scheduler::ConnectionList cidList;
+        bool isDL_;
 	};
 
 }} // namespace wimac::scheduler

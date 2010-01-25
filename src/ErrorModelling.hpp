@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -26,14 +24,12 @@
  ******************************************************************************/
 
 /**
- * \file
- * \author Markus Grauer <gra@comnets.rwth-aachen.de>
+ * @file
+ * @author Markus Grauer <gra@comnets.rwth-aachen.de>
  */
 
 #ifndef WIMAC_ERRORMODELLING_HPP
 #define WIMAC_ERRORMODELLING_HPP
-#include <WIMAC/PhyUser.hpp>
-#include <WIMAC/Logger.hpp>
 
 #include <WNS/ldk/CommandTypeSpecifier.hpp>
 #include <WNS/ldk/HasConnector.hpp>
@@ -45,105 +41,108 @@
 #include <WNS/pyconfig/View.hpp>
 #include <WNS/PowerRatio.hpp>
 
+#include <WIMAC/PhyUser.hpp>
+#include <WIMAC/Logger.hpp>
+
 namespace wimac {
 
-	class ConnectionClasifier;
-	// TODO: call it "ConnectionClassifier"
+    class ConnectionClassifier;
 
-	/// The Command of the ErrorModelling.
-	class ErrorModellingCommand :
-		public wns::ldk::Command,
-		public wns::ldk::ErrorRateProviderInterface
+    /**
+     * @brief The Command of the ErrorModelling.
+     */
+    class ErrorModellingCommand :
+        public wns::ldk::Command,
+        public wns::ldk::ErrorRateProviderInterface
 
-	{
-	public:
-		ErrorModellingCommand()
-		{
-			local.per = 1;
-			local.destructorCalled = NULL;
-			local.cir.set_dB(0);
+    {
+    public:
+        ErrorModellingCommand()
+        {
+            local.per = 1;
+            local.destructorCalled = NULL;
+            local.cir.set_dB(0);
 
-		}
+        }
 
-		~ErrorModellingCommand()
-		{
-			if(NULL != local.destructorCalled)
-				*local.destructorCalled = true;
-		}
-
-
-		virtual double getErrorRate() const
-		{
-			return local.per;
-		}
+        ~ErrorModellingCommand()
+        {
+            if(NULL != local.destructorCalled)
+                *local.destructorCalled = true;
+        }
 
 
-		struct {
-			double per;
-			long *destructorCalled;
-			wns::Ratio cir;
-		} local;
-		struct {} peer;
-		struct {} magic;
+        virtual double getErrorRate() const
+        {
+            return local.per;
+        }
 
-	};
+        struct {
+            double per;
+            long *destructorCalled;
+            wns::Ratio cir;
+        } local;
+        struct {} peer;
+        struct {} magic;
 
-	/**
-	 * @brief ErrorModelling implementation of the FU.
-	 *
-	 * It maps the Carry Interference Ratio (CIR) for a PhyMode
-	 * to the Symbol Error Rate (SER) and calculate the
-	 * Packet Error Rate (PER).
-	 */
-	class ErrorModelling :
-		public virtual wns::ldk::FunctionalUnit,
-		public wns::ldk::CommandTypeSpecifier< ErrorModellingCommand >,
-		public wns::ldk::HasReceptor<>,
-		public wns::ldk::HasConnector<wns::ldk::RoundRobinConnector>,
-		public wns::ldk::HasDeliverer<>,
-		public wns::Cloneable< ErrorModelling >
-	{
-	public:
-		ErrorModelling(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config);
+    };
 
-		virtual void
-		doSendData(const wns::ldk::CompoundPtr& compound);
+    /**
+     * @brief ErrorModelling implementation of the FU.
+     *
+     * It maps the Carry Interference Ratio (CIR) for a PhyMode
+     * to the Symbol Error Rate (SER) and calculate the
+     * Packet Error Rate (PER).
+     */
+    class ErrorModelling :
+        public virtual wns::ldk::FunctionalUnit,
+        public wns::ldk::CommandTypeSpecifier< ErrorModellingCommand >,
+        public wns::ldk::HasReceptor<>,
+        public wns::ldk::HasConnector<wns::ldk::RoundRobinConnector>,
+        public wns::ldk::HasDeliverer<>,
+        public wns::Cloneable< ErrorModelling >
+    {
+    public:
+        ErrorModelling(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config);
 
-		virtual void
-		doOnData(const wns::ldk::CompoundPtr& compound);
+        virtual void
+        doSendData(const wns::ldk::CompoundPtr& compound);
 
-		virtual void
-		onFUNCreated();
+        virtual void
+        doOnData(const wns::ldk::CompoundPtr& compound);
 
-		void
-		PrintMappings();
+        virtual void
+        onFUNCreated();
 
-
-	private:
-		virtual bool
-		doIsAccepting(const wns::ldk::CompoundPtr& compound) const;
-
-		virtual void
-		doWakeup();
-
-		std::map<double, double> cir2ser_BPSK12_;
-		std::map<double, double> cir2ser_QPSK12_;
-		std::map<double, double> cir2ser_QPSK34_;
-		std::map<double, double> cir2ser_QAM16_12_;
-		std::map<double, double> cir2ser_QAM16_34_;
-		std::map<double, double> cir2ser_QAM64_23_;
-		std::map<double, double> cir2ser_QAM64_34_;
+        void
+        printMappings();
 
 
-		std::string CIRProviderName_;
-		std::string PHYModeProviderName_;
+    private:
+        virtual bool
+        doIsAccepting(const wns::ldk::CompoundPtr& compound) const;
 
-		struct Friends {
-			FunctionalUnit* CIRProvider;
-			FunctionalUnit* PHYModeProvider;
-		} friends;
-	};
+        virtual void
+        doWakeup();
+
+        std::map<double, double> cir2ser_BPSK12_;
+        std::map<double, double> cir2ser_QPSK12_;
+        std::map<double, double> cir2ser_QPSK34_;
+        std::map<double, double> cir2ser_QAM16_12_;
+        std::map<double, double> cir2ser_QAM16_34_;
+        std::map<double, double> cir2ser_QAM64_23_;
+        std::map<double, double> cir2ser_QAM64_34_;
+
+
+        std::string CIRProviderName_;
+        std::string PHYModeProviderName_;
+
+        struct Friends {
+            FunctionalUnit* CIRProvider;
+            FunctionalUnit* PHYModeProvider;
+        } friends;
+    };
 }
 
-#endif // NOT defined WIMAC_ERRORMODELLING_HPP
+#endif
 

@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,36 +23,40 @@
  *
  ******************************************************************************/
 
-#ifndef WIMAC_SCHEDULER_PRIORITYSCHEDULER_HPP
-#define WIMAC_SCHEDULER_PRIORITYSCHEDULER_HPP
 
-#include <WIMAC/scheduler/Scheduler.hpp>
+#ifndef WIMAC_COMPOUNDSWITCH_FILTER_FILTERALL_HPP
+#define WIMAC_COMPOUNDSWITCH_FILTER_FILTERALL_HPP
 
+#include <WNS/pyconfig/View.hpp>
+#include <WNS/logger/Logger.hpp>
 
-namespace wimac { namespace scheduler {
+#include <WIMAC/compoundSwitch/Filter.hpp>
+#include <WIMAC/compoundSwitch/CompoundSwitch.hpp>
 
-	class PriorityScheduler :
-		public wimac::scheduler::Scheduler
-	{
-	public:
-		PriorityScheduler(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config);
-
-// 		virtual void callBack( unsigned int fSlot, simTimeType startTime, simTimeType endTime, wns::scheduler::UserID user,
-// 							   const wns::ldk::CompoundPtr& pdu, float cidColor, unsigned int beam,
-// 							   wns::service::phy::ofdma::PatternPtr pattern, wns::scheduler::MapInfoEntryPtr /*burst*/,
-// 							   //wns::scheduler::PHYmode phyMode, // obsolete
-// 							   const wns::service::phy::phymode::PhyModeInterface& _phyMode,
-// 							   bool measureInterference, wns::Power requestedTxPower,
-// 							   wns::CandI estimatedCandI);
-
- 		//void startCollection(int);
-		void startScheduling();
-	private:
-	};
-
-}} // namespace wimac::scheduler
+namespace wimac { namespace compoundSwitch { namespace filter {
 
 
-#endif // WIMAC_SCHEDULER_SCHEDULER_HPP
+            /**
+             * @brief This filter match at any compound.
+             * @author Markus Grauer <gra@comnets.rwth-aachen.de>
+             *
+             */
+            class FilterAll :
+                public Filter
+            {
+            public:
+                FilterAll(CompoundSwitch* compoundSwitch, wns::pyconfig::View& config);
+
+                ~FilterAll();
+
+                virtual bool
+                filter(const wns::ldk::CompoundPtr& compound) const;
+
+
+            };
+
+        }}}
+
+#endif
 
 

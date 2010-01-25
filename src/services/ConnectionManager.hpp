@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -26,8 +24,8 @@
  ******************************************************************************/
 
 /**
- * \file
- * \author Karsten Klagges <kks@comnets.rwth-aachen.de>
+ * @file
+ * @author Karsten Klagges <kks@comnets.rwth-aachen.de>
  */
 
 #ifndef WIMAC_SERVICES_CONNECTIONMANAGER_HPP
@@ -37,259 +35,315 @@
 #include <list>
 #include <WNS/Cloneable.hpp>
 #include <WNS/SmartPtr.hpp>
-#include <WNS/ObjManager.hpp>
 #include <WNS/ldk/ManagementServiceInterface.hpp>
 #include <WNS/Subject.hpp>
 
+#include <WIMAC/Component.hpp>
 #include <WIMAC/ConnectionIdentifier.hpp>
 #include <WIMAC/ConnectionRule.hpp>
 #include <WIMAC/Logger.hpp>
 
-namespace wns { namespace ldk {
-
-    class ManagementServiceRegistry;
-
-}}
-
-namespace dll {
-	class Layer2;
+namespace wns {
+    namespace ldk {
+        class ManagementServiceRegistry;
+    }
 }
 
 namespace wimac {
-class Component;
-
-namespace service {
-	class FUReseter;
-
-	class CIDNotFound :
-		public wns::Exception
-	{
-	public:
-		CIDNotFound(int line, const char* file) :
-			wns::Exception()
-		{
-			*this << "Connection Identifier not found in "
-				  << file << ":" << line;
-		}
-	private:
-		CIDNotFound();
-	};
-
-/*Simpelest ConnectionManagerInterface for ACKSwitch Unit Test.
-ToDo: extend Interface maybe with refactoring of the ConnectionManager (bmw)*/
-	class ConnectionManagerInterface
-{
-public:
-
-	typedef ConnectionIdentifier::Ptr ConnectionIdentifierPtr;
-	typedef std::list<ConnectionIdentifierPtr> ConnectionIdentifiers;
-
-	ConnectionIdentifierPtr
-	virtual getBasicConnectionFor( const ConnectionIdentifier::CID cid ) = 0;
-	virtual ~ConnectionManagerInterface() {}
-
-};
-
-	class ConnectionDeletedNotification {
-	public:
-		virtual void notifyAboutConnectionDeleted( const ConnectionIdentifier ) = 0;
-		virtual ~ConnectionDeletedNotification(){}
-	};
-
-/// Manager to manage connections.
-/** The ConnectionManager holds a database for registered connections.
- *  Each connection is associated with a connection rule. The ConnectionManager
- *  also acts like a Classifier. Compounds may be classified by the
- *  findConnection() method.
- * \todo The ConnectionManager needs refactoring of the interface. I suppose
- * there are some redundant methods.
- */
-class ConnectionManager :
-	public ConnectionManagerInterface,
-	public wns::ldk::ManagementService,
-	public wns::Subject<ConnectionDeletedNotification>
-{
-
-	typedef wns::Subject<ConnectionDeletedNotification> Subject;
-public:
-
-	//	ConnectionManager( Layer2* layer2, const wns::pyconfig::View& config);
-	ConnectionManager( wns::ldk::ManagementServiceRegistry* msr, const wns::pyconfig::View& config);
-	explicit ConnectionManager( const wns::pyconfig::View& config);
-	ConnectionManager( const ConnectionManager& other );
 
 
-	/// Register a new connection. Return ConnectionIdentifier with new CID from AP()
-	ConnectionIdentifier
-	appendConnection( const ConnectionIdentifier& connection );
+    namespace service {
+        class FUReseter;
 
-	/// Delete all connections
-	void
-	deleteAllConnections();
+        class CIDNotFound :
+            public wns::Exception
+        {
+        public:
+            CIDNotFound(int line, const char* file) :
+                wns::Exception()
+            {
+                *this << "Connection Identifier not found in "
+                      << file << ":" << line;
+            }
+        private:
+            CIDNotFound();
+        };
 
-	/// Delete connections with given ID  for departure and  destination.
-	void
-	deleteConnectionsForBS( ConnectionIdentifier::StationID baseStation );
+        /**
+         * @brief Simplest ConnectionManagerInterface for ACKSwitch
+         * Unit Test.
+         *
+         * @todo Extend Interface maybe with refactoring of the
+         * ConnectionManager (bmw)
+         */
+        class ConnectionManagerInterface
+        {
+        public:
 
-	/// Delete connections with given ID  for departure and  destination.
-	void
-	deleteConnectionsForSS( ConnectionIdentifier::StationID subscriberStation );
+            ConnectionIdentifierPtr
+            virtual getBasicConnectionFor( const ConnectionIdentifier::CID cid ) = 0;
+            virtual ~ConnectionManagerInterface() {}
 
-	/// Delete connection with given CID
-	void
-	deleteCI( ConnectionIdentifier::CID cid );
+        };
 
-	/// Changes values but not the primary keys of the connection
-	void
-	changeConnection( const ConnectionIdentifier& connection );
+        class ConnectionDeletedNotification {
+        public:
+            virtual void notifyAboutConnectionDeleted( const ConnectionIdentifier ) = 0;
+            virtual ~ConnectionDeletedNotification(){}
+        };
 
-	/// Changes values but not the primary keys of the connections
-	void
-	changeConnections( ConnectionIdentifiers& connections );
+        /**
+         * @brief Manager to manage connections.
+         *
+         * The ConnectionManager holds a database for registered
+         * connections.  Each connection is associated with a
+         * connection rule. The ConnectionManager also acts like a
+         * Classifier. Compounds may be classified by the
+         * findConnection() method.
+         *
+         * @todo The ConnectionManager needs refactoring of the
+         * interface. I suppose there are some redundant methods.
+         */
+        class ConnectionManager :
+            public ConnectionManagerInterface,
+            public wns::ldk::ManagementService,
+            public wns::Subject<ConnectionDeletedNotification>
+        {
 
+            typedef wns::Subject<ConnectionDeletedNotification> Subject;
+        public:
 
-	/**
-	 * @brief Find a registered connection for the given Compound.
-	 *
-	 * The compound does not need to be classified before. The connection
-	 * manager looks after a match in the registered connection rules. This
-	 * method is usually only used by the ConnectionClassifier. To look for
-	 * connections for a already classified compound use getConnectionWithID().
-	 *
-	 * \return pointer to the registered connection or an empty pointer
-	 */
-	ConnectionIdentifierPtr
-	findConnection( const wns::ldk::CompoundPtr& compound ) const;
+            ConnectionManager( wns::ldk::ManagementServiceRegistry* msr,
+                               const wns::pyconfig::View& config);
 
+            explicit ConnectionManager( const wns::pyconfig::View& config);
 
-	/**
-	 * @brief Get ConnectionIdentifier for that compound by using CID from the
-	 * wimac::Classifier.
-	 */
-	ConnectionIdentifierPtr
-	getConnection( const wns::ldk::CompoundPtr& compound ) const;
-
-
-	/**
-	 * @brief  Get a list of ConnectionIdentifiers for all connections stored in the
-	 * Connection Manager.
-	 */
-	ConnectionIdentifiers
-	getAllConnections();
-
-	/**
-	 * @brief Get a list of all ConnectionIdentifiers which belong to this
-	 * subscriber station.
-	 */
-	ConnectionIdentifiers
-	getAllCIForSS( ConnectionIdentifier::StationID subscriberStation ) const;
-
-	/**
-	 * @brief Get a list of all ConnectionIdentifiers which belong to this
-	 * base station.
-	 */
-	ConnectionIdentifiers
-	getAllCIForBS( ConnectionIdentifier::StationID baseStation );
-
-	/**
-	 * @brief Get a list of ConnectionIdentifiers for incoming connections from a
-	 * specified departure.
-	 */
-	ConnectionIdentifiers
-	getIncomingConnections ( ConnectionIdentifier::StationID from );
+            ConnectionManager( const ConnectionManager& other );
 
 
-	/// Get a list of ConnectionIdentifiers for incoming data connections from a
-	/// specified departure
-	ConnectionIdentifiers
-	getIncomingDataConnections( ConnectionIdentifier::StationID from );
+            /**
+             * @brief Register a new connection. Return
+             * ConnectionIdentifier with new CID from AP()
+             */
+            ConnectionIdentifier
+            appendConnection( const ConnectionIdentifier& connection );
 
-	/// Get a list of ConnectionIdentifiers for outgoing connections to a
-	/// specified destination
-	ConnectionIdentifiers
-	getOutgoingConnections( ConnectionIdentifier::StationID to );
+            /**
+             * @brief Delete all connections
+             */
+            void
+            deleteAllConnections();
 
-	/// Get a list of ConnectionIdentifiers for outgoin data connections to a
-	/// specified destination
-	ConnectionIdentifiers
-	getOutgoingDataConnections( ConnectionIdentifier::StationID to );
+            /**
+             * @brief Delete connections with given ID for departure
+             * and destination.
+             */
+            void
+            deleteConnectionsForBS( ConnectionIdentifier::StationID baseStation );
 
+            /**
+             * @brief Delete connections with given ID for departure
+             * and destination.
+             */
+            void
+            deleteConnectionsForSS( ConnectionIdentifier::StationID subscriberStation );
 
+            /**
+             * @brief Delete connection with given CID
+             */
+            void
+            deleteCI( ConnectionIdentifier::CID cid );
 
-	/// Get all data connections with the specified direction.
-	/** \sa ConnectionIdentifier::Direction
-	 */
-	ConnectionIdentifiers
-	getAllDataConnections( int direction );
+            /**
+             * @brief Changes values but not the primary keys of the
+             * connection
+             */
+            void
+            changeConnection( const ConnectionIdentifier& connection );
 
-
-	/// Get a special connection of type connectionType.
-	/**
-	 * Find a special connection between the baseStation and the subscriber of
-	 * type connectionType.
-	 * \sa ConnectionIdentifier::ConnectionType
-	 */
-	ConnectionIdentifierPtr getSpecialConnection(
-		ConnectionIdentifier::ConnectionType connectionType,
-		ConnectionIdentifier::StationID baseStation,
-		ConnectionIdentifier::StationID subscriber );
-
-
-	/// Return the basic connection that belongs to the given connection.
-	/**
-	 * This is used by the ACKSwitch to switch the connection of an ACK that
-	 * needs to be transmitted via the basic connection.
-	 */
-	ConnectionIdentifierPtr
-	getBasicConnectionFor( const ConnectionIdentifier::CID cid );
-
-
-	/// Return the basic connection that belongs to the given subscriberStation.
-	/**
-	 * This is used by the Handover.
-	 */
-	ConnectionIdentifierPtr
-	getBasicConnectionFor( const ConnectionIdentifier::StationID subscriberStation );
-
-	/// Return the primary management connection that belongs to the
-	/// given connection
-	ConnectionIdentifierPtr
-	getPrimaryConnectionFor( ConnectionIdentifier::StationID stationID ) const;
-
-	/// Find the connection with the specified CID.
-	ConnectionIdentifierPtr
-	getConnectionWithID( ConnectionIdentifier::CID cid ) const;
-
-	/// Find all basic connection,
-	ConnectionIdentifiers getAllBasicConnections() const;
+            /**
+             * @brief Changes values but not the primary keys of the
+             * connections
+             */
+            void
+            changeConnections( ConnectionIdentifiers& connections );
 
 
-	/// Decrease all ConnectionIdentifiers who are not listening
-	void
-	decreaseCINotListening();
+            /**
+             * @brief Find a registered connection for the given Compound.
+             *
+             * The compound does not need to be classified before. The
+             * connection manager looks after a match in the
+             * registered connection rules. This method is usually
+             * only used by the ConnectionClassifier. To look for
+             * connections for a already classified compound use
+             * getConnectionWithID().
+             *
+             * @return pointer to the registered connection or an empty pointer
+             */
+            ConnectionIdentifierPtr
+            findConnection( const wns::ldk::CompoundPtr& compound ) const;
 
-	void onMSRCreated();
 
-	ConnectionIdentifier::CID getAndIncreaseHighestCellCID();
+            /**
+             * @brief Get ConnectionIdentifier for that compound by
+             * using CID from the wimac::Classifier.
+             */
+            ConnectionIdentifierPtr
+            getConnection( const wns::ldk::CompoundPtr& compound ) const;
 
-private:
-	/// Delete ConnectionIdentifier from ConnectionManager if they exist
-	void singularityDelete(const ConnectionIdentifierPtr ci);
 
-	/// On a double basic ConnectionIdentifier all other ConnectionIdentifier
-	/// for peer station will be deleted.
-	void doubleBasicCIDeleteAllOtherCI(const ConnectionIdentifierPtr ci);
+            /**
+             * @brief Get a list of ConnectionIdentifiers for all
+             * connections stored in the Connection Manager.
+             */
+            ConnectionIdentifiers
+            getAllConnections();
 
-	ConnectionIdentifiers connectionIdentifiers_;
+            /**
+             * @brief Get a list of all ConnectionIdentifiers which
+             * belong to this subscriber station.
+             */
+            ConnectionIdentifiers
+            getAllCIForSS( ConnectionIdentifier::StationID subscriberStation ) const;
 
-	ConnectionIdentifier::CID highestCID_;
+            /**
+             * @brief Get a list of all ConnectionIdentifiers which
+             * belong to this base station.
+             */
+            ConnectionIdentifiers
+            getAllCIForBS( ConnectionIdentifier::StationID baseStation );
 
-	/// Station this ConnectionManager belongs to.
-	dll::Layer2* layer_;
+            /**
+             * @brief Get a list of ConnectionIdentifiers for incoming
+             * connections from a specified departure.
+             */
+            ConnectionIdentifiers
+            getIncomingConnections ( ConnectionIdentifier::StationID from );
 
-	wns::pyconfig::View config_;
-};
-}}
 
+            /**
+             * @brief Get a list of ConnectionIdentifiers for incoming
+             * data connections from a specified departure
+             */
+            ConnectionIdentifiers
+            getIncomingDataConnections( ConnectionIdentifier::StationID from );
+
+            /**
+             * @brief Get a list of ConnectionIdentifiers for outgoing
+             * connections to a specified destination
+             */
+            ConnectionIdentifiers
+            getOutgoingConnections( ConnectionIdentifier::StationID to );
+
+            /**
+             * @brief Get a list of ConnectionIdentifiers for outgoin
+             * data connections to a specified destination
+             */
+            ConnectionIdentifiers
+            getOutgoingDataConnections( ConnectionIdentifier::StationID to );
+
+            /**
+             * @brief Get all data connections with the specified direction.
+             *
+             * @sa ConnectionIdentifier::Direction
+             */
+            ConnectionIdentifiers
+            getAllDataConnections( int direction );
+
+
+            /**
+             * @brief Get a special connection of type connectionType.
+             *
+             * Find a special connection between the baseStation and
+             * the subscriber of type connectionType.
+             *
+             * @sa ConnectionIdentifier::ConnectionType
+             */
+            ConnectionIdentifierPtr getSpecialConnection(
+                ConnectionIdentifier::ConnectionType connectionType,
+                ConnectionIdentifier::StationID baseStation,
+                ConnectionIdentifier::StationID subscriber );
+
+
+            /**
+             * @brief Return the basic connection that belongs to the
+             * given connection.
+             *
+             * This is used by the ACKSwitch to switch the connection
+             * of an ACK that needs to be transmitted via the basic
+             * connection.
+             */
+            ConnectionIdentifierPtr
+            getBasicConnectionFor( const ConnectionIdentifier::CID cid );
+
+
+            /**
+             * @brief Return the basic connection that belongs to the
+             * given subscriberStation.
+             *
+             * This is used by the Handover.
+             */
+            ConnectionIdentifierPtr
+            getBasicConnectionFor( const StationID subscriberStation ) const;
+
+            /**
+             * @brief Return the primary management connection that
+             * belongs to the given connection
+             */
+            ConnectionIdentifierPtr
+            getPrimaryConnectionFor( ConnectionIdentifier::StationID stationID ) const;
+
+            /**
+             * @brief Find the connection with the specified CID.
+             */
+            ConnectionIdentifierPtr
+            getConnectionWithID( ConnectionIdentifier::CID cid ) const;
+
+            /**
+             * @brief Find all basic connection.
+             */
+            ConnectionIdentifiers getAllBasicConnections() const;
+
+
+            /**
+             * @brief Decrease all ConnectionIdentifiers who are not listening.
+             */
+            void
+            decreaseCINotListening();
+
+            void onMSRCreated();
+
+            ConnectionIdentifier::CID getAndIncreaseHighestCellCID();
+
+        private:
+            /**
+             * @brief Delete ConnectionIdentifier from
+             * ConnectionManager if they exist.
+             */
+            void singularityDelete(const ConnectionIdentifierPtr ci);
+
+            /**
+             * @brief On a double basic ConnectionIdentifier all other
+             * ConnectionIdentifier for peer station will be deleted.
+             */
+            void doubleBasicCIDeleteAllOtherCI(const ConnectionIdentifierPtr ci);
+
+            ConnectionIdentifiers connectionIdentifiers_;
+
+            ConnectionIdentifier::CID highestCID_;
+
+            /**
+             * @brief Station this ConnectionManager belongs to.
+             */
+            Component* layer_;
+
+            /**
+             * @todo Remove the pyconfig view from here.
+             */
+            wns::pyconfig::View config_;
+        };
+    }
+}
 #endif
 

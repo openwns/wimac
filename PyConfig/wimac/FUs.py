@@ -27,37 +27,21 @@
 
 from openwns.pyconfig import Sealed
 
-import openwns.Buffer
-
-
-
-class BufferDropping(openwns.Buffer.Dropping):
-    __plugin__ = 'wimac.BufferDropping'
-
-    resetedBitsProbeName = None
-    resetedCompoundsProbeName = None
-
-    def __init__(self,**kw):
-        super(BufferDropping, self).__init__(**kw)
-
-
 class Classifier(Sealed):
     __plugin__ = 'wimac.ConnectionClassifier'
-
-
 
 
 class ClassifierMock(Sealed):
     __plugin__ = 'wimac.ClassifierMock'
 
 
-
-
 class ACKSwitch(Sealed):
     __plugin__ = 'wimac.ACKSwitch'
-
 
 
 class PhyUser(Sealed):
     __plugin__ = 'wimac.PhyUser'
 
+
+class UpperConvergence(Sealed):
+    __plugin__ = 'wimac.UpperConvergence'

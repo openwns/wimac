@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -30,30 +28,30 @@
 
 #include <WNS/pyconfig/View.hpp>
 
-#include <DLL/compoundSwitch/Filter.hpp>
+#include <WIMAC/compoundSwitch/Filter.hpp>
 
 namespace wimac { namespace relay {
-	class RelayMapper;
+        class RelayMapper;
 }}
 
 namespace wimac { namespace compoundSwitch { namespace filter {
 
-	class RelayDirection :
-		public dll::compoundSwitch::Filter
-	{
-	public:
-		RelayDirection(dll::compoundSwitch::CompoundSwitch*, wns::pyconfig::View&);
+            class RelayDirection :
+                public Filter
+            {
+            public:
+                RelayDirection(CompoundSwitch*, wns::pyconfig::View&);
 
-		void onFUNCreated();
+                void onFUNCreated();
 
-		virtual bool
-		filter( const wns::ldk::CompoundPtr& compound) const;
+                virtual bool
+                filter( const wns::ldk::CompoundPtr& compound) const;
 
-	private:
-		wimac::relay::RelayMapper* mapper_;
-		int direction_;
-	};
-}}}
+            private:
+                wimac::relay::RelayMapper* mapper_;
+                int direction_;
+            };
+        }}}
 #endif
 
 

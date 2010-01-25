@@ -26,9 +26,9 @@
 ###############################################################################
 
 import openwns.node
-import dll.Layer2
+import wimac.Component
 
-class RANG( dll.Layer2.Layer2 ):
+class RANG( wimac.Component.Component ):
     dataTransmission = None
     notification = None
 
@@ -38,7 +38,7 @@ class RANG( dll.Layer2.Layer2 ):
         super(RANG,self).__init__(node, "RANG")
         self.dataTransmission = "RANG.dllDataTransmission"
         self.notification = "RANG.dllNotification"
-        self.nameInComponentFactory = "dll.RANG"
+        self.nameInComponentFactory = "wimac.RANG"
         self.dllDataTransmissions = []
         self.dllNotifications = []
         self.logger.enabled=True

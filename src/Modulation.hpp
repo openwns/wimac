@@ -2,7 +2,7 @@
  * This file is part of openWNS (open Wireless Network Simulator)
  * _____________________________________________________________________________
  *
- * Copyright (C) 2004-2009
+ * Copyright (C) 2004-2007
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
  * phone: ++49-241-80-27910,
@@ -24,45 +24,39 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-#ifndef WIMAC_SCHEDULER_DSASTATEGY
-#define WIMAC_SCHEDULER_DSASTATEGY
+#ifndef WIMAC_MODULATION_HPP
+#define WIMAC_MODULATION_HPP
 
-#include <WNS/scheduler/strategy/dsastrategy/DSAStrategy.hpp>
-#include <WNS/scheduler/strategy/SchedulerState.hpp>
+#include <WNS/pyconfig/View.hpp>
+#include <WNS/simulator/Bit.hpp>
 
-namespace wimac { namespace scheduler {
+namespace wimac {
 
-    class DSAStrategy :
-        public virtual wns::scheduler::strategy::dsastrategy::DSAStrategy
+class Modulation
+{
+public:
+    Modulation(const wns::pyconfig::View& config):
+        capacity_(config.get<Bit>("capacity"))
     {
-    public:
+    }
 
-        DSAStrategy(const wns::pyconfig::View& );
+    /**
+     * @brief Returns the bita capacity of a single symbol on one
+     * subcarrier.
+     */
+    Bit capacity() const
+    {
+        return capacity_;
+    }
 
-        wns::scheduler::strategy::dsastrategy::DSAResult
-        getSubChannelWithDSA(wns::scheduler::strategy::RequestForResource& request,
-                             wns::scheduler::strategy::SchedulerStatePtr schedulerState,
-                             wns::scheduler::SchedulingMapPtr schedulingMap);
+private:
+    friend class PhyMode;
 
-        bool
-        requiresCQI() const
-        {
-            return false;
-        }
+    Modulation(){}
 
-        void
-        initialize(wns::scheduler::strategy::SchedulerStatePtr schedulerState,
-                   wns::scheduler::SchedulingMapPtr schedulingMap);
+    Bit capacity_;
+};
 
-    private:
-        std::auto_ptr<wns::distribution::StandardUniform> randomDist;
-        /** @brief remember position of last used subChannel */
-        int lastUsedSubChannel;
-        int lastUsedBeam;
-
-    };
-
-
-    }}
+}
 
 #endif

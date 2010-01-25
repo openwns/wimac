@@ -30,12 +30,10 @@
 
 """
 
-from openwns.pyconfig import Sealed
-from openwns.pyconfig import attrsetter
+from openwns.pyconfig import Sealed, attrsetter
 
 class HandoverStrategy(Sealed):
     __plugin__ = None
-
 
 
 class Averaging(HandoverStrategy):
@@ -45,7 +43,6 @@ class Averaging(HandoverStrategy):
 
      def __init__(self, **kw):
           attrsetter(self, kw)
-
 
 
 class AverageWindow(HandoverStrategy):

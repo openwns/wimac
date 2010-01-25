@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -39,14 +37,13 @@
 #include <WNS/ldk/Compound.hpp>
 #include <WNS/ldk/Classifier.hpp>
 #include <WNS/pyconfig/View.hpp>
-#include <WIMAC/services/ConnectionManager.hpp>
-#include <WIMAC/scheduler/BSULSchedulerInterface.hpp>
 
+#include <WIMAC/services/ConnectionManager.hpp>
 
 namespace wimac { namespace scheduler {
 
 	class Scheduler;
-	class SchedulerInterface;
+	class Interface;
 
 	/// A generator of pseude BW reqeusts that can be used by the BSScheduler.
 	class PseudoBWRequestGenerator :
@@ -55,7 +52,7 @@ namespace wimac { namespace scheduler {
 	public:
 		PseudoBWRequestGenerator( const wns::pyconfig::View& config );
 
-		void setScheduler(wimac::scheduler::SchedulerInterface*);
+		void setScheduler(wimac::scheduler::Interface*);
 
 		void setFUN(wns::ldk::fun::FUN* fun);
 

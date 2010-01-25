@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -34,62 +32,63 @@
 #include <WIMAC/Component.hpp>
 
 namespace wimac {
-class ConnectionClassifier;
-class PhyUser;
-namespace frame {
+    class ConnectionClassifier;
+    class PhyUser;
+    namespace frame {
 
-/// A CompoundCollector that collects a single compound.
-class SingleCompoundCollector
-	: public wns::ldk::fcf::CompoundCollector,
-	  public wns::ldk::CommandTypeSpecifier<wns::ldk::EmptyCommand>,
-	  public wns::ldk::HasConnector<>,
-	  public wns::ldk::HasReceptor<>,
-	  public wns::ldk::HasDeliverer<>,
-	  public wns::Cloneable<SingleCompoundCollector>
-{
-public:
-	SingleCompoundCollector( wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config ) :
-		wns::ldk::fcf::CompoundCollector( config ),
-		wns::ldk::CommandTypeSpecifier<wns::ldk::EmptyCommand>(fun),
-		phyMode(wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface>
-			(wns::service::phy::phymode::createPhyMode( config.getView("phyMode") ) ) )
-	{
-		component_ = dynamic_cast<Component*>( getFUN()->getLayer() );
-		assure( component_, "the single compound collector needs to be part of the WiMAC layer" );
-	}
+        /**
+         * @brief A CompoundCollector that collects a single compound.
+         */
+        class SingleCompoundCollector :
+            public wns::ldk::fcf::CompoundCollector,
+            public wns::ldk::CommandTypeSpecifier<wns::ldk::EmptyCommand>,
+            public wns::ldk::HasConnector<>,
+            public wns::ldk::HasReceptor<>,
+            public wns::ldk::HasDeliverer<>,
+            public wns::Cloneable<SingleCompoundCollector>
+        {
+        public:
+            SingleCompoundCollector( wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config ) :
+                wns::ldk::fcf::CompoundCollector( config ),
+                wns::ldk::CommandTypeSpecifier<wns::ldk::EmptyCommand>(fun),
+                phyMode(wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface>
+                        (wns::service::phy::phymode::createPhyMode( config.getView("phyMode") ) ) )
+            {
+                component_ = dynamic_cast<Component*>( getFUN()->getLayer() );
+                assure( component_, "the single compound collector needs to be part of the WiMAC layer" );
+            }
 
-	void doOnData( const wns::ldk::CompoundPtr& );
-	void doSendData( const wns::ldk::CompoundPtr& );
+            void doOnData( const wns::ldk::CompoundPtr& );
+            void doSendData( const wns::ldk::CompoundPtr& );
 
-	bool doIsAccepting( const wns::ldk::CompoundPtr& compound ) const;
+            bool doIsAccepting( const wns::ldk::CompoundPtr& compound ) const;
 
-	void doWakeup(){}
+            void doWakeup(){}
 
-	void doStart(int);
+            void doStart(int);
 
-	void doStartCollection(int){ accepting_ = true; getReceptor()->wakeup(); }
-	void finishCollection(){ accepting_ = false; }
-	simTimeType getCurrentDuration() const;
+            void doStartCollection(int){ accepting_ = true; getReceptor()->wakeup(); }
+            void finishCollection(){ accepting_ = false; }
+            wns::simulator::Time getCurrentDuration() const;
 
-protected:
+        protected:
 
-	virtual void onFUNCreated();
+            virtual void onFUNCreated();
 
-private:
-	struct
-	{
-		wimac::ConnectionClassifier* classifier_;
-		wimac::PhyUser* phyUser_;
-	} friends_;
+        private:
+            struct
+            {
+                wimac::ConnectionClassifier* classifier_;
+                wimac::PhyUser* phyUser_;
+            } friends_;
 
-	Component* component_;
+            Component* component_;
 
-	wns::ldk::CompoundPtr compound_;
-	bool accepting_;
-	wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface> phyMode;
-};
-
-}
+            wns::ldk::CompoundPtr compound_;
+            bool accepting_;
+            wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface> phyMode;
+        };
+    }
 }
 #endif
 

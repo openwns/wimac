@@ -31,95 +31,100 @@
 #include <functional>
 
 #include <WNS/ldk/Command.hpp>
+#include <WNS/service/phy/phymode/PhyModeInterface.hpp>
+#include <WNS/service/phy/power/PowerMeasurement.hpp>
 #include <WIMAC/CIRProvider.hpp>
 #include <WIMAC/PhyAccessFunc.hpp>
 #include <WIMAC/PhyModeProviderCommand.hpp>
 #include <WNS/service/phy/phymode/PhyModeInterface.hpp>
 
 namespace wimac {
-	class PhyUser;
-	class Component;
+    class PhyUser;
+    class Component;
 
 
-	class PhyUserCommand
-		: public wns::ldk::Command,
-		  public wimac::PhyModeProviderCommand,
-		  public wimac::CIRProviderCommand
-	{
-	public:
-		struct Local {
+    /**
+     * \brief The PhyUserCommand is the command of the PhyUser functional unit
+     */
+    class PhyUserCommand :
+            public wns::ldk::Command,
+            public wimac::PhyModeProviderCommand,
+            public wimac::CIRProviderCommand
+    {
+    public:
+        struct {
 			wns::Power rxPower_;
 			wns::Power interference_;
 
-			std::auto_ptr<PhyAccessFunc> pAFunc_;
+            std::auto_ptr<PhyAccessFunc> pAFunc_;
 
-		} local;
+        } local;
 
-		struct Peer {
-			wns::node::Interface* source_;
-			wns::node::Interface* destination_;
-			int cellID_;
-			wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface> phyModePtr;
-			bool measureInterference_;
-			wns::CandI estimatedCandI_;
-		} peer;
+        struct {
+            wns::node::Interface* source_;
+            wns::node::Interface* destination_;
+            int cellID_;
+            wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface> phyModePtr;
+            bool measureInterference_;
+            wns::CandI estimatedCandI_;
+        } peer;
 
-		struct Magic {
-			wimac::Component* sourceComponent_;
-			bool contentionAccess_;
-			bool frameHead_;
-		} magic;
+        struct {
+            wimac::Component* sourceComponent_;
+            bool contentionAccess_;
+            bool frameHead_;
+        } magic;
 
 
-		PhyUserCommand()
-		{
-			peer.measureInterference_ = false;
-			peer.source_ = 0;
-			peer.destination_ = 0;
-			peer.cellID_ = 0;
-			peer.estimatedCandI_ = wns::CandI();
-			magic.sourceComponent_ = 0;
-			magic.contentionAccess_ = false;
-			magic.frameHead_ = false;
-		}
+        PhyUserCommand()
+        {
+            peer.measureInterference_ = false;
+            peer.source_ = 0;
+            peer.destination_ = 0;
+            peer.cellID_ = 0;
+            peer.estimatedCandI_ = wns::CandI();
+            magic.sourceComponent_ = 0;
+            magic.contentionAccess_ = false;
+            magic.frameHead_ = false;
+        }
 
-		PhyUserCommand(const PhyUserCommand& other) :
-			wns::ldk::Command(),
-			wimac::PhyModeProviderCommand(),
-			wimac::CIRProviderCommand()
-		{
+        PhyUserCommand(const PhyUserCommand& other) :
+            wns::ldk::Command(),
+            wimac::PhyModeProviderCommand(),
+            wimac::CIRProviderCommand()
+        {
 			local.rxPower_            = other.local.rxPower_;
 			local.interference_       = other.local.interference_;
-			if (other.local.pAFunc_.get())
-				local.pAFunc_.reset(dynamic_cast<wimac::PhyAccessFunc*>(other.local.pAFunc_->clone()));
-			peer.measureInterference_ = other.peer.measureInterference_;
-			peer.source_              = other.peer.source_;
-			peer.destination_         = other.peer.destination_;
-			peer.cellID_              = other.peer.cellID_;
-			peer.phyModePtr           = other.peer.phyModePtr;
-			peer.estimatedCandI_      = other.peer.estimatedCandI_;
+            if (other.local.pAFunc_.get())
+                local.pAFunc_.reset(dynamic_cast<wimac::PhyAccessFunc*>(other.local.pAFunc_->clone()));
+            peer.measureInterference_ = other.peer.measureInterference_;
+            peer.source_              = other.peer.source_;
+            peer.destination_         = other.peer.destination_;
+            peer.cellID_              = other.peer.cellID_;
+            peer.phyModePtr           = other.peer.phyModePtr;
+            peer.estimatedCandI_      = other.peer.estimatedCandI_;
 
-			magic.sourceComponent_       = other.magic.sourceComponent_;
-			magic.contentionAccess_   = other.magic.contentionAccess_;
-			magic.frameHead_          = other.magic.frameHead_;
-		}
+            magic.sourceComponent_       = other.magic.sourceComponent_;
+            magic.contentionAccess_   = other.magic.contentionAccess_;
+            magic.frameHead_          = other.magic.frameHead_;
+        }
 
-		const wns::service::phy::phymode::PhyModeInterface& getPhyMode() const { return *(peer.phyModePtr); }
-		const wns::service::phy::phymode::PhyModeInterface* getPhyModePtr() const { return peer.phyModePtr.getPtr(); }
+        const wns::service::phy::phymode::PhyModeInterface& getPhyMode() const { return *(peer.phyModePtr); }
+        const wns::service::phy::phymode::PhyModeInterface* getPhyModePtr() const { return peer.phyModePtr.getPtr(); }
 
-		void setPhyMode( const wns::service::phy::phymode::PhyModeInterface& _phyMode )
-		{
-			peer.phyModePtr = wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface>
-				(dynamic_cast<const wns::service::phy::phymode::PhyModeInterface*>(_phyMode.clone()));
-		}
+        void setPhyMode( const wns::service::phy::phymode::PhyModeInterface& _phyMode )
+        {
+            peer.phyModePtr = wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface>
+                (dynamic_cast<const wns::service::phy::phymode::PhyModeInterface*>(_phyMode.clone()));
+        }
 
 		wns::Ratio getCIR() const
 		{
 			return wns::Ratio::from_dB( local.rxPower_.get_dBm() - local.interference_.get_dBm() );
 		}
 
-		wns::Power getEstimatedIintra() const { return peer.estimatedCandI_.sdma.iIntra; }
+        wns::Power getEstimatedIintra() const { return peer.estimatedCandI_.sdma.iIntra; }
 
-	};
+    };
 }
 #endif

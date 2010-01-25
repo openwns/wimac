@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -34,76 +32,90 @@
 #include <WNS/ldk/fcf/CompoundCollector.hpp>
 #include <WNS/ldk/tools/UpUnconnectable.hpp>
 #include <WNS/events/CanTimeout.hpp>
-#include <WIMAC/frame/MapCommand.hpp>
 
+#include <WIMAC/frame/MapCommand.hpp>
+#include <WIMAC/frame/ULMapCollector.hpp>
 
 namespace wimac {
-class Component;
-class PhyUser;
-	namespace service {
-		class ConnectionManager;
-	}
-	namespace scheduler {
-		class Scheduler;
-	}
+    class Component;
+    class PhyUser;
+    namespace service {
+        class ConnectionManager;
+    }
+    namespace scheduler {
+        class Scheduler;
+    }
 
-namespace frame {
-class BSDLScheduler;
-
-
-	typedef MapCommand DLMapCommand;
-
-	/// The sending entity of the DL MAP.
-	class DLMapCollector :
-		public wns::ldk::fcf::CompoundCollector,
-		public wns::ldk::CommandTypeSpecifier<DLMapCommand>,
-		public wns::ldk::HasConnector<>,
-		public wns::ldk::HasReceptor<>,
-		public wns::Cloneable<DLMapCollector>,
-		public wns::events::CanTimeout,
-		public wns::ldk::tools::UpUnconnectable
-
-{
-public:
-	DLMapCollector( wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config );
-
-	void onFUNCreated();
-
-	void calculateSizes( const wns::ldk::CommandPool* commandPool, Bit& commandPoolSize, Bit& dataSize ) const;
-
-	void doOnData( const wns::ldk::CompoundPtr& );
-
-	void doStart(int);
-
-	void doStartCollection(int){}
-	void finishCollection(){}
-
-	void onTimeout();
-
-	simTimeType getCurrentDuration() const;
+    namespace frame {
 
 
-	/**
-	 * @brief Returns the duration of the DL phase.
-	 *
-	 * This method is only usefull in the receiving MapCollector.
-	 */
-	simTimeType getDLPhaseDuration() const { return dlPhaseDuration_; }
+        typedef MapCommand DLMapCommand;
 
-private:
-	wimac::scheduler::Scheduler* dlScheduler_;
-	std::string dlSchedulerName_;
-	wimac::Component* component_;
-	wimac::PhyUser* phyUser_;
-	wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface> phyMode;
+        /**
+         * @brief The sending entity of the DL MAP.
+         */
+        class DLMapCollector :
+            public wns::ldk::fcf::CompoundCollector,
+            public wns::ldk::CommandTypeSpecifier<DLMapCommand>,
+            public wns::ldk::HasConnector<>,
+            public wns::ldk::HasReceptor<>,
+            public wns::Cloneable<DLMapCollector>,
+            public wns::events::CanTimeout,
+            public wns::ldk::tools::UpUnconnectable,
+            virtual public wimac::frame::MapHandlerInterface
+        {
+        public:
+            /*MapHandlerInterface begin */
+		virtual bool		
+		resourcesGranted() 
+		{ 
+			assure(0, "not to be called"); return false; 
+		}
+		virtual wns::scheduler::SchedulingMapPtr
+		getMasterMapForSlaveScheduling() 
+		{ 
+			assure(0, "not to be called"); 
+			return wns::scheduler::SchedulingMapPtr(); 
+		};
+            /*MapHandlerInterface end*/
 
-	// members that are only used by the receiving MapCollector
-	wimac::service::ConnectionManager* connectionManager_;
-	simTimeType dlPhaseDuration_;
+            DLMapCollector( wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config );
 
-};
+            void onFUNCreated();
 
-}
+            void calculateSizes( const wns::ldk::CommandPool* commandPool, Bit& commandPoolSize, Bit& dataSize ) const;
+
+            void doOnData( const wns::ldk::CompoundPtr& );
+
+            void doStart(int);
+
+            void doStartCollection(int){}
+            void finishCollection(){}
+
+            void onTimeout();
+
+            wns::simulator::Time getCurrentDuration() const;
+
+
+            /**
+             * @brief Returns the duration of the DL phase.
+             *
+             * This method is only usefull in the receiving MapCollector.
+             */
+            wns::simulator::Time getDLPhaseDuration() const { return dlPhaseDuration_; }
+
+        private:
+            wimac::scheduler::Scheduler* dlScheduler_;
+            std::string dlSchedulerName_;
+            wimac::Component* component_;
+            wimac::PhyUser* phyUser_;
+            wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface> phyMode;
+
+            // members that are only used by the receiving MapCollector
+            wimac::service::ConnectionManager* connectionManager_;
+            wns::simulator::Time dlPhaseDuration_;
+        };
+    }
 }
 #endif
 

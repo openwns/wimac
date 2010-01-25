@@ -27,14 +27,10 @@
 
 """Handover implementation
 
-
 """
-
-import dll.Services
 from openwns.pyconfig import attrsetter
 
-
-class FUReseter(dll.Services.Service):
+class FUReseter():
     """This class
 
     """

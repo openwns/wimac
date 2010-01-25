@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,20 +23,56 @@
  *
  ******************************************************************************/
 
-#ifndef WIMAC_SCHEDULER_BSULSCHEDULERINTERFACE_HPP
-#define WIMAC_SCHEDULER_BSULSCHEDULERINTERFACE_HPP
 
-#include <WNS/ldk/Compound.hpp>
+#include <WIMAC/compoundSwitch/filter/FilterFilterName.hpp>
 
-namespace wimac {
-  namespace scheduler {
-    ///pseodo data interface for outgoing UL fake pdus in BS or RS
-    class BSULSchedulerInterface {
-    public:
-        virtual ~BSULSchedulerInterface() {};
-      virtual void sendPseudoData(const wns::ldk::CompoundPtr& compound) = 0;
-      virtual bool isAcceptingPseudoData(const wns::ldk::CompoundPtr& compound) const = 0;
-      virtual void resetAllQueues() = 0;
-    };
-}}
-#endif
+#include <WIMAC/compoundSwitch/CompoundSwitch.hpp>
+
+#include <WNS/pyconfig/View.hpp>
+#include <WNS/Assure.hpp>
+#include <WNS/logger/Logger.hpp>
+
+#include <WNS/ldk/Command.hpp>
+
+
+using namespace wimac;
+using namespace wimac::compoundSwitch;
+using namespace wimac::compoundSwitch::filter;
+
+
+STATIC_FACTORY_REGISTER_WITH_CREATOR(FilterFilterName,
+                                     Filter,
+                                     "wimac.compoundSwitch.filter.FilterFilterName",
+                                     CompoundSwitchConfigCreator);
+
+FilterFilterName::FilterFilterName(CompoundSwitch* compoundSwitch,
+                                   wns::pyconfig::View& config) :
+    Filter(compoundSwitch, config),
+    friends_()
+{
+}
+
+FilterFilterName::~FilterFilterName()
+{
+}
+
+void
+FilterFilterName::onFUNCreated()
+{
+}
+
+bool
+FilterFilterName::filter(const wns::ldk::CompoundPtr& compound) const
+{
+    if( compoundSwitch_->getCommand( compound->getCommandPool() )
+        ->local.filterName == getName() )
+        return true;
+
+    return false;
+}
+
+
+
+
+
+

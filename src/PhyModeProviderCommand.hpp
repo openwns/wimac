@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -34,15 +32,26 @@
 
 namespace wimac {
 
-	/// Provides information about the PHY mode.
-	class PhyModeProviderCommand
-	{
-	public:
-		virtual const wns::service::phy::phymode::PhyModeInterface& getPhyMode() const = 0;
-		virtual const wns::service::phy::phymode::PhyModeInterface* getPhyModePtr() const = 0;
-		virtual void setPhyMode( const wns::service::phy::phymode::PhyModeInterface& _phyMode ) = 0;
-		virtual ~PhyModeProviderCommand() {}
-	};
+    /**
+     * @brief Provides information about the PHY mode.
+     */
+    class PhyModeProviderCommand
+    {
+    public:
+        virtual
+        const wns::service::phy::phymode::PhyModeInterface&
+        getPhyMode() const = 0;
+
+        virtual
+        const wns::service::phy::phymode::PhyModeInterface*
+        getPhyModePtr() const = 0;
+
+        virtual
+        void
+        setPhyMode( const wns::service::phy::phymode::PhyModeInterface& _phyMode ) = 0;
+
+        virtual ~PhyModeProviderCommand() {}
+    };
 
 }
 #endif

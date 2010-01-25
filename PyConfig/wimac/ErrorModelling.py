@@ -32,10 +32,8 @@
    calculate the Packet Error Rate (PER).
 """
 
-from openwns.pyconfig import Frozen
-from openwns.pyconfig import Sealed
-from openwns.pyconfig import attrsetter
-from LLMapping import WIMAXMapper
+from openwns.pyconfig import Frozen, Sealed, attrsetter
+from wimac.LLMapping import WIMAXMapper
 from support.WiMACParameters import ParametersOFDM
 
 class MappingObject(Sealed):

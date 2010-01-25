@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -39,33 +37,33 @@ namespace wimac {
     class EventObserver
     {
     public:
-	EventObserver(std::string observerName);
+        EventObserver(std::string observerName);
 
-	virtual
-	~EventObserver();
+        virtual
+        ~EventObserver();
 
-	void
-	setEventSubject(EventSubject* eventSubject);
+        void
+        setEventSubject(EventSubject* eventSubject);
 
-	virtual void
-	eventSubjectDeleted();
+        virtual void
+        eventSubjectDeleted();
 
-	virtual void
-	event(std::string event) = 0;
+        virtual void
+        event(std::string event) = 0;
 
-	std::string
-	getObserverName() const {return observerName_;}
+        std::string
+        getObserverName() const {return observerName_;}
 
-	const EventSubject*
-	getEventSubject() const
-	{
-	    return eventSubject_;
-	}
+        const EventSubject*
+        getEventSubject() const
+        {
+            return eventSubject_;
+        }
 
     private:
-	const std::string observerName_;
+        const std::string observerName_;
 
-	EventSubject* eventSubject_;
+        EventSubject* eventSubject_;
     };
 
 
@@ -73,40 +71,39 @@ namespace wimac {
     class EventSubject
     {
     public:
-	typedef std::list<EventObserver*> EventObservers;
+        typedef std::list<EventObserver*> EventObservers;
 
-	EventSubject(std::string stationName);
+        EventSubject(std::string stationName);
 
-	~EventSubject();
+        ~EventSubject();
 
-	void
-	attachObserver(EventObserver* eventObserver);
+        void
+        attachObserver(EventObserver* eventObserver);
 
-	void
-	detachObserver(EventObserver* eventObserver);
+        void
+        detachObserver(EventObserver* eventObserver);
 
-	void
-	notifyEventObservers(std::string event);
+        void
+        notifyEventObservers(std::string event);
 
-	EventObservers
-	testGetEventObservers_()
-	{
-	    return eventObservers_;
-	}
+        EventObservers
+        testGetEventObservers_()
+        {
+            return eventObservers_;
+        }
 
 
     private:
 
-	void
-	pl();
+        void
+        pl();
 
-	EventObservers observersToNotify_;
-	EventObservers eventObservers_;
+        EventObservers observersToNotify_;
+        EventObservers eventObservers_;
 
-	const std::string stationName_;
-	wns::logger::Logger logger_;
+        const std::string stationName_;
+        wns::logger::Logger logger_;
     };
-
-} // wimac
+}
 
 #endif

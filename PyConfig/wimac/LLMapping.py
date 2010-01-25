@@ -25,10 +25,8 @@
 #
 ###############################################################################
 
-from openwns.pyconfig import attrsetter
-import openwns.logger
+from openwns.pyconfig import Sealed, attrsetter
 from openwns.interval import Interval
-from openwns.pyconfig import Sealed
 
 from support.WiMACParameters import ParametersOFDM,ParametersOFDMA
 

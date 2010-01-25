@@ -30,12 +30,10 @@
 
 """
 from openwns.pyconfig import Sealed
-
-import dll.Services
 from openwns.pyconfig import attrsetter
 
 
-class DeadStationDetect(dll.Services.Service):
+class DeadStationDetect(object):
     """This class
 
        self.qosPriority: Signaling, UGS, rtPS, nrtPS, BE

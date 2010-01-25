@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -24,6 +22,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
+
 
 #ifndef WIMAC_PROBESTARTSTOP_HPP
 #define WIMAC_PROBESTARTSTOP_HPP
@@ -45,108 +44,106 @@
 
 namespace wimac{
 
-	class ProbeStartStop;
+    class ProbeStartStop;
 
-	/**
-	 * @brief Interface to start and stop the Probe.
-         *
-	 *
-	 */
-	class ProbeStartStopInterface
-	{
-	public:
-		virtual ~ProbeStartStopInterface(){};
+    /**
+     * @brief Interface to start and stop the Probe.
+     */
+    class ProbeStartStopInterface
+    {
+    public:
+        virtual ~ProbeStartStopInterface(){};
 
-		virtual void event(const std::string event) = 0;
-	};
+        virtual void event(const std::string event) = 0;
+    };
 
 
-	class ProbeStartStopCommand :
-		public wns::ldk::Command
-	{
-	public:
-		struct {} local;
-		struct {} peer;
-		struct
-		{
-			ProbeStartStop* probingFU;
-		} magic;
-	};
+    class ProbeStartStopCommand :
+            public wns::ldk::Command
+    {
+    public:
+        struct {} local;
+        struct {} peer;
+        struct
+        {
+            ProbeStartStop* probingFU;
+        } magic;
+    };
 
 
-	/**
-	 * @brief FunctionalUnit to probe the number of compounds and the
-         *        total size between the start stop signal
-	 *
-	 *  @todo (gra): It should migrate to the LDK, after it is unit tested
-	 *               and some more detailed documentation.
-	 */
-	class ProbeStartStop :
-		public wns::ldk::probe::Probe,
-		public wns::ldk::CommandTypeSpecifier<ProbeStartStopCommand>,
-		public wns::ldk::HasReceptor<>,
-		public wns::ldk::HasConnector<>,
-		public wns::ldk::HasDeliverer<>,
-		public wns::ldk::Forwarding<ProbeStartStop>,
-		public wns::Cloneable<ProbeStartStop>,
-		public ProbeStartStopInterface,
-		public EventObserver
-	{
-	public:
-		ProbeStartStop(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config);
-		virtual ~ProbeStartStop();
+    /**
+     * @brief FunctionalUnit to probe the number of compounds and the
+     * total size between the start stop signal
+     *
+     * @todo (gra): It should migrate to the LDK, after it is unit
+     * tested and some more detailed documentation.
+     */
+    class ProbeStartStop :
+        public wns::ldk::probe::Probe,
+        public wns::ldk::CommandTypeSpecifier<ProbeStartStopCommand>,
+        public wns::ldk::HasReceptor<>,
+        public wns::ldk::HasConnector<>,
+        public wns::ldk::HasDeliverer<>,
+        public wns::ldk::Forwarding<ProbeStartStop>,
+        public wns::Cloneable<ProbeStartStop>,
+        public ProbeStartStopInterface,
+        public EventObserver
+    {
+    public:
+        ProbeStartStop(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config);
+        virtual ~ProbeStartStop();
 
-		// Processor interface
-		virtual void processOutgoing(const wns::ldk::CompoundPtr& compound);
-		virtual void processIncoming(const wns::ldk::CompoundPtr& compound);
+        // Processor interface
+        virtual void processOutgoing(const wns::ldk::CompoundPtr& compound);
+        virtual void processIncoming(const wns::ldk::CompoundPtr& compound);
 
 
-		virtual void event(const std::string event);
+        virtual void event(const std::string event);
 
-		virtual void onFUNCreated();
+        virtual void onFUNCreated();
 
 
 
-	private:
-		void reset();
-		void start();
-		void stop();
+    private:
+        void reset();
+        void start();
+        void stop();
 
 
-		bool probing_;
+        bool probing_;
 
-		double cumulatedIncomingBits_;
-		double cumulatedIncomingCompounds_;
-		double cumulatedOutgoingBits_;
-		double cumulatedOutgoingCompounds_;
-		double cumulatedAggregatedBits_;
-		double cumulatedAggregatedCompounds_;
+        double cumulatedIncomingBits_;
+        double cumulatedIncomingCompounds_;
+        double cumulatedOutgoingBits_;
+        double cumulatedOutgoingCompounds_;
+        double cumulatedAggregatedBits_;
+        double cumulatedAggregatedCompounds_;
 
 
-		// Values form PyConfig
-		wns::logger::Logger logger_;
+        // Values form PyConfig
+        wns::logger::Logger logger_;
 
-		struct{
-			wns::probe::bus::ContextCollectorPtr incomingBits;
-			wns::probe::bus::ContextCollectorPtr incomingCompounds;
-			wns::probe::bus::ContextCollectorPtr outgoingBits;
-			wns::probe::bus::ContextCollectorPtr outgoingCompounds;
-			wns::probe::bus::ContextCollectorPtr aggregatedBits;
-			wns::probe::bus::ContextCollectorPtr aggregatedCompounds;
-		} probe_;
+        struct{
+            wns::probe::bus::ContextCollectorPtr incomingBits;
+            wns::probe::bus::ContextCollectorPtr incomingCompounds;
+            wns::probe::bus::ContextCollectorPtr outgoingBits;
+            wns::probe::bus::ContextCollectorPtr outgoingCompounds;
+            wns::probe::bus::ContextCollectorPtr aggregatedBits;
+            wns::probe::bus::ContextCollectorPtr aggregatedCompounds;
+        } probe_;
 
-		struct{
-			std::string eventStartStopSubjectName;
+        struct{
+            std::string eventStartStopSubjectName;
 
-			std::string eventStartStopSubjectType;
+            std::string eventStartStopSubjectType;
 
-			EventSubject* eventStartStopSubject;
-		} friends_;
+            EventSubject* eventStartStopSubject;
+        } friends_;
 
-		const std::string eventReset_;
-		const std::string eventStart_;
-		const std::string eventStop_;
-	};
+        const std::string eventReset_;
+        const std::string eventStart_;
+        const std::string eventStop_;
+    };
 
 }
 

@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,9 +23,10 @@
  *
  ******************************************************************************/
 
+
 /**
- * \file
- * \author Markus Grauer <gra@comnets.rwth-aachen.de>
+ * @file
+ * @author Markus Grauer <gra@comnets.rwth-aachen.de>
  */
 
 #ifndef WIMAC_SERVICES_DEADSTATIONDETECT_HPP
@@ -51,154 +50,155 @@
 
 namespace wimac {
 
-class ConnectionClassifier;
+    class ConnectionClassifier;
 
-namespace service {
+    namespace service {
 
-class ConnectionManager;
-
-/************************* Notify interface *********************/
-class DeadStationDetectNotifyInterface
-{
-public:
-	typedef ConnectionIdentifier::CID CID;
-
-	virtual
-	~DeadStationDetectNotifyInterface()
-		{
-		}
-
-	virtual void
-	notifyActivityFor(CID cid) = 0;
-};
+        class ConnectionManager;
 
 
+        class DeadStationDetectNotifyInterface
+        {
+        public:
+            typedef ConnectionIdentifier::CID CID;
+
+            virtual
+            ~DeadStationDetectNotifyInterface()
+            {
+            }
+
+            virtual void
+            notifyActivityFor(CID cid) = 0;
+        };
+
+        /**
+         * @brief DeadStationDetect
+         */
+        class DeadStationDetect:
+            public wns::ldk::ManagementService,
+            public DeadStationDetectNotifyInterface,
+            public wns::ldk::fcf::NewFrameObserver
+        {
+            typedef ConnectionIdentifier::StationID StationID;
+            typedef ConnectionIdentifier::Frames Frames;
+            typedef std::map<StationID, wns::simulator::Time> MapStationTime;
+
+        public:
+            DeadStationDetect(wns::ldk::ManagementServiceRegistry* msr,
+                              const  wns::pyconfig::View& config);
+
+            ~DeadStationDetect()
+            {
+                friends_.newFrameProvider->detachObserver(this);
+            }
+
+            /**
+             * @brief DeadStationDetect notify interface implementation
+             */
+            virtual void
+            notifyActivityFor(const CID cid);
+
+            /**
+             * @brief NewFrameObserver interface implementation
+             */
+            virtual void
+            messageNewFrame();
+
+            void
+            onMSRCreated();
 
 
-/********************** DeadStationDetect ************************/
+        private:
+            /**
+             * @brief Update SimTime to an existing stationLastActive_
+             * entry or create a new one with current SimTime
+             */
+            void
+            setStationLastActive(const StationID stationID);
 
-/**
-	 * @brief DeadStationDetect
-	 *
-	 *
-     *
-	 */
+            /**
+             * @brief Adjust stationLastActive_ Map with stations
+             * stored in the ConnectionManager
+             */
+            void
+            adjustStations();
 
-class DeadStationDetect
-	: public wns::ldk::ManagementService,
-	  public DeadStationDetectNotifyInterface,
-	  public wns::ldk::fcf::NewFrameObserver
-{
-	typedef ConnectionIdentifier::StationID StationID;
-	typedef ConnectionIdentifier::Frames Frames;
-	typedef std::map<StationID, simTimeType> MapStationTime;
+            /**
+             * @brief Delete all ConnectionIdentifer for stations,
+             * with their last activity older than deltaTime
+             */
+            void
+            deleteDeadStations(const wns::simulator::Time deltaTime);
 
-public:
-	DeadStationDetect(wns::ldk::ManagementServiceRegistry* msr,
-					  const  wns::pyconfig::View& config);
+            /**
+             * @brief Execute on timer_ has run out.
+             */
+            void
+            timerExecute();
 
-	~DeadStationDetect()
-		{
-			friends_.newFrameProvider->detachObserver(this);
-		};
+            int timer_;
+            MapStationTime stationLastActive_;
 
-	/// DeadStationDetect notify interface implementation
-	virtual void
-	notifyActivityFor(const CID cid);
+            // Static values from PyConfig
+            const int checkInterval_;
+            const wns::simulator::Time timeToLive_;
 
-	/// NewFrameObserver interface implementation
-	virtual void
-	messageNewFrame();
+            struct{
+                std::string connectionManagerName;
+                std::string newFrameProviderName;
 
-	void
-	onMSRCreated();
+                wimac::service::ConnectionManager* connectionManager;
+                wns::ldk::fcf::NewFrameProvider* newFrameProvider;
+            } friends_;
 
-
-private:
-	/// Update SimTime to an existing stationLastActive_ entry or create a new one
-    /// with current SimTime
-	void
-	setStationLastActive(const StationID stationID);
-
-	/// Adjust stationLastActive_ Map with stations stored in the
-	/// ConnectionManager
-	void
-	adjustStations();
-
-	/// Delete all ConnectionIdentifer for stations,
-	/// with their last activity older than deltaTime
-	void
-	deleteDeadStations(const simTimeType deltaTime);
-
-	/// Execute on timer_ has run out.
-	void
-	timerExecute();
-
-	int timer_;
-	MapStationTime stationLastActive_;
-
-	// Static values from PyConfig
-	const int checkInterval_;
-	const simTimeType timeToLive_;
-
-	struct{
-		std::string connectionManagerName;
-		std::string newFrameProviderName;
-
-		wimac::service::ConnectionManager* connectionManager;
-		wns::ldk::fcf::NewFrameProvider* newFrameProvider;
-	} friends_;
-
-	wns::logger::Logger logger_;
-};
+            wns::logger::Logger logger_;
+        };
 
 
 
-/***************** DSDSensor Functiona Unit ***********************/
-/**
- * @brief DSDSensor is the sensor for DeadStationDetect management service
- *
- *
- *
- */
-class DSDSensor
-	: virtual public wns::ldk::FunctionalUnit,
-	  public wns::ldk::CommandTypeSpecifier<>,
-	  public wns::ldk::HasReceptor<>,
-	  public wns::ldk::HasConnector<>,
-      public wns::ldk::HasDeliverer<>,
-	  public wns::ldk::Processor< DSDSensor>,
-	  public wns::Cloneable<DSDSensor>
-{
-public:
-	// FUNConfigCreator interface realisation
-	DSDSensor(wns::ldk::fun::FUN* fuNet, const wns::pyconfig::View& config);
+        /**
+         * @brief DSDSensor is the sensor for DeadStationDetect management service.
+         */
+        class DSDSensor :
+            public virtual wns::ldk::FunctionalUnit,
+            public wns::ldk::CommandTypeSpecifier<>,
+            public wns::ldk::HasReceptor<>,
+            public wns::ldk::HasConnector<>,
+            public wns::ldk::HasDeliverer<>,
+            public wns::ldk::Processor< DSDSensor>,
+            public wns::Cloneable<DSDSensor>
+        {
+        public:
+            // FUNConfigCreator interface realisation
+            DSDSensor(wns::ldk::fun::FUN* fuNet, const wns::pyconfig::View& config);
 
-	~DSDSensor(){};
-
-	virtual void onFUNCreated();
+            virtual void onFUNCreated();
 
 
-private:
-	/// Procesor interface implementation
-	virtual void
-	processIncoming(const wns::ldk::CompoundPtr& compound);
+        private:
+            /**
+             * @brief Procesor interface implementation
+             */
+            virtual void
+            processIncoming(const wns::ldk::CompoundPtr& compound);
 
-    /// Procesor interface implementation
-	virtual void
-	processOutgoing(const wns::ldk::CompoundPtr&);
+            /**
+             * @brief Procesor interface implementation
+             */
+            virtual void
+            processOutgoing(const wns::ldk::CompoundPtr&);
 
 
-    struct {
-		std::string connectionClassifierName;
-		std::string deadStationDetectName;
+            struct {
+                std::string connectionClassifierName;
+                std::string deadStationDetectName;
 
-		ConnectionClassifier* connectionClassifier;
-		DeadStationDetectNotifyInterface* deadStationDetect;
-	} friends_;
-};
-
-}} // service::wimac
-#endif // WIMAC_SERVICES_DEADSTATIONDEDECT_HPP
+                ConnectionClassifier* connectionClassifier;
+                DeadStationDetectNotifyInterface* deadStationDetect;
+            } friends_;
+        };
+    }
+}
+#endif
 
 

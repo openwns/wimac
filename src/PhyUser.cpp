@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,23 +23,29 @@
  *
  ******************************************************************************/
 
-#include <WIMAC/PhyUser.hpp>
 
-#include <WIMAC/Classifier.hpp>
-#include <WIMAC/Component.hpp>
-#include <WIMAC/Logger.hpp>
-#include <WIMAC/ConnectionIdentifier.hpp>
+#include <WIMAC/PhyUser.hpp>
+#include <WIMAC/GuiWriter.hpp>
+
+#include <cmath>
+
 #include <WNS/service/phy/ofdma/DataTransmission.hpp>
-#include <DLL/StationManager.hpp>
 #include <WNS/service/dll/StationTypes.hpp>
 #include <WNS/rng/RNGen.hpp>
-
 #include <WNS/ldk/fun/FUN.hpp>
 #include <WNS/ldk/fcf/FrameBuilder.hpp>
 #include <WNS/pyconfig/View.hpp>
 #include <WNS/probe/bus/ContextProviderCollection.hpp>
+#include <WNS/probe/bus/utils.hpp>
 
-#include <cmath>
+
+#include <WIMAC/Classifier.hpp>
+#include <WIMAC/ConnectionIdentifier.hpp>
+#include <WIMAC/Component.hpp>
+#include <WIMAC/Logger.hpp>
+#include <WIMAC/services/InterferenceCache.hpp>
+#include <WIMAC/StationManager.hpp>
+#include <WIMAC/services/ConnectionManager.hpp>
 
 using namespace wimac;
 
@@ -61,6 +65,7 @@ PhyUser::PhyUser(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config) :
     maxAgeCacheEntry(1.0),
     waitOneFrameRx_(-1),
     waitOneFrameTx_(-1),
+
     tune_(),
     friends_()
 {
@@ -85,50 +90,51 @@ PhyUser::PhyUser(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config) :
 
     wns::probe::bus::ContextProviderCollection cpc(cpcParent);
 
-    probes_.interferenceSDMA = wns::probe::bus::ContextCollectorPtr(
-        new wns::probe::bus::ContextCollector(cpc, "wimac.interferenceSDMA"));
+    probes_.interferenceSDMA = 
+        wns::probe::bus::collector(cpc, config, "iProbeName");
 
-    probes_.cirSDMA = wns::probe::bus::ContextCollectorPtr(
-        new wns::probe::bus::ContextCollector(cpc, "wimac.cirSDMA"));
+    probes_.cirSDMA = 
+        wns::probe::bus::collector(cpc, config, "cirProbeName");
 
-    probes_.carrierSDMA = wns::probe::bus::ContextCollectorPtr(
-        new wns::probe::bus::ContextCollector(cpc, "wimac.carrierSDMA"));
+    probes_.carrierSDMA = 
+        wns::probe::bus::collector(cpc, config, "cProbeName");
 
-    probes_.deltaInterferenceSDMA = wns::probe::bus::ContextCollectorPtr(
-        new wns::probe::bus::ContextCollector(cpc, "wimac.deltaInterferenceSDMA"));
+    probes_.deltaInterferenceSDMA =
+        wns::probe::bus::collector(cpc, config, "deltaIProbeName");
 
-    probes_.deltaCarrierSDMA = wns::probe::bus::ContextCollectorPtr(
-        new wns::probe::bus::ContextCollector(cpc, "wimac.deltaCarrierSDMA"));
+    probes_.deltaCarrierSDMA = 
+        wns::probe::bus::collector(cpc, config, "deltaCProbeName");
 
-    probes_.deltaPHYModeSDMA = wns::probe::bus::ContextCollectorPtr(
-        new wns::probe::bus::ContextCollector(cpc, "wimac.deltaPHYModeSDMA"));
+    probes_.PHYModeSDMA = 
+        wns::probe::bus::collector(cpc, config, "phyModeProbeName");
 
-    
-    probes_.PHYModeSDMA = wns::probe::bus::ContextCollectorPtr(
-    new wns::probe::bus::ContextCollector(cpc, "wimac.PHYModeSDMA"));
-    
-    probes_.interferenceFrameHead = wns::probe::bus::ContextCollectorPtr(
-        new wns::probe::bus::ContextCollector(cpc, "wimac.interferenceFrameHead"));
+    probes_.deltaPHYModeSDMA = 
+        wns::probe::bus::collector(cpc, config, "deltaPhyProbeName");
 
-    probes_.interferenceFrameHead = wns::probe::bus::ContextCollectorPtr(
-        new wns::probe::bus::ContextCollector(cpc, "wimac.interferenceFrameHead"));
+    probes_.interferenceFrameHead = 
+        wns::probe::bus::collector(cpc, config, "iFCHProbeName");
 
-    probes_.cirFrameHead = wns::probe::bus::ContextCollectorPtr(
-        new wns::probe::bus::ContextCollector(cpc, "wimac.cirFrameHead"));
+    probes_.cirFrameHead = 
+        wns::probe::bus::collector(cpc, config, "cirFCHProbeName");
 
-    probes_.interferenceContention = wns::probe::bus::ContextCollectorPtr(
-        new wns::probe::bus::ContextCollector(cpc, "wimac.interferenceContention"));
+    probes_.interferenceContention = 
+        wns::probe::bus::collector(cpc, config, "iContentionProbeName");
 
-    probes_.cirContention = wns::probe::bus::ContextCollectorPtr(
-        new wns::probe::bus::ContextCollector(cpc, "wimac.cirContention"));
+    probes_.cirContention = 
+        wns::probe::bus::collector(cpc, config, "cirContentionProbeName");
 
-    probes_.pathloss = wns::probe::bus::ContextCollectorPtr(
-        new wns::probe::bus::ContextCollector(cpc, "wimac.pathloss"));
+    probes_.pathloss = 
+        wns::probe::bus::collector(cpc, config, "pathlossProbeName");
+
+    guiProbe_ = wns::probe::bus::ContextCollectorPtr(
+        new wns::probe::bus::ContextCollector(cpc, "wimac.guiProbe"));
+
+    GuiWriter_ = new GuiWriter(guiProbe_, this);
 }
 
 
 PhyUser::PhyUser( const PhyUser& rhs ):
-    wns::ldk::CompoundHandlerInterface<FunctionalUnit>( rhs ),
+	wns::ldk::CompoundHandlerInterface<FunctionalUnit>( rhs ),
 	wns::ldk::CommandTypeSpecifierInterface( rhs ),
 	wns::ldk::HasReceptorInterface( rhs ),
 	wns::ldk::HasConnectorInterface( rhs ),
@@ -200,10 +206,10 @@ PhyUser::PhyUser( const PhyUser& rhs ):
         new wns::probe::bus::ContextCollector(
             *rhs.probes_.pathloss ));
 }
-
-
 PhyUser::PhyUser::~PhyUser()
-{}
+{
+    delete GuiWriter_;
+}
 
 
 bool
@@ -218,15 +224,18 @@ PhyUser::doSendData(const wns::ldk::CompoundPtr& compound)
 {
 	COMMANDTYPE* command = getCommand( compound->getCommandPool() );
 	(*command->local.pAFunc_.get())( this, compound );
+
+    int macaddr = address.getInteger();
+    GuiWriter_->writeToProbe(compound,macaddr);
 }
 
 
 void PhyUser::onFUNCreated()
 {
-	friends_.layer = dynamic_cast<wimac::Component*>( getFUN()->getLayer() );
-	assure(friends_.layer, "must be part of wimac::Component");
-	friends_.interferenceCache = getFUN()->getLayer()
-		->getManagementService<dll::services::management::InterferenceCache>(friends_.interferenceCacheName);
+    friends_.layer = dynamic_cast<wimac::Component*>( getFUN()->getLayer() );
+    assure(friends_.layer, "must be part of wimac::Component");
+    friends_.interferenceCache = getFUN()->getLayer()
+        ->getManagementService<service::InterferenceCache>(friends_.interferenceCacheName);
 
 	friends_.connectionManager = getFUN()->getLayer()
 		->getManagementService<service::ConnectionManager>(friends_.connectionManagerName);
@@ -276,7 +285,6 @@ PhyUser::onData(wns::osi::PDUPtr pdu,
         wns::service::phy::power::PowerMeasurementPtr rxPowerMeasurement)
 {
     wns::ldk::CompoundPtr compound = wns::staticCast<wns::ldk::Compound>(pdu);
-
     if(!getFUN()->getProxy()->commandIsActivated(
         compound->getCommandPool(), this))      
             return;
@@ -308,11 +316,11 @@ PhyUser::onData(wns::osi::PDUPtr pdu,
             // The remote interferenceCache stores the averaged noise plus inter-cell
             // interference and the carrier signal strength separated by usedID.
             puCommand->magic.sourceComponent_
-                ->getManagementService<dll::services::management::InterferenceCache>
+                ->getManagementService<service::InterferenceCache>
                 ("interferenceCache")
                 ->storeCarrier( friends_.layer->getNode(),
                                 rxPower,
-                                dll::services::management::InterferenceCache::Remote );
+                                service::InterferenceCache::Remote );
 
             wns::Power iInterPlusNoise;
             if(interference > puCommand->getEstimatedIintra()){
@@ -323,11 +331,11 @@ PhyUser::onData(wns::osi::PDUPtr pdu,
             }
 
             puCommand->magic.sourceComponent_
-                ->getManagementService<dll::services::management::InterferenceCache>
+                ->getManagementService<service::InterferenceCache>
                 ("interferenceCache")
                 ->storeInterference( friends_.layer->getNode(),
                                      iInterPlusNoise,
-                                     dll::services::management::InterferenceCache::Remote );
+                                     service::InterferenceCache::Remote );
 
             cacheEntryTimeStamp = wns::simulator::getEventScheduler()->getTime();
 
@@ -345,19 +353,19 @@ PhyUser::onData(wns::osi::PDUPtr pdu,
             if(cacheEntryTimeStamp + maxAgeCacheEntry < wns::simulator::getEventScheduler()->getTime()){
                 // write frame head C/I into interference cache
                 puCommand->magic.sourceComponent_
-                    ->getManagementService<dll::services::management::InterferenceCache>
+                    ->getManagementService<service::InterferenceCache>
                     ("interferenceCache")
                     ->storeCarrier( friends_.layer->getNode(),
                                     rxPower,
-                                    dll::services::management::InterferenceCache::Remote );
+                                    service::InterferenceCache::Remote );
 
 
                 puCommand->magic.sourceComponent_
-                    ->getManagementService<dll::services::management::InterferenceCache>
+                    ->getManagementService<service::InterferenceCache>
                     ("interferenceCache")
                     ->storeInterference( friends_.layer->getNode(),
                                          ( interference ),
-                                         dll::services::management::InterferenceCache::Remote );
+                                         service::InterferenceCache::Remote );
 
                 cacheEntryTimeStamp = wns::simulator::getEventScheduler()->getTime();
 

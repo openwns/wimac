@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,67 +23,66 @@
  *
  ******************************************************************************/
 
+
 /**
- * \file
- * \author Markus Grauer <gra@comnets.rwth-aachen.de>
+ * @file
+ * @author Markus Grauer <gra@comnets.rwth-aachen.de>
  */
 
 #include <WIMAC/services/scanningStrategy/ScanningStrategy.hpp>
-
+#include <WIMAC/Component.hpp>
 
 using namespace wimac;
 using namespace wimac::service;
 using namespace wimac::service::scanningStrategy;
 
 
-/********** ScanningStrategy ***************************************************/
-
-ScanningStrategy::ScanningStrategy(VersusInterface* const versusUnit,
-								   const dll::Layer2* layer,
-								   const wns::pyconfig::View& config)
-	: Interface(),
-	  ScanningCallBackInterface(),
-	  NewFrameObserver(config.get<std::string>("__plugin__")),
-	  layer_(layer),
-	  versusUnit_(versusUnit),
-	  remainRetries_(-1),
-	  timer_(-1),
-	  retries_(config.get<int>("retries")),
-	  framesBetweenScanning_(config.get<ConnectionIdentifier::Frames>
-							 ("framesBetweenScanning"))
+ScanningStrategy::ScanningStrategy(VersusInterface* versusUnit,
+                                   Component* layer,
+                                   const wns::pyconfig::View& config) :
+    Interface(),
+    ScanningCallBackInterface(),
+    NewFrameObserver(config.get<std::string>("__plugin__")),
+    layer_(layer),
+    versusUnit_(versusUnit),
+    remainRetries_(-1),
+    timer_(-1),
+    retries_(config.get<int>("retries")),
+    framesBetweenScanning_(config.get<ConnectionIdentifier::Frames>
+                           ("framesBetweenScanning"))
 {
-	friends_.scanningProviderName = config.get<std::string>("scanningProvider");
-	friends_.newFrameProviderName = config.get<std::string>("newFrameProvider");
+    friends_.scanningProviderName = config.get<std::string>("scanningProvider");
+    friends_.newFrameProviderName = config.get<std::string>("newFrameProvider");
 
-	friends_.scanningProvider = NULL;
-	friends_.newFrameProvider = NULL;
+    friends_.scanningProvider = NULL;
+    friends_.newFrameProvider = NULL;
 }
 
 ScanningStrategy::~ScanningStrategy()
 {
-	if(timer_ >= 0)
-		this->timerStop();
+    if(timer_ >= 0)
+        this->timerStop();
 }
 
 void
 ScanningStrategy::setup(const Stations stationsToScan)
 {
-	assure( !stationsToScan.empty(),
-		    "ScanningStrategy::setup: List stationsToScan is empty!" );
+    assure( !stationsToScan.empty(),
+            "ScanningStrategy::setup: List stationsToScan is empty!" );
 
-	stationsToScan_ = stationsToScan;
+    stationsToScan_ = stationsToScan;
 }
 
 void
 ScanningStrategy::onFUNCreated()
 {
-	friends_.scanningProvider = layer_->getFUN()
-		->findFriend<controlplane::ScanningSS*>
-		(friends_.scanningProviderName);
+    friends_.scanningProvider = layer_->getFUN()
+        ->findFriend<controlplane::ScanningSS*>
+        (friends_.scanningProviderName);
 
-	friends_.newFrameProvider = layer_->getFUN()
-		->findFriend<wns::ldk::fcf::NewFrameProvider*>
-		(friends_.newFrameProviderName);
+    friends_.newFrameProvider = layer_->getFUN()
+        ->findFriend<wns::ldk::fcf::NewFrameProvider*>
+        (friends_.newFrameProviderName);
 }
 
 
@@ -93,10 +90,10 @@ ScanningStrategy::onFUNCreated()
 void
 ScanningStrategy::resultScanning(const wimac::CIRMeasureInterface::MeasureValues& measureValuesOutput)
 {
-	if(!measureValuesOutput.empty())
-		remainRetries_ = -1;
+    if(!measureValuesOutput.empty())
+        remainRetries_ = -1;
 
-	this->result(measureValuesOutput);
+    this->result(measureValuesOutput);
 }
 
 
@@ -104,48 +101,44 @@ ScanningStrategy::resultScanning(const wimac::CIRMeasureInterface::MeasureValues
 void
 ScanningStrategy::messageNewFrame()
 {
-	if ( timer_ == 0 )
-	{
-		this->timerStop();
-		this->timerExecute();
-	}
+    if ( timer_ == 0 )
+    {
+        this->timerStop();
+        this->timerExecute();
+    }
 
-   	if( timer_ > 0 )
-		--timer_;
+    if( timer_ > 0 )
+        --timer_;
 }
 
-
-
-/************* Private Functions *********************************************/
 
 void
 ScanningStrategy::startScanning(Stations stationsToScan)
 {
-	if ( remainRetries_ < 0 )
-		remainRetries_ = retries_;
+    if ( remainRetries_ < 0 )
+        remainRetries_ = retries_;
 
-	if( remainRetries_ == 0 )
-	{
-		LOG_INFO(layer_->getName(), ": Scanning failed ", retries_, " times.");
+    if( remainRetries_ == 0 )
+    {
+        LOG_INFO(layer_->getName(), ": Scanning failed ", retries_, " times.");
 
-		remainRetries_ = -1;
-		this->timerStart(framesBetweenScanning_);
-		versusUnit_->scanningStrategyResult(CIRMeasureInterface::MeasureValues());
-		return;
-	}
+        remainRetries_ = -1;
+        this->timerStart(framesBetweenScanning_);
+        versusUnit_->scanningStrategyResult(CIRMeasureInterface::MeasureValues());
+        return;
+    }
 
-	remainRetries_--;
+    remainRetries_--;
 
-	friends_.scanningProvider->start(stationsToScan, this);
+    friends_.scanningProvider->start(stationsToScan, this);
 }
-
 
 
 void
 ScanningStrategy::timerStart(Frames time)
 {
-	timer_ = time;
-	friends_.newFrameProvider->attachObserver(this);
+    timer_ = time;
+    friends_.newFrameProvider->attachObserver(this);
 }
 
 
@@ -153,8 +146,8 @@ ScanningStrategy::timerStart(Frames time)
 void
 ScanningStrategy::timerStop()
 {
-		friends_.newFrameProvider->detachObserver(this);
-		timer_ = -1;
+    friends_.newFrameProvider->detachObserver(this);
+    timer_ = -1;
 }
 
 

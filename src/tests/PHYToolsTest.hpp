@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -29,20 +27,20 @@
 #define PHYTOOLSTEST_HPP
 
 #include <stdexcept>
-#include <cppunit/extensions/HelperMacros.h>
+#include <WNS/cppunit/extensions/HelperMacros.h>
 
 namespace wimac{
 
-	class PHYToolsTest :
-		public CppUnit::TestFixture  {
-		CPPUNIT_TEST_SUITE(PHYToolsTest);
-		CPPUNIT_TEST(testFeatures);
-		CPPUNIT_TEST_SUITE_END();
-public:
-	void setUp();
-	void tearDown();
-	void testFeatures();
-	};
+    class PHYToolsTest :
+        public CppUnit::TestFixture  {
+        CPPUNIT_TEST_SUITE(PHYToolsTest);
+        CPPUNIT_TEST(testFeatures);
+        CPPUNIT_TEST_SUITE_END();
+    public:
+        void setUp();
+        void tearDown();
+        void testFeatures();
+    };
 }
 
 #endif

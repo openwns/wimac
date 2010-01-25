@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -24,192 +22,204 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
+
 #include <WIMAC/scheduler/DLCallback.hpp>
 
 #include <WNS/scheduler/RegistryProxyInterface.hpp>
 #include <WNS/scheduler/MapInfoEntry.hpp>
+#include <WNS/scheduler/SchedulingMap.hpp>
+#include <WNS/scheduler/strategy/Strategy.hpp>
 #include <WNS/ldk/Layer.hpp>
+//#include <WNS/ldk/CompoundPtr.hpp>
+
 #include <WIMAC/Logger.hpp>
 
+#include <WIMAC/Component.hpp>
 #include <WIMAC/Utilities.hpp>
 #include <WIMAC/PhyAccessFunc.hpp>
 #include <WIMAC/PhyUser.hpp>
 #include <WIMAC/PhyUserCommand.hpp>
 
 STATIC_FACTORY_REGISTER_WITH_CREATOR(
-	wimac::scheduler::DLCallback,
-	wimac::scheduler::Callback,
-	"wimac.scheduler.DLCallback",
-	wns::ldk::FUNConfigCreator );
+				     wimac::scheduler::DLCallback,
+				     wimac::scheduler::Callback,
+				     "wimac.scheduler.DLCallback",
+				     wns::ldk::FUNConfigCreator );
 
 using namespace wimac::scheduler;
 
 DLCallback::DLCallback(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config) :
-	Callback(fun),
-	fun_(fun),
-	beamforming(config.get<bool>("beamforming"))
+    Callback(fun, config),
+    fun_(fun),
+    beamforming(config.get<bool>("beamforming")),
+    slotLength_(config.get<wns::simulator::Time>("slotLength"))
 {}
-
-void
-DLCallback::callBack(wns::scheduler::MapInfoEntryPtr mapInfoEntry)
-{
-  simTimeType startTime = mapInfoEntry->start;
-  simTimeType endTime = mapInfoEntry->end;
-  wns::scheduler::UserID user = mapInfoEntry->user;
-  int userID = user->getNodeID();
-  int fSlot = mapInfoEntry->subBand;
-  int beam = mapInfoEntry->beam;
-  wns::Power txPower = mapInfoEntry->txPower;
-  wns::service::phy::phymode::PhyModeInterfacePtr phyModePtr = mapInfoEntry->phyModePtr;
-  wns::service::phy::ofdma::PatternPtr pattern = mapInfoEntry->pattern;
-  wns::CandI estimatedCandI = mapInfoEntry->estimatedCandI;
-  std::list<wns::ldk::CompoundPtr> compounds = mapInfoEntry->compounds;
-
-  double rate = phyModePtr->getDataRate();
-
-  assure(compounds.size() > 0, "Empty compound list");
-  simTimeType pduPointer = 0.0;
-
-  // iterate over all compounds in list:
-  for (wns::scheduler::CompoundList::iterator iter=compounds.begin(); iter!=compounds.end(); ++iter)
-  {
-    wns::ldk::CompoundPtr pdu = *iter;
-    simTimeType pduDuration = pdu->getLengthInBits() / rate;
-
-  // TODO
-	assure(pdu != wns::ldk::CompoundPtr(), "Invalid PDU");
-// 	assure(beam < maxBeams, "Too many beams");
-// 	assure(endTime > startTime, "Scheduled PDU must end after it starts");
-// 	assure(endTime <= this->getDuration(), "PDU overun the maximum duration of the frame phase!");
-// 	assure(fSlot < freqChannels, "Invalid frequency channel");
-
-#ifndef WNS_NO_LOGGING
-	std::stringstream m;
-	m <<     ":  direction: DL \n"
-	  << "        PDU scheduled for user: " << colleagues.registry->getNameForUser(user) << "\n"
-	  << "        Frequency Slot: " << fSlot << "\n"
-	  << "        StartTime:      " << pduPointer << "\n"
-	  << "        EndTime:        " << pduPointer + pduDuration - Utilities::getComputationalAccuracyFactor()<< "\n"
-//	  << "        Beamforming:    " << beamforming << "\n"
-	  << "        Beam:           " << beam << "\n"
-	  << "        Tx Power:       " << txPower;
-	LOG_INFO(fun_->getLayer()->getName(), m.str());
-#endif
-
-//	pduCount++;
-
-	/// @todo enable frame plotting again
-// 	if (plotFrames) {
-// 		// substr(19,2) should deliver the "subscriber station xy"
-
-// 		std::string printID;
-
-// 		if (uplink || measureInterference)
-// 			printID = colleagues.registry->getNameForUser(user);
-// 		else
-// 			printID = std::string("");
-// 		*plotFiles[fSlot] << startTime << "\t" << endTime << "\t"
-// 						  << float(beam) << "\t" << cidColor/2.0 << "\t\"" << printID << "\"\n";
-
-// 	}
-
-	// DEBUG: Don't use beamfoarming. For debuging
-// 	if(!beamforming)
-// 		pattern = wns::service::phy::ofdma::PatternPtr();
-
-	PhyAccessFunc* func = 0;
-
-	if(beamforming && (pattern != wns::service::phy::ofdma::PatternPtr()))
-	{
-		BeamformingPhyAccessFunc* sdmaFunc = new BeamformingPhyAccessFunc;
-		sdmaFunc->destination_ = user;
-		sdmaFunc->transmissionStart_ = pduPointer;
-		sdmaFunc->transmissionStop_ = 
-			pduPointer + pduDuration - Utilities::getComputationalAccuracyFactor();
-		sdmaFunc->subBand_ = fSlot;
-		sdmaFunc->pattern_ = pattern;
-		sdmaFunc->requestedTxPower_ = txPower;
-		func = sdmaFunc;
-	}
-	else if(user != NULL)
-	{
-		OmniUnicastPhyAccessFunc* omniUnicastFunc = new OmniUnicastPhyAccessFunc;
-		omniUnicastFunc->destination_ = user;
-		omniUnicastFunc->transmissionStart_ = pduPointer;
-		omniUnicastFunc->transmissionStop_ =
-			pduPointer + pduDuration - Utilities::getComputationalAccuracyFactor();
-		omniUnicastFunc->subBand_ = fSlot;
-		func = omniUnicastFunc;
-	}else
-	{
-		BroadcastPhyAccessFunc* broadcastFunc = new BroadcastPhyAccessFunc;
-		broadcastFunc->transmissionStart_ = pduPointer;
-		broadcastFunc->transmissionStop_ =
-			pduPointer + pduDuration - Utilities::getComputationalAccuracyFactor();
-		broadcastFunc->subBand_ = fSlot;
-		func = broadcastFunc;
-	}
-
-
-	// set PhyUser command
-	wimac::PhyUserCommand* phyCommand = dynamic_cast<wimac::PhyUserCommand*>(
-		fun_->getProxy()->activateCommand( pdu->getCommandPool(), friends_.phyUser ) );
-
-	phyCommand->local.pAFunc_.reset( func );
-
-	//wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface> phyModePtr
-	//	(wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface>
-	//	 (dynamic_cast<const wns::service::phy::phymode::PhyModeInterface*>(phyMode.clone())));
-
-	phyCommand->local.pAFunc_->phyMode_ = phyModePtr;
-
-
-	phyCommand->peer.destination_ = user;
-	wimac::Component* wimacComponent = dynamic_cast<wimac::Component*>(fun_->getLayer());
-	phyCommand->peer.cellID_ = wimacComponent->getCellID();
-	phyCommand->peer.source_ = wimacComponent->getNode();
-	phyCommand->peer.phyModePtr = phyModePtr;
-	phyCommand->peer.measureInterference_ = true; // measureInterference;
-	phyCommand->peer.estimatedCandI_ = estimatedCandI;
-	phyCommand->magic.sourceComponent_ = wimacComponent;
-
-	/// @todo enable pduWatch again
-	//this->pduWatch(pdu);  // Watch for special compounds to inform its observer
-
-	scheduledPDUs.push(pdu);
-    pduPointer += pduDuration;
-  }  
-}
 
 void DLCallback::deliverNow(wns::ldk::Connector* connector)
 {
-	simTimeType now = wns::simulator::getEventScheduler()->getTime();
+    LOG_INFO(fun_->getLayer()->getName(), " DLCallback::deliverNow() ");
+    wns::simulator::Time now = wns::simulator::getEventScheduler()->getTime();
 
-	while (!scheduledPDUs.empty())
-	{
-		wns::ldk::CompoundPtr compound =
-			scheduledPDUs.front();
-		PhyUserCommand* phyUserCommand =
-			friends_.phyUser->getCommand( compound->getCommandPool() );
+    while (!scheduledPDUs.empty())
+    {
+        wns::ldk::CompoundPtr compound = scheduledPDUs.front();
+        PhyUserCommand* phyUserCommand =
+            friends_.phyUser->getCommand( compound->getCommandPool() );
 
 
-		PhyAccessFunc* func =
-			dynamic_cast<PhyAccessFunc*>(phyUserCommand->local.pAFunc_.get());
+        PhyAccessFunc* func =
+            dynamic_cast<PhyAccessFunc*>(phyUserCommand->local.pAFunc_.get());
 
-		func->transmissionStart_ += now;
-		func->transmissionStop_ += now;
+        func->transmissionStart_ += now;
+        func->transmissionStop_ += now;
 
-		if ( connector->hasAcceptor(scheduledPDUs.front() ) )
-		{
-			connector->getAcceptor(scheduledPDUs.front())->sendData(scheduledPDUs.front());
-			scheduledPDUs.pop();
-		}
-		else
-		{
-			throw wns::Exception( "Lower FU is not accepting scheduled PDU but is supposed to do so" );
-		}
-	}
+        frameOffsetDelayProbe_->put(compound, func->transmissionStart_ - lastScheduling_);
+        transmissionDelayProbe_->put(compound, func->transmissionStop_ - func->transmissionStart_);
+
+        if ( connector->hasAcceptor(scheduledPDUs.front() ) )
+        {
+            connector->getAcceptor(scheduledPDUs.front())->sendData(scheduledPDUs.front());
+            scheduledPDUs.pop();
+        }
+        else
+        {
+            throw wns::Exception( "Lower FU is not accepting scheduled PDU but is supposed to do so" );
+        }
+    }
 }
 
+void
+DLCallback::callBack(wns::scheduler::SchedulingMapPtr schedulingMap)
+{
+    lastScheduling_ = wns::simulator::getEventScheduler()->getTime();    
 
+    for(wns::scheduler::SubChannelVector::iterator iterSubChannel = schedulingMap->subChannels.begin();
+        iterSubChannel != schedulingMap->subChannels.end(); ++iterSubChannel)
+    {
+        wns::scheduler::SchedulingSubChannel& subChannel = *iterSubChannel;
+        for(wns::scheduler::SchedulingTimeSlotPtrVector::iterator iterTimeSlot = 
+            subChannel.temporalResources.begin(); 
+            iterTimeSlot != subChannel.temporalResources.end(); ++iterTimeSlot)
+        {
+            wns::scheduler::SchedulingTimeSlotPtr timeSlotPtr = *iterTimeSlot;
+            for( wns::scheduler::PhysicalResourceBlockVector::iterator iterPRB = 
+                timeSlotPtr->physicalResources.begin();
+                iterPRB != timeSlotPtr->physicalResources.end(); ++iterPRB)
+            {
+                while ( !iterPRB->scheduledCompounds.empty() )
+                { // for every compound in subchannel:
+                    wns::scheduler::SchedulingCompound schedulingCompound = 
+                        iterPRB->scheduledCompounds.front();
+                    iterPRB->scheduledCompounds.pop_front(); // remove from map
+                    processPacket(schedulingCompound);
+                } // while (all scheduledCompounds)
+            } // forall beams
+        } // end for ( timeSlots )
+    } // forall subChannels
+}
+
+void
+DLCallback::processPacket(const wns::scheduler::SchedulingCompound & compound)
+{
+    simTimeType startTime = compound.startTime;
+    simTimeType endTime = compound.endTime;
+    wns::scheduler::UserID user = compound.userID;
+    int userID = user->getNodeID();
+    int fSlot = compound.subChannel;
+    int timeSlot = compound.timeSlot;
+    int beam = compound.beam;
+    wns::Power txPower = compound.txPower;
+    wns::service::phy::phymode::PhyModeInterfacePtr phyModePtr = compound.phyModePtr;
+    wns::service::phy::ofdma::PatternPtr pattern = compound.pattern;
+
+    simTimeType timeSlotOffset = timeSlot * slotLength_;
+    startTime += timeSlotOffset;
+    endTime += timeSlotOffset;
+
+    //TODO:bmw
+    //wns::CandI estimatedCandI = compound.estimatedCandI;
+    wns::CandI estimatedCandI = wns::CandI();
+    
+    double rate = phyModePtr->getDataRate();
+    wns::ldk::CompoundPtr pdu  = compound.compoundPtr;
+    simTimeType pduDuration = pdu->getLengthInBits() / rate;
+    // TODO
+    assure(pdu != wns::ldk::CompoundPtr(), "Invalid empty PDU");
+    //assure(beam < maxBeams, "Too many beams");
+    //assure(endTime > startTime, "Scheduled PDU must end after it starts");
+    //assure(endTime <= this->getDuration(), "PDU overun the maximum duration of the frame phase!");
+    //assure(fSlot < freqChannels, "Invalid frequency channel");
+
+#ifndef WNS_NO_LOGGING
+    std::stringstream m;
+    m <<     ":  direction: DL \n"
+    << "        PDU scheduled for user: " << colleagues.registry->getNameForUser(user) << "\n"
+    << "        Frequency Slot: " << fSlot << "\n"
+    << "        Time Slot: " << timeSlot <<" slotLength: "<<slotLength_<<"\n"
+    << "        StartTime:      " << startTime<< "\n"
+    << "        EndTime:        " << endTime<< "\n"
+    //<< "        Beamforming:    " << beamforming << "\n"
+    << "        Beam:           " << beam << "\n"
+    << "        Tx Power:       " << txPower;
+    LOG_INFO(fun_->getLayer()->getName(), m.str());
+#endif
+
+    PhyAccessFunc* func = 0;
+
+    if(beamforming && (pattern != wns::service::phy::ofdma::PatternPtr()))
+    {
+        BeamformingPhyAccessFunc* sdmaFunc = new BeamformingPhyAccessFunc;
+        sdmaFunc->destination_ = user;
+        sdmaFunc->transmissionStart_ = startTime;
+        // TODO: (bmw) check if here 'endTime' to be used
+        sdmaFunc->transmissionStop_ =
+        startTime + pduDuration - Utilities::getComputationalAccuracyFactor();
+        sdmaFunc->subBand_ = fSlot;
+        sdmaFunc->pattern_ = pattern;
+        sdmaFunc->requestedTxPower_ = txPower;
+        func = sdmaFunc;
+    }
+    else if(user != NULL)
+    {
+        OmniUnicastPhyAccessFunc* omniUnicastFunc = new OmniUnicastPhyAccessFunc;
+        omniUnicastFunc->destination_ = user;
+        omniUnicastFunc->transmissionStart_ = startTime;
+        // TODO: (bmw) check if here 'endTime' to be used
+        omniUnicastFunc->transmissionStop_ =
+        startTime + pduDuration - Utilities::getComputationalAccuracyFactor();
+        omniUnicastFunc->subBand_ = fSlot;
+        func = omniUnicastFunc;
+    }
+    else
+    {
+        BroadcastPhyAccessFunc* broadcastFunc = new BroadcastPhyAccessFunc;
+        broadcastFunc->transmissionStart_ = startTime;
+        // TODO: (bmw) check if here 'endTime' to be used
+        broadcastFunc->transmissionStop_ =
+        startTime + pduDuration - Utilities::getComputationalAccuracyFactor();
+        broadcastFunc->subBand_ = fSlot;
+        func = broadcastFunc;
+    }
+
+
+    // set PhyUser command
+    wimac::PhyUserCommand* phyCommand = dynamic_cast<wimac::PhyUserCommand*>(
+        fun_->getProxy()->activateCommand( pdu->getCommandPool(), friends_.phyUser ) );
+
+    phyCommand->local.pAFunc_.reset( func );
+
+    phyCommand->local.pAFunc_->phyMode_ = phyModePtr;
+
+
+    phyCommand->peer.destination_ = user;
+    wimac::Component* wimacComponent = dynamic_cast<wimac::Component*>(fun_->getLayer());
+    phyCommand->peer.cellID_ = wimacComponent->getCellID();
+    phyCommand->peer.source_ = wimacComponent->getNode();
+    phyCommand->peer.phyModePtr = phyModePtr;
+    phyCommand->peer.measureInterference_ = true; // measureInterference;
+    phyCommand->peer.estimatedCandI_ = estimatedCandI;
+    phyCommand->magic.sourceComponent_ = wimacComponent;
+
+    scheduledPDUs.push(pdu);
+}
 

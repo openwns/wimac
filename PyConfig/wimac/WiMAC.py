@@ -25,9 +25,9 @@
 #
 ###############################################################################
 
-from openwns.module import Module
+import openwns.module
 
-class WiMAC(Module):
+class WiMAC(openwns.module.Module):
 
     parametersPHY = None
 

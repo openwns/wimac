@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,33 +23,30 @@
  *
  ******************************************************************************/
 
+
 #ifndef WIMAC_TEST_CONNECTIONMANAGERTEST_H
 #define WIMAC_TEST_CONNECTIONMANAGERTEST_H
 
-#include <cppunit/extensions/HelperMacros.h>
+#include <WNS/cppunit/extensions/HelperMacros.h>
 #include <WNS/node/Registry.hpp>
 #include <WNS/ldk/ldk.hpp>
 
+namespace wimac {
 
-NAMESPACE_BEGIN(wimac)
+    class ConnectionManagerTest : public CppUnit::TestFixture
+    {
+        CPPUNIT_TEST_SUITE( ConnectionManagerTest );
+        CPPUNIT_TEST( removalTest );
+        CPPUNIT_TEST_SUITE_END();
+    public:
+        void setUp();
+        void tearDown();
+        void removalTest();
 
-
-class ConnectionManagerTest : public CppUnit::TestFixture
-{
-	CPPUNIT_TEST_SUITE( ConnectionManagerTest );
-	CPPUNIT_TEST( removalTest );
-	CPPUNIT_TEST_SUITE_END();
-public:
-	void setUp();
-	void tearDown();
-	void removalTest();
-
-private:
-	std::auto_ptr<wns::node::Registry> registry_;
-};
-
-NAMESPACE_END
-
+    private:
+        std::auto_ptr<wns::node::Registry> registry_;
+    };
+}
 
 #endif
 

@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,9 +23,10 @@
  *
  ******************************************************************************/
 
+
 /**
- * \file
- * \author Markus Grauer <gra@comnets.rwth-aachen.de>
+ * @file
+ * @author Markus Grauer <gra@comnets.rwth-aachen.de>
  */
 
 #ifndef WIMAC_SERVICES_HANDOVERSTRATEGY_AVERAGEWINDOW_HPP
@@ -39,67 +38,65 @@
 #include <WNS/service/phy/ofdma/DataTransmission.hpp>
 
 namespace wimac {
-namespace service {
-namespace handoverStrategy {
+    namespace service {
+        namespace handoverStrategy {
 
-/**
-* @brief Averaging handover strategy
-* @author Markus Grauer <gra@comnets.rwth-aachen.de>
-* -
-* -
-* -
-*
-*/
-class AverageWindow
-	: public Interface
-{
-	struct StationValue{
-		ConnectionIdentifier::StationID stationID;
-		wns::service::phy::ofdma::Tune tune;
-		wns::Ratio averageCIR;
-	    std::list<CIRMeasureInterface::MValue> mValues;
-	};
+            /**
+             * @brief Averaging handover strategy
+             * @author Markus Grauer <gra@comnets.rwth-aachen.de>
+             */
+            class AverageWindow :
+                public Interface
+            {
+                struct StationValue{
+                    ConnectionIdentifier::StationID stationID;
+                    wns::service::phy::ofdma::Tune tune;
+                    wns::Ratio averageCIR;
+                    std::list<CIRMeasureInterface::MValue> mValues;
+                };
 
-	typedef std::list<StationValue> StationValues;
+                typedef std::list<StationValue> StationValues;
 
+                struct CIRSorter : public std::binary_function<StationValue,StationValue,bool>
+                {
+                    bool operator()(const StationValue& lhs,const StationValue& rhs) const
+                    {
+                        return lhs.averageCIR > rhs.averageCIR;
+                    }
+                };
 
-	struct CIRSorter : public std::binary_function<StationValue,StationValue,bool>
-	{
-		bool operator()(const StationValue& lhs,const StationValue& rhs) const
-			{
-				return lhs.averageCIR > rhs.averageCIR;
-			}
-	};
+            public:
 
-public:
+                AverageWindow(const wns::pyconfig::View&);
 
-	AverageWindow(const wns::pyconfig::View&);
+                ~AverageWindow(){};
 
-	~AverageWindow(){};
+                virtual void
+                storeValues(const MeasureValues& measureValues);
 
-	virtual void
-	storeValues(const MeasureValues& measureValues);
+                virtual Stations
+                decide(const StationID compareStation);
 
-	virtual Stations
-	decide(const StationID compareStation);
+            private:
 
-private:
+                void doAverage();
 
-	void doAverage();
-
-	/// Return better Stations as the Station is associated to or an empty list
-	Stations decide_(const StationID compareStation);
+                /**
+                 * @brief Return better Stations as the Station is
+                 * associated to or an empty list.
+                 */
+                Stations decide_(const StationID compareStation);
 
 
-	StationValues stationsDataSpace_;
+                StationValues stationsDataSpace_;
 
-	// Static values from PyConfig
-	const int windowForAverage_;
-};
+                // Static values from PyConfig
+                const int windowForAverage_;
+            };
+        }
+    }
+}
 
-
-}}} //handoverStrategy::service::wimac
-
-#endif // WIMAC_SERVICES_LOGICHANDOVERRDECISION_HPP
+#endif
 
 

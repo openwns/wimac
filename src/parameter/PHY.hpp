@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -32,77 +30,78 @@
 #include <WNS/pyconfig/View.hpp>
 
 namespace wimac {
-	class WiMAC;
+    class WiMAC;
 }
 
 namespace wimac { namespace parameter {
-	/**
-	 * @brief Basic WiMAC PHY parameters.
-	 */
-	class PHY
-	{
-	public:
+        /**
+         * @brief Basic WiMAC PHY parameters.
+         */
+        class PHY
+        {
+        public:
 
-		double getChannelBandwidth() const { return channelBandwidth; }
-		double getCyclicPrefix() const { return cyclicPrefix;}
-		double getSamplingFrequency() const { return samplingFrequency; }
-		int getFFTSize() const { return fftSize;}
-		double getSubCarrierSpacing() const { return subCarrierSpacing; }
-		double getUsefulSymbolTime() const { return usefulSymbolTime; }
-		double getGuardTime() const { return guardTime; }
-		double getSymbolDuration() const { return symbolDuration; }
-		double getFrameDuration() const { return frameDuration; }
-		int getSymbolsPerFrame() const { return symbolsPerFrame; }
-		double getTTGDuration() const { return ttg; }
-		double getRTGDuration() const { return rtg; }
-		int getGuardSubCarrier() const {return guardSubCarrier; }
-		int getDCDubCarrier() const { return dcSubCarrier; }
-		int getPilotSubCarrier() const { return pilotSubCarrier; }
-		int getDataSubCarrier() const {return dataSubCarrier; }
-		int getSubCahnnels() const { return subChannels; }
-		int getSubCarrierPerSubChannel() const { return subCarrierPerSubChannel; }
-		int getMinimumBitsPerSymbol() const { return minimumBitsPerSymbol; }
+            double getChannelBandwidth() const { return channelBandwidth; }
+            double getCyclicPrefix() const { return cyclicPrefix;}
+            double getSamplingFrequency() const { return samplingFrequency; }
+            int getFFTSize() const { return fftSize;}
+            double getSubCarrierSpacing() const { return subCarrierSpacing; }
+            double getUsefulSymbolTime() const { return usefulSymbolTime; }
+            double getGuardTime() const { return guardTime; }
+            double getSymbolDuration() const { return symbolDuration; }
+            double getFrameDuration() const { return frameDuration; }
+            int getSymbolsPerFrame() const { return symbolsPerFrame; }
+            double getTTGDuration() const { return ttg; }
+            double getRTGDuration() const { return rtg; }
+            int getGuardSubCarrier() const {return guardSubCarrier; }
+            int getDCDubCarrier() const { return dcSubCarrier; }
+            int getPilotSubCarrier() const { return pilotSubCarrier; }
+            int getDataSubCarrier() const {return dataSubCarrier; }
+            int getSubCahnnels() const { return subChannels; }
+            int getSubCarrierPerSubChannel() const { return subCarrierPerSubChannel; }
+            int getMinimumBitsPerSymbol() const { return minimumBitsPerSymbol; }
 
-		int getDLPreamble() const { return dlPreamble; }
-		int getFCH() const { return fch; }
-		int getFrameHead() const { return frameHead; }
+            int getDLPreamble() const { return dlPreamble; }
+            int getFCH() const { return fch; }
+            int getFrameHead() const { return frameHead; }
 
-		int getMapBase() const { return mapBase; }
-		int getIE() const { return ie; }
+            int getMapBase() const { return mapBase; }
+            int getIE() const { return ie; }
 
-	private:
-		void init(const wns::pyconfig::View& config);
+        private:
+            void init(const wns::pyconfig::View& config);
 
-		double channelBandwidth;
-		double cyclicPrefix;
-		double samplingFrequency;
-		int fftSize;
-		double subCarrierSpacing;
-		double usefulSymbolTime;
-		double guardTime;
-		double symbolDuration;
-		double frameDuration;
-		int symbolsPerFrame;
-		double ttg;
-		double rtg;
-		int guardSubCarrier;
-		int dcSubCarrier;
-		int pilotSubCarrier;
-		int dataSubCarrier;
-		int subChannels;
-		int subCarrierPerSubChannel;
-		int minimumBitsPerSymbol;
-		int dlPreamble;
-		int fch;
-		int frameHead;
-		int mapBase;
-		int ie;
+            double channelBandwidth;
+            double cyclicPrefix;
+            double samplingFrequency;
+            int fftSize;
+            double subCarrierSpacing;
+            double usefulSymbolTime;
+            double guardTime;
+            double symbolDuration;
+            double frameDuration;
+            int symbolsPerFrame;
+            double ttg;
+            double rtg;
+            int guardSubCarrier;
+            int dcSubCarrier;
+            int pilotSubCarrier;
+            int dataSubCarrier;
+            int subChannels;
+            int subCarrierPerSubChannel;
+            int minimumBitsPerSymbol;
+            int dlPreamble;
+            int fch;
+            int frameHead;
+            int mapBase;
+            int ie;
 
-		friend class wimac::WiMAC;
-	};
+            friend class wimac::WiMAC;
+        };
 
-	typedef wns::SingletonHolder<PHY> ThePHY;
-}}
+        typedef wns::SingletonHolder<PHY> ThePHY;
+    }
+}
 #endif
 
 

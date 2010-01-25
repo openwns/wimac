@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,51 +23,45 @@
  *
  ******************************************************************************/
 
-/**
- * \file
- * \author Markus Grauer <gra@comnets.rwth-aachen.de>
- */
 
+#ifndef WIMAC_COMPOUNDSWITCH_COMPOUNDSWITCHCONFIGCREATOR_HPP
+#define WIMAC_COMPOUNDSWITCH_COMPOUNDSWITCHCONFIGCREATOR_HPP
 
-#ifndef WIMAC_BUFFER_HPP
-#define WIMAC_BUFFER_HPP
+#include <WNS/StaticFactory.hpp>
+#include <WNS/pyconfig/View.hpp>
 
-#include <WNS/ldk/buffer/Dropping.hpp>
-#include <WNS/probe/bus/ContextCollector.hpp>
-#include <WNS/Cloneable.hpp>
+namespace wimac { namespace compoundSwitch {
 
+    class CompoundSwitch;
 
-namespace wimac{
+    /**
+     * @brief Creator implementation to be used with StaticFactory.
+     *
+     * Useful for constructors with a CompoundSwitch and pyconfig::View
+     * parameter.
+     *
+     */
+    template <typename T, typename KIND = T>
+    struct CompoundSwitchConfigCreator :
+        public CompoundSwitchConfigCreator<KIND, KIND>
+    {
+        virtual KIND* create(CompoundSwitch* compoundSwitch, wns::pyconfig::View& config)
+        {
+            return new T(compoundSwitch, config);
+        }
+    };
 
-/********************* BufferDropping****************************************/
-/**
-* @brief BufferDropping is inherit from wns::ldk::buffer::dropping::Dropping
-*        to add more Probes.
-*
-*/
+    template <typename KIND>
+    struct CompoundSwitchConfigCreator<KIND, KIND>
+    {
+    public:
+        virtual KIND* create(CompoundSwitch*, wns::pyconfig::View&) = 0;
 
-	class BufferDropping :
-		public wns::ldk::buffer::Dropping,
-		public wns::Cloneable<BufferDropping>
-	{
-	public:
-		BufferDropping(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config);
-		BufferDropping(const BufferDropping& other);
-		virtual ~BufferDropping();
-
-		virtual wns::CloneableInterface* clone() const
-			{
-				return wns::Cloneable<BufferDropping>::clone();
-			}
-
-
-	private:
-		//Probes putter
-		wns::probe::bus::ContextCollectorPtr resetedBitsProbe_;
-		wns::probe::bus::ContextCollectorPtr resetedCompoundsProbe_;
-	};
-
-
-}
+        virtual ~CompoundSwitchConfigCreator()
+        {}
+    };
+}}
 
 #endif
+
+

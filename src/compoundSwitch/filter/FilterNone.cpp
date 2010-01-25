@@ -5,8 +5,6 @@
  * Copyright (C) 2004-2009
  * Chair of Communication Networks (ComNets)
  * Kopernikusstr. 5, D-52074 Aachen, Germany
- * phone: ++49-241-80-27910,
- * fax: ++49-241-80-22242
  * email: info@openwns.org
  * www: http://www.openwns.org
  * _____________________________________________________________________________
@@ -25,40 +23,41 @@
  *
  ******************************************************************************/
 
-#ifndef WIMAC_SCHEDULER_PRIORITYDLCALLBACK_HPP
-#define WIMAC_SCHEDULER_PRIORITYDLCALLBACK_HPP
 
-#include <WNS/scheduler/CallBackInterface.hpp>
+#include <WIMAC/compoundSwitch/filter/FilterNone.hpp>
 
-#include <WIMAC/scheduler/DLCallback.hpp>
+#include <WNS/pyconfig/View.hpp>
+#include <WNS/Assure.hpp>
 
-namespace wimac { namespace scheduler {
 
-	class PriorityDLCallback :
-		public virtual wns::scheduler::CallBackInterface,
-		public DLCallback
-	{
-		PriorityDLCallback(wns::ldk::fun::FUN*, const wns::pyconfig::View&);
+using namespace wimac;
+using namespace wimac::compoundSwitch;
+using namespace wimac::compoundSwitch::filter;
 
-		void
-		callBack(wns::scheduler::MapInfoEntryPtr mapInfoEntry);
-	  /*
-		void callBack(unsigned int fSlot,
-			      simTimeType startTime,
-			      simTimeType endTime,
-			      wns::scheduler::UserID user,
-			      const wns::ldk::CompoundPtr& pdu,
-			      float cidColor,
-			      unsigned int beam,
-			      wns::service::phy::ofdma::PatternPtr pattern,
-			      wns::scheduler::MapInfoEntryPtr burst,
-			      const wns::service::phy::phymode::PhyModeInterface& phyMode,
-			      bool measureInterference,
-			      wns::Power txPower,
-			      wns::CandI estimatedCandI) = 0;
-	  */
-	};
 
-}}
-#endif
+STATIC_FACTORY_REGISTER_WITH_CREATOR(FilterNone,
+                                     Filter,
+                                     "wimac.compoundSwitch.filter.FilterNone",
+                                     CompoundSwitchConfigCreator);
+
+FilterNone::FilterNone(CompoundSwitch* compoundSwitch, wns::pyconfig::View& config) :
+    Filter(compoundSwitch, config)
+{
+}
+
+FilterNone::~FilterNone()
+{
+}
+
+bool
+FilterNone::filter(const wns::ldk::CompoundPtr&) const
+{
+    return false;
+}
+
+
+
+
+
+
 
