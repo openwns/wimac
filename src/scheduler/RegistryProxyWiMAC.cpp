@@ -56,7 +56,8 @@ RegistryProxyWiMAC::RegistryProxyWiMAC(wns::ldk::fun::FUN*, const wns::pyconfig:
 	  powerUT(config.get("powerCapabilitiesUT")),
 	  powerAP(config.get("powerCapabilitiesAP")),
 	  powerFRS(config.get("powerCapabilitiesFRS")),
-      numberOfPriorities(config.get<int>("numberOfPriorities"))
+      numberOfPriorities(config.get<int>("numberOfPriorities")),
+            isDL_(config.get<bool>("isDL"))
 {
 	//phyModeMapper.reset(wns::service::phy::phymode::createPhyModeMapper(config.getView("phyModeMapper")));// obsolete
 }
@@ -407,7 +408,7 @@ RegistryProxyWiMAC::filterQoSbased( wns::scheduler::UserSet users )
 }
 
 wns::scheduler::UserSet
-RegistryProxyWiMAC::filterReachable( wns::scheduler::UserSet users )
+RegistryProxyWiMAC::filterReachable(wns::scheduler::UserSet users, const int /*frameNr*/)
 {
 	users = filterListening(users);
 
@@ -419,19 +420,13 @@ RegistryProxyWiMAC::filterReachable( wns::scheduler::UserSet users )
 }
 
 wns::scheduler::UserSet
-RegistryProxyWiMAC::filterReachable( wns::scheduler::UserSet users, const int frameNr )
+RegistryProxyWiMAC::filterReachable(wns::scheduler::UserSet users)
 {
-    return filterReachable(users);
+    return filterReachable(users,0);
 }
 
 wns::scheduler::ConnectionSet
-RegistryProxyWiMAC::filterReachable(wns::scheduler::ConnectionSet connections)
-{
-       return connections;
-}
-
-wns::scheduler::ConnectionSet
-RegistryProxyWiMAC::filterReachable(wns::scheduler::ConnectionSet connections, const int frameNr)
+RegistryProxyWiMAC::filterReachable(wns::scheduler::ConnectionSet connections, const int /*frameNr*/)
 {
        return connections;
 }
@@ -526,6 +521,13 @@ RegistryProxyWiMAC::getPowerCapabilities() const
 
 // This is QoS/priority related
 int
+RegistryProxyWiMAC::getNumberOfQoSClasses()
+{
+    return 1; //wns::service::qos::NUMBEROFQOSCLASSES;
+}
+
+// This is QoS/priority related
+int
 RegistryProxyWiMAC::getNumberOfPriorities()
 {
   return numberOfPriorities;
@@ -588,7 +590,8 @@ RegistryProxyWiMAC::getPriorityForConnection(wns::scheduler::ConnectionID /*cid*
 bool
 RegistryProxyWiMAC::getDL() const
 {
-       return true;
+    LOG_INFO("RegistryProxy::getDL called in station ", layer2->getID(), " isDL: ", isDL_);
+    return isDL_;
 }
 
 bool

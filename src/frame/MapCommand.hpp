@@ -41,7 +41,8 @@ namespace wimac {
             size_t numBursts;
         } local;
         struct {
-            wns::scheduler::MapInfoCollectionPtr mapInfo;
+            //wns::scheduler::MapInfoCollectionPtr mapInfo;
+            wns::scheduler::SchedulingMapPtr schedulingMap;
             wns::simulator::Time phaseDuration;
             int baseStationID;
         } peer;

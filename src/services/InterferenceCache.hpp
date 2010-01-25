@@ -286,9 +286,9 @@ namespace wimac { namespace service {
 
                 bool operator<(const InterferenceCacheKey& rhs) const
                 {
-                    if ( node_->getName() == rhs.node_->getName() )
+                    if ( node_->getNodeID() == rhs.node_->getNodeID() )
                         return subBand_ < rhs.subBand_;
-                    return node_->getName() < rhs.node_->getName();
+                    return node_->getNodeID() < rhs.node_->getNodeID();
                 }
             private:
                 wns::node::Interface* node_;

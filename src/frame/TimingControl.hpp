@@ -89,6 +89,8 @@ namespace wimac {
 
             void onFUNCreated();
 
+            int getOffset();
+
         private:
             struct ActivationEntry
             {
@@ -126,6 +128,7 @@ namespace wimac {
             wns::pyconfig::View config_;
 
             wns::simulator::Time frameStartupDelay_;
+            wns::simulator::Time frameStartTime_;
 
             friend class TriggerActivationStart;
         };

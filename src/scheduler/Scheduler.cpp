@@ -38,7 +38,6 @@
 #include <WNS/probe/bus/ContextProviderCollection.hpp>
 #include <WNS/probe/bus/utils.hpp>
 
-
 #include <WIMAC/Component.hpp>
 #include <WIMAC/PhyUser.hpp>
 #include <WIMAC/PhyAccessFunc.hpp>
@@ -48,7 +47,7 @@
 #include <WIMAC/parameter/PHY.hpp>
 #include <WIMAC/scheduler/RegistryProxyWiMAC.hpp>
 #include <WIMAC/FUConfigCreator.hpp>
-
+#include <WIMAC/frame/ULMapCollector.hpp>
 
 STATIC_FACTORY_REGISTER_WITH_CREATOR(
 	wimac::scheduler::Scheduler,
@@ -63,10 +62,13 @@ Scheduler::Scheduler(wns::ldk::FunctionalUnit* parent, const wns::pyconfig::View
 	plotFrames(config.get<bool>("plotFrames")),
 	usedSlotDuration(0.0),
 	offsetInSlot(0.0),
+        slotDuration(config.get<double>("slotDuration")),
 	freqChannels(config.get<int>("freqChannels")),
 	maxBeams(config.get<int>("maxBeams")),
 	beamforming(config.get<bool>("beamforming")),
+    numberOfTimeSlots_(config.get<int>("numberOfTimeSlots")),
 	uplink(config.get<bool>("uplink")),
+	alwaysAcceptIfQueueAccepts(config.get<bool>("alwaysAcceptIfQueueAccepts")),
 	logger("W-NS", "Scheduler",
 	       wns::simulator::getMasterLogger()),
 	ofdmaProvider(0),
@@ -82,8 +84,11 @@ Scheduler::Scheduler(wns::ldk::FunctionalUnit* parent, const wns::pyconfig::View
 	resetedBitsProbe(),
 	resetedCompoundsProbe(),
 	parent_(parent),
-	accepting_(false)
+	accepting_(false),
+	mapHandler_(0),
+	mapHandlerName_( config.get<std::string>("mapHandlerName") )
 {
+    strategyResult_ = wns::scheduler::strategy::StrategyResultPtr();
     outputDir = "output";
 
     wns::probe::bus::ContextProviderCollection& cpc =
@@ -124,6 +129,7 @@ Scheduler::~Scheduler()
         delete colleagues.callback;
     if ( colleagues.pseudoGenerator )
         delete colleagues.pseudoGenerator;
+    strategyResult_= wns::scheduler::strategy::StrategyResultPtr();
 }
 
 void Scheduler::schedule(const wns::ldk::CompoundPtr& compound)
@@ -135,8 +141,10 @@ void Scheduler::schedule(const wns::ldk::CompoundPtr& compound)
 
 bool Scheduler::doIsAccepting(const wns::ldk::CompoundPtr& compound) const
 {
-    //return accepting_ && colleagues.queue->isAccepting(compound);
-    return colleagues.queue->isAccepting(compound);
+    if(alwaysAcceptIfQueueAccepts)
+	return colleagues.queue->isAccepting(compound);
+    else
+        return accepting_ && colleagues.queue->isAccepting(compound);
 }
 
 void Scheduler::resetAllQueues()
@@ -164,7 +172,45 @@ Scheduler::notifyAboutConnectionDeleted(const ConnectionIdentifier cid)
 void
 Scheduler::deliverSchedule(wns::ldk::Connector* connector)
 {
-    colleagues.callback->deliverNow(connector);
+
+    if (schedulerSpot_ == wns::scheduler::SchedulerSpot::ULSlave()) 
+    {
+        if (mapHandler_->resourcesGranted())
+        {
+            /****************** Scheduling Phase ****************************************/
+            // trigger the scheduling process of the strategy module
+            wns::scheduler::strategy::StrategyInput strategyInput(freqChannels, 
+                slotDuration, 
+                numberOfTimeSlots_, 
+                maxBeams,
+                NULL);
+
+            strategyInput.beamforming = maxBeams > 1?true:false;
+            strategyInput.setInputSchedulingMap(mapHandler_->getMasterMapForSlaveScheduling());
+
+            strategyResult_ = wns::scheduler::strategy::StrategyResultPtr(
+            new wns::scheduler::strategy::StrategyResult(colleagues.strategy->startScheduling(strategyInput))); 
+
+            if (strategyResult_ == wns::scheduler::strategy::StrategyResultPtr())
+            {
+                LOG_INFO(parent_->getFUN()->getName(), 
+                    ": ULSlave::deliverSchedule: Resources granted but no Compounds to schedule");
+                return;//empty map do nothing
+            }
+            LOG_INFO(parent_->getFUN()->getName(), 
+                ": ULSlave::deliverSchedule: ULSlaveCallback will now finalize the schedule.");
+            colleagues.callback->callBack(strategyResult_->schedulingMap);
+        }
+        else
+        {
+            LOG_INFO(parent_->getFUN()->getName(), 
+                ": ULSlave::deliverSchedule: No resources granted");
+            return; //ULSlave scheduling not required without granted resources
+        }
+    }
+    
+    if (schedulerSpot_ != wns::scheduler::SchedulerSpot::ULMaster())     
+        colleagues.callback->deliverNow(connector);
 }
 
 void
@@ -210,9 +256,6 @@ Scheduler::setupPlotting()
 void
 Scheduler::startScheduling()
 {
-    usedSlotDuration = 0.0;
-    offsetInSlot = 0.0;
-
     if (plotFrames)
         setupPlotting();
 
@@ -225,52 +268,50 @@ Scheduler::startScheduling()
 
     accepting_ = false;
 
-    // in case I am an UL scheduler, wakeup my BW request generator
-    //if(!uplink) {
-    //	getReceptor()->wakeup();
-    //}
-    //else {
-    //triggerBWGenerator
-    //	dynamic_cast<wimac::scheduler::PseudoBWRequestGenerator*>(friends_.classifier)->wakeup2();
-    //}
-
-    /****************** Broadcast Phase ****************************************/
-    // if we have broadcast pdus in the queue, schedule them first;
-    // usedSlotDuration gets adapted
-    this->handleBroadcast();
-
-    MESSAGE_BEGIN(NORMAL, logger, m, colleagues.registry->getNameForUser(colleagues.registry->getMyUserID()));
-    m << " Used "
-      << offsetInSlot
-      << " of slot time for Broadcast phase";
-    MESSAGE_END();
-
-    // the following scheduling phases must not schedule into the already used
-    // beginning of the slot; start with next OFDM symbol
-    offsetInSlot = ceil(usedSlotDuration / parameter::ThePHY::getInstance()->getSymbolDuration())*parameter::ThePHY::getInstance()->getSymbolDuration();
-    usedSlotDuration = offsetInSlot;
-
-    if( (double(this->getDuration()) - double(usedSlotDuration)) < parameter::ThePHY::getInstance()->getSymbolDuration() )
-        return; // No more space left for further scheduling
-
+    if(schedulerSpot_ == wns::scheduler::SchedulerSpot::ULSlave())
+        return;
 
     /****************** Scheduling Phase ****************************************/
     // trigger the scheduling process of the strategy module
-    colleagues.strategy->startScheduling(freqChannels,
-                                         maxBeams,
-                                         double(this->getDuration()) - double(usedSlotDuration),
-                                         colleagues.callback);
+    wns::scheduler::strategy::StrategyInput strategyInput(freqChannels, 
+        slotDuration, 
+        numberOfTimeSlots_, 
+        maxBeams,
+        NULL);
+        //colleagues.callback);
 
-    MESSAGE_BEGIN(NORMAL, logger, m, colleagues.registry->getNameForUser(colleagues.registry->getMyUserID()));
-    m << " Used "
-      << offsetInSlot
-      << " of slot time for Broadcast + Scheduling phases";
-    MESSAGE_END();
+    strategyInput.beamforming = maxBeams > 1?true:false;
 
+    strategyResult_ = wns::scheduler::strategy::StrategyResultPtr(
+        new wns::scheduler::strategy::StrategyResult(colleagues.strategy->startScheduling(strategyInput))); 
+
+    if (schedulerSpot_ == wns::scheduler::SchedulerSpot::ULMaster())
+    {
+        LOG_INFO(parent_->getFUN()->getName(), " deleteCompoundsInBursts()+deleteCompounds()");
+        strategyResult_->deleteCompoundsInBursts(); // MapInfoCollection is not needed anymore
+        strategyResult_->schedulingMap->deleteCompounds(); // compounds are not needed anymore
+        strategyResult_->schedulingMap->grantFullResources(); // full time length on used subchannels (only for resourceUsage probe and plot)
+        //strategyResult_->schedulingMap->processMasterMap(); // must be done in slave,peer,UT
+    }
+    // TODO:(bmw) move to Scheduler::finishCollection() 
+    LOG_INFO(parent_->getFUN()->getName(), " Scheduler::finishCollection() in Scheduler::startScheduling(). numberOfTimeSlots_: ", numberOfTimeSlots_, " slotDuration: ", slotDuration);
+    if (strategyResult_ == wns::scheduler::strategy::StrategyResultPtr())
+    {
+           return;//empty map do nothing
+    }
+    colleagues.callback->callBack(strategyResult_->schedulingMap);
 }
 
 void
-Scheduler::finishCollection() {
+Scheduler::finishCollection() 
+{ 
+       LOG_INFO(parent_->getFUN()->getName(), " Scheduler::finishCollection(): ");
+//     if (strategyResult_ == wns::scheduler::strategy::StrategyResultPtr() || schedulerSpot_==wns::scheduler::SchedulerSpot::ULMaster())
+//     {
+//            return; //empty map or ulmaster nothing to do
+//     }
+//     colleagues.callback->callBack(strategyResult_->schedulingMap);
+
     if (plotFrames) {
         for (unsigned int i = 0; i < freqChannels; ++i) {
             plotFiles[i]->close();
@@ -287,6 +328,9 @@ void Scheduler::setFUN(wns::ldk::fun::FUN* fun)
 
 	LOG_INFO(parent_->getFUN()->getName(),
 			 "Scheduler::setFUN() called and now setting up friends and colleagues");
+
+	mapHandler_= fun->findFriend< wimac::frame::MapHandlerInterface*>(mapHandlerName_);
+	assure( mapHandler_, "mapcollector not of type wimac::scheduler::MapHandler");
 
 	// the first thing to do is to set up the registry because other colleagues
 	// may depend on it for their initialization
@@ -334,6 +378,9 @@ void Scheduler::setFUN(wns::ldk::fun::FUN* fun)
         colleagues.queue = queueCreator->create( parent_, queueView );
 	assure(colleagues.queue, "Queue creation failed");
 
+    colleagues.queue->setFUN(fun);
+    colleagues.queue->setColleagues(colleagues.registry);
+
 	wns::scheduler::strategy::StrategyCreator* strategyCreator =
 		wns::scheduler::strategy::StrategyFactory::creator(strategyName);
 	colleagues.strategy = strategyCreator->create(pyConfig.get<wns::pyconfig::View>("strategy"));
@@ -348,9 +395,10 @@ void Scheduler::setFUN(wns::ldk::fun::FUN* fun)
 	colleagues.grouper->setColleagues(colleagues.registry);
 	colleagues.strategy->setColleagues(colleagues.queue,
 					   colleagues.grouper,
-					   colleagues.registry
+					   colleagues.registry,
+					   NULL
 					   );
-	colleagues.queue->setColleagues(colleagues.registry);
+
 	colleagues.callback->setColleagues(colleagues.registry);
 	colleagues.grouper->setFriends(ofdmaProvider);
 	colleagues.strategy->setFriends(ofdmaProvider);
@@ -360,6 +408,7 @@ void Scheduler::setFUN(wns::ldk::fun::FUN* fun)
 		colleagues.pseudoGenerator->setFUN(fun);
 		colleagues.pseudoGenerator->setScheduler(this);
 	}
+	schedulerSpot_ = colleagues.strategy->getSchedulerSpotType();
 }
 
 
@@ -368,19 +417,24 @@ Scheduler::setProvider(wns::service::phy::ofdma::DataTransmission* _ofdmaProvide
 	ofdmaProvider = _ofdmaProvider;
 }
 
-
-wns::scheduler::MapInfoCollectionPtr
-Scheduler::getMapInfo() const {
-    assure(colleagues.strategy, "Strategy module not present");
-
-    return colleagues.strategy->getMapInfo();
+wns::scheduler::SchedulingMapPtr
+Scheduler::getSchedulingMap() const {
+    assure(strategyResult_, "StrategyResult not present");
+    return strategyResult_->schedulingMap;
 }
+
+// wns::scheduler::MapInfoCollectionPtr
+// Scheduler::getMapInfo() const {
+//     assure(colleagues.strategy, "Strategy module not present");
+// 
+//     return colleagues.strategy->getMapInfo();
+// }
 
 int
 Scheduler::getNumBursts() const {
-    assure(colleagues.strategy, "Strategy module not present");
-
-    return colleagues.strategy->getNumBursts();
+    assure(strategyResult_, "Strategy module not present");
+    int numOfSlots = 5;
+    return strategyResult_->schedulingMap->getNumberOfSubChannels() * numOfSlots;
 }
 
 void
@@ -468,4 +522,9 @@ Scheduler::putProbe(int bits, int compounds)
         resetedCompoundsProbe->put(compounds);
 }
 
+wns::scheduler::queue::QueueInterface* 
+Scheduler::getQueue() const
+{
+    return colleagues.queue;    
+}
 

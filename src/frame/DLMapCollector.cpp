@@ -32,7 +32,6 @@
 #include <WIMAC/PhyUser.hpp>
 #include <WIMAC/PhyUserCommand.hpp>
 #include <WIMAC/PhyAccessFunc.hpp>
-#include <WIMAC/scheduler/DLScheduler.hpp>
 #include <WIMAC/frame/SingleCompoundCollector.hpp>
 #include <WIMAC/PhyAccessFunc.hpp>
 #include <WIMAC/Utilities.hpp>
@@ -171,7 +170,7 @@ wns::simulator::Time DLMapCollector::getCurrentDuration() const
         phyMode->getDataRate();
 
     Bit compoundSize =
-        56 + dlScheduler_->getNumBursts() * 48;
+        56 + dlScheduler_->getNumBursts(); /* *48*/;
 
     wns::simulator::Time symbolDuration = parameter::ThePHY::getInstance()->getSymbolDuration();
     wns::simulator::Time roundedDuration =

@@ -27,11 +27,12 @@
 
 #include <WNS/ldk/Compound.hpp>
 #include <WNS/ldk/fcf/TimingControl.hpp>
+#include <WNS/logger/Logger.hpp>
 
-#include <WIMAC/scheduler/DLScheduler.hpp>
 #include <WIMAC/Component.hpp>
 #include <WIMAC/PhyUser.hpp>
 #include <WIMAC/Utilities.hpp>
+#include <WIMAC/services/ConnectionManager.hpp>
 
 using namespace wimac::frame;
 

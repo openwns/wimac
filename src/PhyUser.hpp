@@ -31,6 +31,7 @@
 
 #include <WNS/node/Node.hpp>
 #include <WNS/probe/bus/ContextCollector.hpp>
+#include <WIMAC/GuiWriter.hpp>
 
 #include <WNS/ldk/FunctionalUnit.hpp>
 #include <WNS/ldk/Compound.hpp>
@@ -65,6 +66,7 @@ namespace wns { namespace ldk { namespace fcf {
 
 namespace wimac {
 
+    class GuiWriter;
     namespace service {
         class ConnectionManager;
         class InterferenceCache;
@@ -209,6 +211,11 @@ namespace wimac {
             wns::ldk::fcf::FrameBuilder* frameBuilder;
             ConnectionClassifier* connectionClassifier;
         } friends_;
+
+
+        wns::probe::bus::ContextCollectorPtr guiProbe_;
+
+        GuiWriter* GuiWriter_;
 
     };
 }

@@ -38,6 +38,7 @@
 #include <WNS/scheduler/SchedulerTypes.hpp>
 #include <WNS/Observer.hpp>
 #include <WNS/probe/bus/ContextCollector.hpp>
+#include <WNS/scheduler/strategy/StrategyInterface.hpp>
 
 #include <WIMAC/Classifier.hpp>
 #include <WIMAC/scheduler/PDUWatchProviderObserver.hpp>
@@ -60,9 +61,10 @@ namespace wns {
             class QueueInterface;
         }
 
-        namespace strategy {
-            class StrategyInterface;
-        }
+//         namespace strategy {
+//             class StrategyResultPtr;
+//             class StrategyInterface;
+//         }
 
         namespace grouper {
             class GroupingProviderInterface;
@@ -78,6 +80,9 @@ namespace wns {
 
 namespace wimac {
     class PhyUser;
+    namespace frame {
+        class MapHandlerInterface;
+    }
 }
 namespace wimac { namespace scheduler {
         class Callback;
@@ -129,11 +134,21 @@ namespace wimac { namespace scheduler {
             { return duration_; }
 
             // For MapInfoProviderInterface
-            wns::scheduler::MapInfoCollectionPtr getMapInfo() const;
+            wns::scheduler::SchedulingMapPtr getSchedulingMap() const;
+            wns::scheduler::MapInfoCollectionPtr getMapInfo() const 
+            {
+                assure(0, "getMapInfo() should not be called anymore");
+                return wns::scheduler::MapInfoCollectionPtr();
+            }
             int getNumBursts() const;
 
-
             void notifyAboutConnectionDeleted(const ConnectionIdentifier);
+
+            /**
+            * @bried Returns a pointer to the queue of the current scheduling strategy.
+            */
+            wns::scheduler::queue::QueueInterface* 
+            getQueue() const;
 
         protected:
             void setupPlotting();
@@ -157,7 +172,9 @@ namespace wimac { namespace scheduler {
             unsigned int freqChannels;
             unsigned int maxBeams;
             bool beamforming;
+            int numberOfTimeSlots_;
             bool uplink;
+	    bool alwaysAcceptIfQueueAccepts;
 
             struct Friends
             {
@@ -183,6 +200,9 @@ namespace wimac { namespace scheduler {
             std::string callbackName;
             wns::simulator::Time duration_;
 
+            wimac::frame::MapHandlerInterface* mapHandler_;
+            std::string mapHandlerName_;
+
             int pduCount;
             int frameNo;
 
@@ -190,13 +210,19 @@ namespace wimac { namespace scheduler {
 
             std::string outputDir;
 
+            /** @brief there are three positions for the scheduler... */
+            wns::scheduler::SchedulerSpotType schedulerSpot_;
+
             // Probes
             wns::probe::bus::ContextCollectorPtr resetedBitsProbe;
             wns::probe::bus::ContextCollectorPtr resetedCompoundsProbe;
 
+            wns::scheduler::strategy::StrategyResultPtr strategyResult_;
+
             wns::ldk::FunctionalUnit* parent_;
             wns::ldk::Receptor* receptor_;
             bool accepting_;
+            double slotDuration;
         };
     }
 }

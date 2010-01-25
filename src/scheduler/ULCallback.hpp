@@ -26,42 +26,55 @@
 #ifndef WIMAC_SCHEDULER_ULCALLBACK_HPP
 #define WIMAC_SCHEDULER_ULCALLBACK_HPP
 
-#include <WNS/scheduler/CallBackInterface.hpp>
 #include <WIMAC/scheduler/Callback.hpp>
 
 namespace wimac { namespace scheduler {
 
-	class ULCallback :
-		public virtual wns::scheduler::CallBackInterface,
-		public Callback
-	{
-	public:
-		ULCallback(wns::ldk::fun::FUN*, const wns::pyconfig::View&);
+    class ULCallback :
+        public Callback
+    {
+    public:
+        ULCallback(wns::ldk::fun::FUN*, const wns::pyconfig::View&);
 
-		void
-		callBack(wns::scheduler::MapInfoEntryPtr mapInfoEntry);
-	  /*
-		void callBack(unsigned int fSlot,
-			      wns::simulator::Time startTime,
-			      wns::simulator::Time endTime,
-			      wns::scheduler::UserID user,
-			      const wns::ldk::CompoundPtr& pdu,
-			      float cidColor,
-			      unsigned int beam,
-			      wns::service::phy::ofdma::PatternPtr pattern,
-			      wns::scheduler::MapInfoEntryPtr burst,
-			      const wns::service::phy::phymode::PhyModeInterface& phyMode,
-			      bool measureInterference,
-			      wns::Power requestedTxPower,
-			      wns::CandI estimatedCandI);
+        void
+        callBack(wns::scheduler::SchedulingMapPtr schedulingMap);
 
-	  */
-		void deliverNow(wns::ldk::Connector*);
+        virtual void
+        processPacket(const wns::scheduler::SchedulingCompound & compound) = 0;
 
-	private:
-		wns::ldk::fun::FUN* fun_;
-	};
+        virtual void 
+        deliverNow(wns::ldk::Connector*) = 0;
 
+    protected:
+        wns::ldk::fun::FUN* fun_;
+        wns::simulator::Time slotLength_;
+    };
+
+    class ULMasterCallback :
+        public ULCallback
+    {
+    public:
+        ULMasterCallback(wns::ldk::fun::FUN*, const wns::pyconfig::View&);
+
+        virtual void
+        processPacket(const wns::scheduler::SchedulingCompound & compound);
+
+        virtual void
+        deliverNow(wns::ldk::Connector* connector);
+    };
+
+    class ULSlaveCallback :
+        public ULCallback
+    {
+    public:
+        ULSlaveCallback(wns::ldk::fun::FUN*, const wns::pyconfig::View&);
+
+        virtual void
+        processPacket(const wns::scheduler::SchedulingCompound & compound); 
+
+        virtual void
+        deliverNow(wns::ldk::Connector* connector);
+    };
 }}
 #endif
 

@@ -29,6 +29,7 @@
 #include <WNS/ldk/Compound.hpp>
 #include <WNS/ldk/FUNConfigCreator.hpp>
 #include <WNS/StaticFactory.hpp>
+#include <WNS/scheduler/queue/QueueInterface.hpp>
 #include <WIMAC/FUConfigCreator.hpp>
 
 namespace wns {
@@ -102,6 +103,11 @@ namespace wimac {
              */
             virtual wns::simulator::Time getDuration() const = 0;
 
+            /**
+            * @bried Returns a pointer to the queue of the current scheduling strategy.
+            */
+            virtual wns::scheduler::queue::QueueInterface* 
+            getQueue() const = 0;
 
         private:
 

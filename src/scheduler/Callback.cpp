@@ -26,21 +26,37 @@
 #include <WIMAC/scheduler/Callback.hpp>
 #include <WIMAC/PhyUser.hpp>
 #include <WIMAC/PhyUserCommand.hpp>
+#include <WNS/probe/bus/ContextProviderCollection.hpp> 
+#include <WNS/ldk/Layer.hpp> 
+
 
 using namespace wimac::scheduler;
 
-Callback::Callback(wns::ldk::fun::FUN* fun) :
-	offsetInSlot(0)
+Callback::Callback(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config)
 {
-	colleagues.registry = 0;
-	friends_.phyUser = fun->findFriend<wimac::PhyUser*>("phyUser");
-	assureNotNull(friends_.phyUser);
+    colleagues.registry = 0;
+    friends_.phyUser = fun->findFriend<wimac::PhyUser*>("phyUser");
+    assureNotNull(friends_.phyUser);
+
+    wns::probe::bus::ContextProviderCollection* cpcParent = 
+        &fun->getLayer()->getContextProviderCollection();
+
+    wns::probe::bus::ContextProviderCollection cpc(cpcParent);
+
+    frameOffsetDelayProbe_ = wns::probe::bus::ContextCollectorPtr(
+        new wns::probe::bus::ContextCollector(cpc, config.get<std::string>(
+            "frameOffsetDelayProbeName")));
+
+    transmissionDelayProbe_ = wns::probe::bus::ContextCollectorPtr(
+        new wns::probe::bus::ContextCollector(cpc, config.get<std::string>(
+            "transmissionDelayProbeName")));
+
 }
 
 
 void Callback::setColleagues(wns::scheduler::RegistryProxyInterface* registry)
 {
-	colleagues.registry = registry;
+    colleagues.registry = registry;
 }
 
 

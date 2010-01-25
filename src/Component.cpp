@@ -36,6 +36,7 @@
 #include <WNS/ldk/buffer/Buffer.hpp>
 #include <WNS/ldk/fun/Main.hpp>
 #include <WNS/ldk/utils.hpp>
+#include <WNS/ldk/Group.hpp>
 #include <WNS/service/phy/ofdma/Handler.hpp>
 #include <WNS/service/phy/ofdma/DataTransmission.hpp>
 #include <WNS/service/dll/StationTypes.hpp>
@@ -49,6 +50,8 @@
 #include <WIMAC/services/DeadStationDetect.hpp>
 #include <WIMAC/StationManager.hpp>
 #include <WIMAC/UpperConvergence.hpp>
+#include <WIMAC/helper/ContextProvider.hpp>
+
 
 using namespace wimac;
 
@@ -152,6 +155,12 @@ Component::Component(wns::node::Interface* node, const wns::pyconfig::View& conf
     getNode()->getContextProviderCollection().
         addProvider(wns::probe::bus::contextprovider::Callback
                     ("MAC.StationType", boost::bind(&wimac::Component::getStationType, this ) ) );
+    getNode()->getContextProviderCollection().addProvider(
+        wimac::helper::contextprovider::SourceAddress(fun_, 
+            config.get<std::string>("upperConvergenceName")));    
+    getNode()->getContextProviderCollection().addProvider(
+        wimac::helper::contextprovider::TargetAddress(fun_, 
+            config.get<std::string>("upperConvergenceName")));
 
     // global station registry
     TheStationManager::getInstance()->registerStation(id_, address_, this);
@@ -282,10 +291,15 @@ Component::getNumberOfQueuedPDUs(ConnectionIdentifiers cis)
         wns::ldk::FlowSeparator* bufferSep =
             getFUN()->findFriend<wns::ldk::FlowSeparator*>("bufferSep");
         wns::ldk::ConstKeyPtr key(new ConnectionKey((*conn)->cid_));
-        wns::ldk::buffer::Buffer* buffer =
-            dynamic_cast<wns::ldk::buffer::Buffer*>(bufferSep->getInstance(key));
-        if(buffer)
+        wns::ldk::Group* group =
+            dynamic_cast<wns::ldk::Group*>(bufferSep->getInstance(key));
+        if(group)
+        {
+            wns::ldk::buffer::Buffer* buffer =
+                group->getSubFUN()->findFriend<wns::ldk::buffer::Buffer*>("buffer");
+            assure(buffer, "Cannot find buffer in subFUN");
             queuedPDUs += buffer->getSize();
+        }
     }
     if (getFUN()->knowsFunctionalUnit("upRelayInject"))
     {

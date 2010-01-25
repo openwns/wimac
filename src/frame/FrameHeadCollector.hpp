@@ -42,7 +42,6 @@ namespace wimac {
 }
 
 namespace wimac { namespace frame {
-        class BSDLScheduler;
 
         /**
          * @brief Command for the FrameHeadWriter and FrameHeadRetreiver.

@@ -34,7 +34,7 @@
 #include <WNS/events/CanTimeout.hpp>
 
 #include <WIMAC/frame/MapCommand.hpp>
-
+#include <WIMAC/frame/ULMapCollector.hpp>
 
 namespace wimac {
     class Component;
@@ -47,7 +47,6 @@ namespace wimac {
     }
 
     namespace frame {
-        class BSDLScheduler;
 
 
         typedef MapCommand DLMapCommand;
@@ -62,9 +61,24 @@ namespace wimac {
             public wns::ldk::HasReceptor<>,
             public wns::Cloneable<DLMapCollector>,
             public wns::events::CanTimeout,
-            public wns::ldk::tools::UpUnconnectable
+            public wns::ldk::tools::UpUnconnectable,
+            virtual public wimac::frame::MapHandlerInterface
         {
         public:
+            /*MapHandlerInterface begin */
+		virtual bool		
+		resourcesGranted() 
+		{ 
+			assure(0, "not to be called"); return false; 
+		}
+		virtual wns::scheduler::SchedulingMapPtr
+		getMasterMapForSlaveScheduling() 
+		{ 
+			assure(0, "not to be called"); 
+			return wns::scheduler::SchedulingMapPtr(); 
+		};
+            /*MapHandlerInterface end*/
+
             DLMapCollector( wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config );
 
             void onFUNCreated();

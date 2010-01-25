@@ -48,14 +48,9 @@ namespace wimac { namespace scheduler {
          * backlogged PDUs.
          */
         bool
-        queueHasPDUs(wns::scheduler::ConnectionID);
+        queueHasPDUs(wns::scheduler::ConnectionID) const;
 
-        /**
-         * @brief
-         *
-         * Return True if there is no compound in the queue
-         */
-        bool
+        virtual bool
         isEmpty() const;
 
         /**
@@ -150,8 +145,8 @@ namespace wimac { namespace scheduler {
          * for a certain user.  Only used in
          * scheduler/strategy/ProportionalFairBase
          */
-        uint32_t
-        numCompoundsForUser(wns::scheduler::UserID user) const;
+        //uint32_t
+        //numCompoundsForUser(wns::scheduler::UserID user) const;
 
         /**
          * @brief Returns the number of Compounds the Queue has stored for a
@@ -161,20 +156,20 @@ namespace wimac { namespace scheduler {
         numCompoundsForCid(wns::scheduler::ConnectionID cid) const;
 
         /**
-         * @brief Returns the number of Bits schedules for one user.
+         * @brief Returns the number of Bits to be scheduled for one user.
          * Only used in scheduler/strategy/ProportionalFairBase
          */
-        uint32_t
-        numBitsForUser(wns::scheduler::UserID user) const;
+        //uint32_t
+        //numBitsForUser(wns::scheduler::UserID user) const;
 
         /**
-         * @brief Returns the number of Bits schedules for one user
+         * @brief Returns the number of Bits to be scheduled for one user
          */
         uint32_t
         numBitsForCid(wns::scheduler::ConnectionID cid) const;
 
         /**
-         * @brief Returns the a container of QueueStatus for each cid
+         * @brief Returns the container of QueueStatus for each cid
          */
         wns::scheduler::QueueStatusContainer
         getQueueStatus() const;
@@ -201,6 +196,11 @@ namespace wimac { namespace scheduler {
         void
         put(const wns::ldk::CompoundPtr& compound);
 
+        /** @brief Retrieves a copy of the queue for a CID. Makes no sense here so we throw
+        **/
+        virtual std::queue<wns::ldk::CompoundPtr> 
+        getQueueCopy(wns::scheduler::ConnectionID cid);
+
         /**
          * @brief Gives the queue module access to the RegistryProxy
          */
@@ -221,9 +221,6 @@ namespace wimac { namespace scheduler {
 
         wns::ldk::Receptor*
         getReceptor() const;
-
-
-        
 
 
         struct IsAcceptingChecker

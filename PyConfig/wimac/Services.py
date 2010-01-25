@@ -25,6 +25,22 @@
 #
 ###############################################################################
 
+import openwns.logger
+
+class QueueManager(object):
+    __plugin__ = "wimac.services.QueueManager"
+    connectionManagerServiceName = None
+    logger = None
+    
+    def __init__(self, 
+            serviceName = "queueManager", 
+            cmServiceName = "connectionManager", 
+            parentLogger = None):
+        self.serviceName = serviceName
+        self.connectionManagerServiceName = cmServiceName
+        self.logger = openwns.logger.Logger("WIMAC", "QueueManager", True, parentLogger);
+      
+
 class ConnectionManager():
     __plugin__ = 'wimac.services.ConnectionManager'
     fuReseter = None

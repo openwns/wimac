@@ -126,15 +126,22 @@ DataCollector::doSendData(const wns::ldk::CompoundPtr& compound)
 void
 DataCollector::doStartCollection(int)
 {
-    getCurrentScheduler()->setDuration(getMaximumDuration());
-
-    getCurrentScheduler()->startScheduling();
+    wimac::scheduler::Interface* sched;
+    sched = getCurrentScheduler();
+    if(sched != NULL)
+    {
+        getCurrentScheduler()->setDuration(getMaximumDuration());
+        getCurrentScheduler()->startScheduling();
+    }
 }
 
 void
 DataCollector::doStart(int)
 {
-    getCurrentScheduler()->deliverSchedule(getConnector());
+    wimac::scheduler::Interface* sched;
+    sched = getCurrentScheduler();
+    if(sched != NULL)
+        getCurrentScheduler()->deliverSchedule(getConnector());
     setTimeout( getMaximumDuration() );
 }
 
@@ -160,7 +167,10 @@ DataCollector::onTimeout()
 void
 DataCollector::finishCollection()
 {
-    getCurrentScheduler()->finishScheduling();
+    wimac::scheduler::Interface* sched;
+    sched = getCurrentScheduler();
+    if(sched != NULL)
+        getCurrentScheduler()->finishScheduling();
 }
 
 wimac::scheduler::Interface*

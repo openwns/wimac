@@ -33,7 +33,6 @@
 #include <WIMAC/PhyUserCommand.hpp>
 #include <WIMAC/PhyAccessFunc.hpp>
 #include <WIMAC/Utilities.hpp>
-#include <WIMAC/scheduler/ULScheduler.hpp>
 #include <WIMAC/frame/SingleCompoundCollector.hpp>
 #include <WIMAC/frame/DataCollector.hpp>
 #include <WIMAC/scheduler/Scheduler.hpp>
@@ -66,7 +65,11 @@ ULMapCollector::ULMapCollector( wns::ldk::fun::FUN* fun, const wns::pyconfig::Vi
     phyUser_(0),
     phyMode(wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface>
             (wns::service::phy::phymode::createPhyMode( config.getView("phyMode") ) ) ),
-    hasUplinkBurst_(false)
+    //hasUplinkBurst_(false),
+    //myBursts_(new wns::scheduler::MapInfoCollection)
+    ulResourcesAvailable_(false),
+    scheduledULMap_(wns::scheduler::SchedulingMapPtr())
+
 {
     if (!config.isNone("ulSchedulerName") )
         ulSchedulerName_ = config.get<std::string>("ulSchedulerName");
@@ -112,8 +115,10 @@ void ULMapCollector::doStart(int mode)
             component_->getID();
         command->local.numBursts =
             ulScheduler_->getNumBursts();
-        command->peer.mapInfo =
-            ulScheduler_->getMapInfo();
+        //command->peer.mapInfo =
+          //  ulScheduler_->getMapInfo();
+	command->peer.schedulingMap =
+            ulScheduler_->getSchedulingMap();
         // map duration is a little shorter than the phase duration
         command->local.mapDuration =
             getCurrentDuration() - Utilities::getComputationalAccuracyFactor();
@@ -138,11 +143,13 @@ void ULMapCollector::doStart(int mode)
         phyCommand->local.pAFunc_->phyMode_ = phyMode;
 
         setTimeout( getCurrentDuration() - Utilities::getComputationalAccuracyFactor() );
-        LOG_INFO( getFUN()->getLayer()->getName(), " send UL Map of size: ", command->local.numBursts, " / ", command->peer.mapInfo->size() );
+        LOG_INFO( getFUN()->getLayer()->getName(), " send UL Map of size: ", command->local.numBursts );
+        //LOG_INFO( getFUN()->getLayer()->getName(), " send UL Map of size: ", command->local.numBursts, " / ", command->peer.mapInfo->size() );
         getConnector()->getAcceptor( compound )->sendData( compound );
     }
     case Receiving:
         /* wait and do nothing */
+	ulResourcesAvailable_ = false;
         break;
     default:
         throw wns::Exception("Unknown activation mode in DLMapCollector");
@@ -159,6 +166,7 @@ void
 ULMapCollector::calculateSizes( const wns::ldk::CommandPool* commandPool, Bit& commandPoolSize, Bit& dataSize ) const
 {
     //What are the sizes in the upper Layers
+    /** @todo: update to 16e or 16m MAP size */
     getFUN()->getProxy()->calculateSizes(commandPool, commandPoolSize, dataSize, this);
 
     ULMapCommand* command = getCommand( commandPool );
@@ -171,7 +179,7 @@ wns::simulator::Time ULMapCollector::getCurrentDuration() const
         phyMode->getDataRate();
 
     Bit compoundSize =
-        56 + ulScheduler_->getNumBursts() * 48;
+        56 + ulScheduler_->getNumBursts(); /** 48;*/
     wns::simulator::Time symbolDuration = parameter::ThePHY::getInstance()->getSymbolDuration();
     wns::simulator::Time roundedDuration =
         ceil( (compoundSize / dataRate ) / symbolDuration ) * symbolDuration;
@@ -181,8 +189,8 @@ wns::simulator::Time ULMapCollector::getCurrentDuration() const
 
 void ULMapCollector::doOnData( const wns::ldk::CompoundPtr& compound )
 {
-	ULMapCommand* command =
-		getCommand( compound->getCommandPool() );
+	assure (compound, "Invalid Map compound received!");
+	ULMapCommand* command = getCommand( compound->getCommandPool() );
 
 	if(command->peer.baseStationID !=
 	   connectionManager_->getConnectionWithID( 0 )->baseStation_ )
@@ -191,34 +199,24 @@ void ULMapCollector::doOnData( const wns::ldk::CompoundPtr& compound )
 			   "ULMapCollector::doOnData: compound is not from associated BaseStation");
 	}
 
-	LOG_INFO( getFUN()->getLayer()->getName(), " received UL Map from station: ", command->peer.baseStationID,
-			  " of size : ", command->peer.mapInfo->size() );
+	//LOG_INFO( getFUN()->getLayer()->getName(), " received UL Map from station: ", command->peer.baseStationID,
+	//		  " of size : ", command->peer.mapInfo->size() );
+	LOG_INFO( getFUN()->getLayer()->getName(), " received UL Map from station: ", command->peer.baseStationID);
 
 	ulPhaseDuration_ = command->peer.phaseDuration;
 
-	// find my entry in the ul map and set given timing
-	wns::scheduler::MapInfoCollection::iterator info =
-	find_if( command->peer.mapInfo->begin(), command->peer.mapInfo->end(),
-			 UserFind( component_->getNode() ) );
-	if ( info == command->peer.mapInfo->end() )
+	// check if at least one of the frames contains granted ul resources
+	ulResourcesAvailable_ = false;
+        LOG_INFO("ULMAP saving now: ");
+        scheduledULMap_ = command->peer.schedulingMap;
+	LOG_INFO("ULMAP = ", scheduledULMap_->toString());
+        //Clear old MAPlist
+	//scheduledULMap_->clear();
+	if (scheduledULMap_->hasResourcesForUser(component_->getNode()))
 	{
-		LOG_INFO( getFUN()->getLayer()->getName(),
-				  " received UL MAP without uplink opportunity for itself");
-		burstStartTime_ = 0.0;
-		burstEndTime_ = 0.0;
-		ulPhaseDuration_ = 0.0;
-		burstPhyMode = phyMode;
-		hasUplinkBurst_ = false;
-	}
-	else
-	{
-		burstStartTime_ = (*info)->start;
-		burstEndTime_ = (*info)->end;
-		burstPhyMode = wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface>
-			(dynamic_cast<const wns::service::phy::phymode::PhyModeInterface*>((*info)->phyModePtr->clone()));
-		estimatedCandI_ = (*info)->estimatedCandI;
-		hasUplinkBurst_ = true;
+		ulResourcesAvailable_ = true; // assume always true when a MAP comes
+                LOG_INFO( getFUN()->getLayer()->getName(), " has granted resources" );
 	}
 
-    getFrameBuilder()->finishedPhase(this);
+	getFrameBuilder()->finishedPhase(this);
 }

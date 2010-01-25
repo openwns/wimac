@@ -32,6 +32,9 @@
 #include <WNS/ldk/Layer.hpp>
 #include <WNS/ldk/fcf/FrameBuilder.hpp>
 #include <WNS/ldk/fcf/CompoundCollector.hpp>
+#include <WNS/probe/bus/ContextProviderCollection.hpp>
+#include <WNS/probe/bus/ContextCollector.hpp>
+#include <boost/bind.hpp>
 
 #include <WIMAC/Logger.hpp>
 #include <WIMAC/parameter/PHY.hpp>
@@ -73,6 +76,14 @@ TimingControl::TimingControl( wns::ldk::fcf::FrameBuilder* fb, const wns::pyconf
 {
     assure( config.knows("activations"),
             "Activations are not specified in TimingControl" );
+
+    wns::probe::bus::ContextProviderCollection& cpc =
+        getFrameBuilder()->getFUN()->getLayer()->getContextProviderCollection();
+
+    cpc.addProvider(wns::probe::bus::contextprovider::Callback(
+        "OffsetFromFrameStart",
+        boost::bind(&TimingControl::getOffset, this)));
+
 }
 
 void TimingControl::start()
@@ -218,6 +229,8 @@ TimingControl::periodically()
     //Notify NewFrame-Observers about newFrame
     frameBuilder_->notifyNewFrameObservers();
 
+    frameStartTime_ = wns::simulator::getEventScheduler()->getTime();
+
     // Only continue if running == true
     if ( !running_ )
         return;
@@ -225,8 +238,7 @@ TimingControl::periodically()
     TriggerActivationStart event (this);
 
     wns::simulator::getEventScheduler()
-        ->schedule( event,
-                    wns::simulator::getEventScheduler()->getTime() + frameStartupDelay_  );
+        ->schedule(event, frameStartTime_ + frameStartupDelay_ );
 }
 
 void
@@ -318,3 +330,11 @@ TimingControl::processOneActivation()
     }
 }
 
+int
+TimingControl::getOffset()
+{
+    simTimeType now = wns::simulator::getEventScheduler()->getTime();
+    double offset = now - frameStartTime_;
+    int symOffset = int(offset / parameter::ThePHY::getInstance()->getSymbolDuration());
+    return symOffset;
+}

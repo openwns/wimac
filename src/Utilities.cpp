@@ -43,5 +43,5 @@ std::string Utilities::printip(unsigned int ip)
 
 double Utilities::getComputationalAccuracyFactor()
 {
-    return 1e-14;
+    return 1e-9;
 }

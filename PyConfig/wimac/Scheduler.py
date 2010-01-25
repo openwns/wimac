@@ -41,14 +41,6 @@ class PhyModeMapper:
     and include the one that I want to use with "phyModeMapper = ..." in class Scheduler
     """
 
-class SchedulerTimingNode:
-    __plugin__ = "wimac.scheduler.SchedulerTimingNode"
-    computationalAccuracyFactor = 1e-13
-
-class SchedulerTimingNodeRX:
-    __plugin__ = "wimac.scheduler.SchedulerTimingNodeRX"
-
-
 class RegistryProxyWiMAC(openwns.Scheduler.RegistryProxy):
     nameInRegistryProxyFactory = "RegistryProxyWiMAC"
     phyModeMapper = None
@@ -59,19 +51,23 @@ class RegistryProxyWiMAC(openwns.Scheduler.RegistryProxy):
     powerCapabilitiesFRS = None
     qosClassMapping    = openwns.qos.QoSClasses()
     numberOfPriorities = qosClassMapping.getMaxPriority() + 1
-
+    isDL = None
+    
+    def __init__(self, isDL = True):
+        self.isDL = isDL
+        
     def setPhyModeMapper(self, phyModeMapper):
         self.phyModeMapper = phyModeMapper
         # for the moment, max, avg and overall power are set the same. change it when necessary
-        self.powerCapabilitiesUT = openwns.Scheduler.PowerCapabilities(ParametersSystem.txPowerUT,
-                                                                   ParametersSystem.txPowerUT,
-                                                                   ParametersSystem.txPowerUT)
-        self.powerCapabilitiesAP = openwns.Scheduler.PowerCapabilities(ParametersSystem.txPowerAP,
-                                                                   ParametersSystem.txPowerAP,
-                                                                   ParametersSystem.txPowerAP)
-        self.powerCapabilitiesFRS = openwns.Scheduler.PowerCapabilities(ParametersSystem.txPowerFRS,
-                                                                    ParametersSystem.txPowerFRS,
-                                                                    ParametersSystem.txPowerFRS)
+        self.powerCapabilitiesUT = openwns.Scheduler.PowerCapabilities(ParametersSystem.txPower['UT'],
+                                                                   ParametersSystem.txPower['UT'],
+                                                                   ParametersSystem.txPower['UT'])
+        self.powerCapabilitiesAP = openwns.Scheduler.PowerCapabilities(ParametersSystem.txPower['AP'],
+                                                                   ParametersSystem.txPower['AP'],
+                                                                   ParametersSystem.txPower['AP'])
+        self.powerCapabilitiesFRS = openwns.Scheduler.PowerCapabilities(ParametersSystem.txPower['FRS'],
+                                                                    ParametersSystem.txPower['FRS'],
+                                                                    ParametersSystem.txPower['FRS'])
 
 class SpaceTimeSectorizationRegistryProxy(openwns.Scheduler.RegistryProxy):
     phyModeMapper = None
@@ -106,13 +102,20 @@ class Scheduler(openwns.FCF.CompoundCollector):
     beamforming = None
     plotFrames = False
     uplink = None
+    alwaysAcceptIfQueueAccepts = None
     pseudoGenerator = None
+    numberOfTimeSlots = None
+    mapHandlerName = None
+    slotDuration = None
+    
 
     resettedBitsProbeBusName = None
     resettedCompoundsProbeBusName = None
 
     def __init__(self, frameBuilder,
                  symbolDuration,
+                 slotDuration,
+                 mapHandlerName,
                  strategy,
                  beamforming = True,
                  maxBeams = 4,
@@ -120,6 +123,8 @@ class Scheduler(openwns.FCF.CompoundCollector):
                  uplink = False,
                  **kw):
         openwns.FCF.CompoundCollector.__init__(self, frameBuilder)
+        self.mapHandlerName = mapHandlerName
+        self.slotDuration = slotDuration
         self.strategy = strategy
         self.strategy.logger.enabled = False
         self.strategy.dsastrategy.logger.enabled = False
@@ -129,20 +134,19 @@ class Scheduler(openwns.FCF.CompoundCollector):
         self.grouper = openwns.Scheduler.SINRHeuristic(beamforming = beamforming)
         self.grouper.friendliness_dBm = friendliness_dBm
         self.uplink = uplink
+        self.alwaysAcceptIfQueueAccepts = False
         self.grouper.uplink = self.uplink
-        self.registry = RegistryProxyWiMAC()
+        self.registry = RegistryProxyWiMAC(isDL = (not uplink))
         subCarriersPerSubChannel = ParametersOFDM.dataSubCarrier
         phyModeMapper = WIMAXMapper(symbolDuration,subCarriersPerSubChannel)
         self.registry.setPhyModeMapper(phyModeMapper)
         self.maxBeams = maxBeams
+        self.numberOfTimeSlots = 1
         self.freqChannels = 1
         self.beamforming = beamforming
         self.resettedBitsProbeBusName = "wimac.schedulerQueue.resetted.bits"
         self.resettedCompoundsProbeBusName = "wimac.schedulerQueue.resetted.compounds"
         attrsetter(self, kw)
-
-class PriorityScheduler(Scheduler):
-    __plugin__ = 'wimac.scheduler.PriorityScheduler'
 
 class PseudoBWRequestGenerator(Sealed):
     __plugin__ = 'wimac.scheduler.PseudoBWRequestGenerator'
@@ -160,17 +164,38 @@ class PseudoBWRequestGenerator(Sealed):
         self.pduOverhead = _pduOverhead
         self.classifier = 'classifier'
 
-class ULCallback(Sealed):
-    __plugin__ = 'wimac.scheduler.ULCallback'
+class Callback(Sealed):
+    frameOffsetDelayProbeName = "wimac.frameOffsetDelay"
+    transmissionDelayProbeName = "wimac.transmissionDelay"
+    
+
+class ULCallback(Callback):
+    #__plugin__ = 'wimac.scheduler.ULCallback'
+    slotLength = None
 
     def __init__(self, **kw):
+        self.slotLength = 0
         attrsetter(self, kw) 
 
-class DLCallback(Sealed):
-    __plugin__ = 'wimac.scheduler.DLCallback'
-    beamforming = None
+class ULMasterCallback(ULCallback):
+    __plugin__ = 'wimac.scheduler.ULMasterCallback'
 
     def __init__(self, **kw):
+        ULCallback.__init__(self, **kw)
+
+class ULSlaveCallback(ULCallback):
+    __plugin__ = 'wimac.scheduler.ULSlaveCallback'
+
+    def __init__(self, **kw):
+        ULCallback.__init__(self, **kw)
+
+class DLCallback(Callback):
+    __plugin__ = 'wimac.scheduler.DLCallback'
+    beamforming = None
+    slotLength = None
+
+    def __init__(self, **kw):
+        self.slotLength = 0
         attrsetter(self, kw)
 
 class BypassQueue(Sealed):

@@ -48,7 +48,18 @@ namespace wimac {
 }
 
 namespace wimac { namespace frame {
-        class BSULScheduler;
+
+	class MapHandlerInterface
+	{
+	public:
+		virtual bool		
+		resourcesGranted() = 0;
+
+		virtual wns::scheduler::SchedulingMapPtr
+		getMasterMapForSlaveScheduling() = 0;
+		
+	};
+
 
         /**
          * @brief Command of the ULMapWriter and ULMapRetreiver.
@@ -68,7 +79,8 @@ namespace wimac { namespace frame {
             public wns::ldk::HasReceptor<>,
             public wns::ldk::tools::UpUnconnectable,
             public wns::Cloneable<ULMapCollector>,
-            public wns::events::CanTimeout
+            public wns::events::CanTimeout,
+            virtual public wimac::frame::MapHandlerInterface
         {
         public:
             ULMapCollector( wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config );
@@ -87,12 +99,14 @@ namespace wimac { namespace frame {
 
             wns::simulator::Time getCurrentDuration() const;
 
+/* old interface - to be removed*/
             wns::simulator::Time getULPhaseDuration() const { return ulPhaseDuration_; }
 
             /**
              * @brief Returns the start of the subscriber station's
              * burst relative to ULPhase start time.
              */
+
             wns::simulator::Time getBurstStart() const {
                 return burstStartTime_;
             }
@@ -117,6 +131,19 @@ namespace wimac { namespace frame {
             bool hasUplinkBurst() const {
                 return hasUplinkBurst_;
             }
+
+            wns::scheduler::MapInfoCollectionPtr
+            getBursts() {return myBursts_;};
+
+/* new Interface*/
+            bool resourcesGranted() {
+                return ulResourcesAvailable_;
+            }
+
+             virtual wns::scheduler::SchedulingMapPtr getMasterMapForSlaveScheduling() { 
+                return scheduledULMap_;
+             }
+            
         private:
             wimac::scheduler::Scheduler* ulScheduler_;
             std::string ulSchedulerName_;
@@ -130,16 +157,22 @@ namespace wimac { namespace frame {
              * @brief PhyMode to be used for the MAP.
              */
             wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface> phyMode;
+/*old MapCollector variables*/
             wns::simulator::Time ulPhaseDuration_;
             wns::simulator::Time burstStartTime_;
             wns::simulator::Time burstEndTime_;
+            wns::scheduler::MapInfoCollectionPtr myBursts_;
+            wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface> burstPhyMode;
+            wns::CandI estimatedCandI_;
+            bool hasUplinkBurst_;
+/*new Mapcollector variables*/
+            wns::scheduler::SchedulingMapPtr scheduledULMap_;
 
             /**
              * @brief PhyMode to be used for the burst.
              */
-            wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface> burstPhyMode;
-            wns::CandI estimatedCandI_;
-            bool hasUplinkBurst_;
+
+            bool ulResourcesAvailable_;
         };
     }
 }

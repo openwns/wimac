@@ -29,51 +29,51 @@
 #include <queue>
 
 #include <WNS/scheduler/CallBackInterface.hpp>
-#include <WIMAC/scheduler/PDUWatchProviderObserver.hpp>
+#include <WNS/probe/bus/ContextCollector.hpp> 
 
 namespace wns { namespace scheduler {
-	class RegistryProxyInterface;
+    class RegistryProxyInterface;
 }}
 
 namespace wimac {
-	class PhyUser;
+    class PhyUser;
 }
 
 namespace wimac { namespace scheduler {
 
-	class Callback :
-		public virtual wns::scheduler::CallBackInterface
-		//public PDUWatchProvider
-	{
-	public:
-		Callback(wns::ldk::fun::FUN* fun);
+    class Callback :
+        public virtual wns::scheduler::CallBackInterface
+    {
+    public:
+        Callback(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config);
 
-		virtual void setColleagues(wns::scheduler::RegistryProxyInterface* registry);
+        virtual void setColleagues(wns::scheduler::RegistryProxyInterface* registry);
 
-		/**
-		 * @brief Deliver all scheduled compounds to the given connector now.
-		 */
-		virtual void deliverNow(wns::ldk::Connector*) = 0;
+        /**
+        * @brief Deliver all scheduled compounds to the given connector now.
+        */
+        virtual void 
+        deliverNow(wns::ldk::Connector*) = 0;
 
-		virtual void setOffset(double offset)
-		{ offsetInSlot = offset; }
+    protected:
+        struct {
+            wns::scheduler::RegistryProxyInterface* registry;
+        } colleagues;
 
-	protected:
-		struct {
-			wns::scheduler::RegistryProxyInterface* registry;
-		} colleagues;
-		struct {
-			wimac::PhyUser* phyUser;
-		} friends_;
-		
-		std::queue<wns::ldk::CompoundPtr> scheduledPDUs;
+        struct {
+            wimac::PhyUser* phyUser;
+        } friends_;
 
-		double offsetInSlot;
-	};
+        std::queue<wns::ldk::CompoundPtr> scheduledPDUs;
 
-	typedef wns::ldk::FUNConfigCreator<Callback> CallbackCreator;
-	typedef wns::StaticFactory<CallbackCreator> CallbackFactory;
+        wns::simulator::Time lastScheduling_;
+        wns::probe::bus::ContextCollectorPtr frameOffsetDelayProbe_;
+        wns::probe::bus::ContextCollectorPtr transmissionDelayProbe_;
 
+    };
+
+    typedef wns::ldk::FUNConfigCreator<Callback> CallbackCreator;
+    typedef wns::StaticFactory<CallbackCreator> CallbackFactory;
 }}
 
 #endif

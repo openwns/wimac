@@ -147,8 +147,7 @@ PseudoBWRequestGenerator::wakeup() {
 
         //FIXME BWrequest shortcut
         wimac::ConnectionIdentifiers cis =
-            component_->getManagementService<service::ConnectionManager>
-            ("connectionManager")->getIncomingConnections(peerStationId);
+            friends_.connectionManager->getIncomingConnections(peerStationId);
         int queueSize = peerComponent->getNumberOfQueuedPDUs(cis);
         if(queueSize == 0)
             continue;

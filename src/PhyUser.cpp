@@ -25,6 +25,7 @@
 
 
 #include <WIMAC/PhyUser.hpp>
+#include <WIMAC/GuiWriter.hpp>
 
 #include <cmath>
 
@@ -125,6 +126,10 @@ PhyUser::PhyUser(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config) :
     probes_.pathloss = 
         wns::probe::bus::collector(cpc, config, "pathlossProbeName");
 
+    guiProbe_ = wns::probe::bus::ContextCollectorPtr(
+        new wns::probe::bus::ContextCollector(cpc, "wimac.guiProbe"));
+
+    GuiWriter_ = new GuiWriter(guiProbe_, this);
 }
 
 
@@ -202,7 +207,9 @@ PhyUser::PhyUser( const PhyUser& rhs ):
             *rhs.probes_.pathloss ));
 }
 PhyUser::PhyUser::~PhyUser()
-{}
+{
+    delete GuiWriter_;
+}
 
 
 bool
@@ -217,6 +224,9 @@ PhyUser::doSendData(const wns::ldk::CompoundPtr& compound)
 {
 	COMMANDTYPE* command = getCommand( compound->getCommandPool() );
 	(*command->local.pAFunc_.get())( this, compound );
+
+    int macaddr = address.getInteger();
+    GuiWriter_->writeToProbe(compound,macaddr);
 }
 
 

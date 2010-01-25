@@ -254,7 +254,7 @@ BypassQueue::isAccepting(const wns::ldk::CompoundPtr& compound) const
 }
 
 bool
-BypassQueue::queueHasPDUs(wns::scheduler::ConnectionID cid)
+BypassQueue::queueHasPDUs(wns::scheduler::ConnectionID cid) const
 {
     std::auto_ptr<QueueHasPDUs> queueHasPDUs( new QueueHasPDUs(colleagues_.registry, cid));
     isAcceptingChecker_ = queueHasPDUs.get();
@@ -266,16 +266,16 @@ BypassQueue::queueHasPDUs(wns::scheduler::ConnectionID cid)
 bool
 BypassQueue::isEmpty() const
 {
+    // Example from libwns:
+    //    for (QueueContainer::const_iterator iter = queues.begin(); iter != queues.end(); ++iter)
+    //    {
+    //        if ((*iter).second.pduQueue.size() != 0)
+    //            return false;
+    //    }
+    //    return true;
     throw wns::Exception("not implemented");
-    /*
-    for (QueueContainer::const_iterator iter = queues.begin(); iter != queues.end(); ++iter)
-    {
-        if ((*iter).second.pduQueue.size() != 0)
-            return false;
-    }
-    return true;
-    */
 }
+
 
 wns::scheduler::ConnectionSet
 BypassQueue::filterQueuedCids(wns::scheduler::ConnectionSet connections)
@@ -385,25 +385,25 @@ BypassQueue::getActiveConnectionsForPriority(unsigned int priority) const
     return listConnections->result();
 }
 
-
+/* obsolete
 uint32_t
 BypassQueue::numCompoundsForUser(wns::scheduler::UserID user) const
 {
     throw wns::Exception("not implemented");
 }
-
+*/
 uint32_t
 BypassQueue::numCompoundsForCid(wns::scheduler::ConnectionID cid) const
 {
     throw wns::Exception("not implemented");
 }
-
+/* obsolete
 uint32_t
 BypassQueue::numBitsForUser(wns::scheduler::UserID user) const
 {
     throw wns::Exception("not implemented");
 }
-
+*/
 uint32_t
 BypassQueue::numBitsForCid(wns::scheduler::ConnectionID cid) const
 {
@@ -437,4 +437,10 @@ wns::ldk::Receptor*
 BypassQueue::getReceptor() const
 {
     return hasReceptor_->getReceptor();
+}
+
+std::queue<wns::ldk::CompoundPtr> 
+BypassQueue::getQueueCopy(wns::scheduler::ConnectionID cid)
+{ 
+    wns::Exception("You should not call getQueueCopy of the BypassQueue."); 
 }

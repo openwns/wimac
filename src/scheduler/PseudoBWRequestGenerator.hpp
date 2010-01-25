@@ -39,8 +39,6 @@
 #include <WNS/pyconfig/View.hpp>
 
 #include <WIMAC/services/ConnectionManager.hpp>
-#include <WIMAC/scheduler/BSULSchedulerInterface.hpp>
-
 
 namespace wimac { namespace scheduler {
 
