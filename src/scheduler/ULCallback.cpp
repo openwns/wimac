@@ -108,7 +108,7 @@ ULMasterCallback::processPacket(const wns::scheduler::SchedulingCompound & compo
     int userID = user->getNodeID();
     int fSlot = compound.subChannel;
     int timeSlot = compound.timeSlot;
-    int beam = compound.beam;
+    int beam = compound.spatialLayer; //beam;
     wns::Power txPower = compound.txPower;
     wns::service::phy::phymode::PhyModeInterfacePtr phyModePtr = compound.phyModePtr;
     wns::service::phy::ofdma::PatternPtr pattern = compound.pattern;
@@ -189,7 +189,7 @@ ULSlaveCallback::processPacket(const wns::scheduler::SchedulingCompound & compou
     int userID = user->getNodeID();
     int fSlot = compound.subChannel;
     int timeSlot = compound.timeSlot;
-    int beam = compound.beam;
+    int beam = compound.spatialLayer; //beam;
     wns::Power txPower = compound.txPower;
     wns::service::phy::phymode::PhyModeInterfacePtr phyModePtr = compound.phyModePtr;
     wns::service::phy::ofdma::PatternPtr pattern = compound.pattern;
