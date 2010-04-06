@@ -27,8 +27,9 @@
  ******************************************************************************/
 
 #include <WIMAC/helper/ContextProvider.hpp>
+#include <WIMAC/StationManager.hpp>
+#include <WIMAC/Component.hpp>
 #include <WNS/service/dll/Address.hpp>
-
 
 using namespace wimac::helper::contextprovider;
 
@@ -68,5 +69,34 @@ TargetAddress::doVisitCommand(wns::probe::bus::IContext& c, const wimac::UpperCo
     if(command->peer.sourceMACAddress.isValid())
     {
         c.insertInt(this->key, command->peer.targetMACAddress.getInteger());
+    }
+}
+
+
+CallbackCommandContextProvider::CallbackCommandContextProvider(wns::ldk::fun::FUN* fun,
+                                                               std::string ucCommandName,
+                                                               const std::string& key,
+                                                               boost::function1<int, wimac::Component*> callback)
+    : wns::probe::bus::CommandContextProvider<wimac::UpperCommand>(fun, ucCommandName, key),
+      callback_(callback)
+{}
+
+
+void
+CallbackCommandContextProvider::doVisitCommand(wns::probe::bus::IContext& c, const wimac::UpperCommand* command) const
+{
+    if (command->peer.sourceMACAddress.isValid())
+    {
+        Component* component = TheStationManager::getInstance()
+            ->getStationByID(command->peer.sourceMACAddress.getInteger());
+        int value = callback_(component);
+        c.insertInt(getKey() + ".Source", value);
+    }
+    if (command->peer.targetMACAddress.isValid())
+    {
+        Component* component = TheStationManager::getInstance()
+            ->getStationByID(command->peer.targetMACAddress.getInteger());
+        int value = callback_(component);
+        c.insertInt(getKey() + ".Target", value);
     }
 }
