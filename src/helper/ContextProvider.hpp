@@ -31,6 +31,9 @@
 
 #include <WNS/probe/bus/CommandContextProvider.hpp>
 #include <WIMAC/UpperConvergence.hpp>
+#include <WIMAC/Component.hpp>
+
+#include <boost/function.hpp>
 
 namespace wimac { namespace helper { namespace contextprovider {
 
@@ -69,6 +72,23 @@ namespace wimac { namespace helper { namespace contextprovider {
         virtual void
         doVisitCommand(wns::probe::bus::IContext& c, const wimac::UpperCommand* command) const;
     };
+
+            class CallbackCommandContextProvider
+                : virtual public wns::probe::bus::CommandContextProvider<wimac::UpperCommand>
+            {
+            public:
+                CallbackCommandContextProvider(wns::ldk::fun::FUN* fun,
+                                               std::string ucCommandName,
+                                               const std::string& key,
+                                               boost::function1<int, wimac::Component*> callback);
+
+            private:
+                virtual void
+                doVisitCommand(wns::probe::bus::IContext& c, const wimac::UpperCommand* command) const;
+
+                boost::function1<int, wimac::Component*> callback_;
+            };
+
 }}}
 
 #endif // WIMAC_HELPER_CONTEXTPROVIDER_HPP

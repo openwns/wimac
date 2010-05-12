@@ -11,6 +11,8 @@ import wimac.Rang
 
 from wimac.support.Transceiver import Transceiver
 
+import scenarios.interfaces
+
 def getOFDMAComponent(node, typeString, _config):
     transceiver = Transceiver(_config)
     phyStation = ofdmaphy.Station.OFDMAStation([transceiver.receiver[typeString]],
@@ -27,7 +29,7 @@ def getOFDMAComponent(node, typeString, _config):
     phyStation.systemManagerName = 'ofdma'
     return ofdmaphy.Station.OFDMAComponent(node, "phy", phyStation)
 
-class SubscriberStation(openwns.node.Node):
+class SubscriberStation(openwns.node.Node, scenarios.interfaces.INode):
     phy = None
     dll = None
     nl  = None
@@ -65,6 +67,20 @@ class SubscriberStation(openwns.node.Node):
                                                 mobility = rise.Mobility.No(openwns.geometry.position.Position())
                                                 )
 
+    def setPosition(self, position):
+        self.mobility.mobility.setCoords(position)      
+
+    def getPosition(self):
+        return self.mobility.getCoords()
+
+    def setAntenna(self, antenna):
+        pass
+
+    def getNodeType(self):
+        return "UE"
+
+    def addTraffic(self, binding, load):
+        self.load.addTraffic(binding, load) 
 
 
 class RemoteStation(openwns.node.Node):
@@ -130,13 +146,13 @@ class RelayStation(openwns.node.Node):
 
 
 
-class BaseStation(openwns.node.Node):
+class BaseStation(openwns.node.Node, scenarios.interfaces.INode):
     phy = None
     dll = None
     mobility = None
 
     def __init__(self, _id, _config):
-        super(BaseStation, self).__init__("AP"+str(_id))
+        super(BaseStation, self).__init__("BS"+str(_id))
         transceiver = Transceiver(_config)
 
         # create the WIMAC DLL
@@ -147,8 +163,26 @@ class BaseStation(openwns.node.Node):
         self.dll.setPhyDataTransmission(self.phy.dataTransmission)
         self.dll.setPhyNotification(self.phy.notification)
         self.mobility = rise.Mobility.Component(node = self,
-                                                name = "mobility AP"+str(_id),
+                                                name = "mobility BS"+str(_id),
                                                 mobility = rise.Mobility.No(openwns.geometry.position.Position()))
+
+    def setPosition(self, position):
+        self.mobility.mobility.setCoords(position)      
+
+    def getPosition(self):
+        return self.mobility.getCoords()
+
+    def setAntenna(self, antenna):
+        pass
+
+    def getNodeType(self):
+        return "BS"
+
+    def addTraffic(self, binding, load):
+        assert false, "Don't deploy traffic to base stations"
+
+
+
 
 
 class RANG(openwns.node.Node):
@@ -180,4 +214,6 @@ class RANG(openwns.node.Node):
 
         self.load = constanze.node.ConstanzeComponent(self, "constanze")
 
+    def getNodeType(self):
+        return "RANG"
 

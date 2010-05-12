@@ -432,7 +432,7 @@ RegistryProxyWiMAC::filterReachable(wns::scheduler::ConnectionSet connections, c
 }
 
 wns::scheduler::PowerMap
-RegistryProxyWiMAC::calcULResources(const wns::scheduler::UserSet& /*users*/, uint32_t /*rapResources*/) const
+RegistryProxyWiMAC::calcULResources(const wns::scheduler::UserSet& /*users*/, unsigned long int /*rapResources*/) const
 {
 	throw wns::Exception("called un-implemented method RegistryProxyWiMAC::calcULResources");
 	return wns::scheduler::PowerMap();

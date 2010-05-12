@@ -63,7 +63,7 @@ namespace wimac { namespace compoundSwitch {
 
         virtual void clear();
 
-        virtual size_t size() const;
+        virtual long unsigned int size() const;
 
         virtual const wns::ldk::Link<wns::ldk::IConnectorReceptacle>::ExchangeContainer get() const;
 

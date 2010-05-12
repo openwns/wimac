@@ -140,7 +140,7 @@ FUReseter::resetCID(wimac::ConnectionIdentifier::Ptr ci)
     LOG_INFO(fun_->getName(), ": try to reset FUs for CID: ", ci->cid_);
 
     // store ProbeID QoSCategory of the Node
-    //uint32_t oldQoSCategory = probeQoSCategoryIDProvider_->get();
+    //unsigned long int oldQoSCategory = probeQoSCategoryIDProvider_->get();
     assure(false, "fix above code if this is used");
 
     /// \warning Its a workaround to probe only the outgoing buffer size

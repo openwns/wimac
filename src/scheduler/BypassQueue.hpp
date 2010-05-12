@@ -145,27 +145,27 @@ namespace wimac { namespace scheduler {
          * for a certain user.  Only used in
          * scheduler/strategy/ProportionalFairBase
          */
-        //uint32_t
+        //unsigned long int
         //numCompoundsForUser(wns::scheduler::UserID user) const;
 
         /**
          * @brief Returns the number of Compounds the Queue has stored for a
          * certain user
          */
-        uint32_t
+        unsigned long int
         numCompoundsForCid(wns::scheduler::ConnectionID cid) const;
 
         /**
          * @brief Returns the number of Bits to be scheduled for one user.
          * Only used in scheduler/strategy/ProportionalFairBase
          */
-        //uint32_t
+        //unsigned long int
         //numBitsForUser(wns::scheduler::UserID user) const;
 
         /**
          * @brief Returns the number of Bits to be scheduled for one user
          */
-        uint32_t
+        unsigned long int
         numBitsForCid(wns::scheduler::ConnectionID cid) const;
 
         /**

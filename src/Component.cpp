@@ -161,6 +161,30 @@ Component::Component(wns::node::Interface* node, const wns::pyconfig::View& conf
     getNode()->getContextProviderCollection().addProvider(
         wimac::helper::contextprovider::TargetAddress(fun_, 
             config.get<std::string>("upperConvergenceName")));
+    getNode()->getContextProviderCollection().addProvider(
+        wimac::helper::contextprovider::CallbackCommandContextProvider(
+            fun_,
+            config.get<std::string>("upperConvergenceName"),
+            "MAC.CellId",
+            &wimac::Component::getCellID));
+    getNode()->getContextProviderCollection().addProvider(
+        wimac::helper::contextprovider::CallbackCommandContextProvider(
+            fun_,
+            config.get<std::string>("upperConvergenceName"),
+            "MAC.Id",
+            &wimac::Component::getID));
+    getNode()->getContextProviderCollection().addProvider(
+        wimac::helper::contextprovider::CallbackCommandContextProvider(
+            fun_,
+            config.get<std::string>("upperConvergenceName"),
+            "MAC.Ring",
+            &wimac::Component::getRing));
+    getNode()->getContextProviderCollection().addProvider(
+        wimac::helper::contextprovider::CallbackCommandContextProvider(
+            fun_,
+            config.get<std::string>("upperConvergenceName"),
+            "MAC.StationType",
+            &wimac::Component::getStationType));
 
     // global station registry
     TheStationManager::getInstance()->registerStation(id_, address_, this);
