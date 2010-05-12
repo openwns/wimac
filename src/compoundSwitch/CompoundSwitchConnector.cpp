@@ -106,7 +106,7 @@ CompoundSwitchConnector::clear()
     fus.clear();
 }
 
-size_t
+long unsigned int
 CompoundSwitchConnector::size() const
 {
     return fus.size();

@@ -386,25 +386,25 @@ BypassQueue::getActiveConnectionsForPriority(unsigned int priority) const
 }
 
 /* obsolete
-uint32_t
+unsigned long int
 BypassQueue::numCompoundsForUser(wns::scheduler::UserID user) const
 {
     throw wns::Exception("not implemented");
 }
 */
-uint32_t
+unsigned long int
 BypassQueue::numCompoundsForCid(wns::scheduler::ConnectionID cid) const
 {
     throw wns::Exception("not implemented");
 }
 /* obsolete
-uint32_t
+unsigned long int
 BypassQueue::numBitsForUser(wns::scheduler::UserID user) const
 {
     throw wns::Exception("not implemented");
 }
 */
-uint32_t
+unsigned long int
 BypassQueue::numBitsForCid(wns::scheduler::ConnectionID cid) const
 {
     throw wns::Exception("not implemented");
