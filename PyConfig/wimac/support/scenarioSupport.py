@@ -303,7 +303,7 @@ def calculateScenarioRadius(_clusterSize, _nCircles, _cellRadius):
 
     elif _clusterSize == 3:
         if _nCircles == 0:
-            scenarioRadios = 2*_cellRadius
+            scenarioRadius = 2*_cellRadius
 	elif _nCircles == 1:
             scenarioRadius = 5*_cellRadius
         else:
@@ -311,7 +311,7 @@ def calculateScenarioRadius(_clusterSize, _nCircles, _cellRadius):
 
     elif _clusterSize == 4:
         if _nCircles == 0:
-            scenarioRadios = 2.5*_cellRadius
+            scenarioRadius = 2.5*_cellRadius
 	elif _nCircles == 1:
             scenarioRadius = math.sqrt(math.pow(5.5,2) + math.pow(1*math.sqrt(3.0),2))*_cellRadius
         else:

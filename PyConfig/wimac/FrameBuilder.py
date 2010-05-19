@@ -26,7 +26,7 @@
 ###############################################################################
 
 from openwns.pyconfig import Sealed, Frozen, attrsetter
-from support.WiMACParameters import ParametersOFDMA
+#from support.WiMACParameters import ParametersOFDMA
 from wimac.LLMapping import WIMAXLowestPhyMode
 
 import openwns.FCF
@@ -128,14 +128,14 @@ class StaticBSULScheduler(openwns.FCF.CompoundCollector):
 class SSULScheduler(openwns.FCF.CompoundCollector):
     __plugin__ = "wimac.frame.SSULScheduler"
     ulMapRetrieverName = None
-    symbolDuration = ParametersOFDMA.symbolDuration
+    symbolDuration = None #ParametersOFDMA.symbolDuration
     phyMode = None
 
-    def __init__(self, frameBuilder, ulMapRetrieverName):
+    def __init__(self, frameBuilder, ulMapRetrieverName, symbolDuration_):
         openwns.FCF.CompoundCollector.__init__(self, frameBuilder)
         self.ulMapRetrieverName = ulMapRetrieverName
         self.phyMode = WIMAXLowestPhyMode
-
+        self.symbolDuration = symbolDuration_
 
 class ActivationAction(Sealed):
     Start = 0

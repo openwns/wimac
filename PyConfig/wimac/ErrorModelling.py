@@ -34,7 +34,7 @@
 
 from openwns.pyconfig import Frozen, Sealed, attrsetter
 from wimac.LLMapping import WIMAXMapper
-from support.WiMACParameters import ParametersOFDM
+#from support.WiMACParameters import ParametersOFDM
 
 class MappingObject(Sealed):
     cir = None
@@ -259,11 +259,11 @@ class ErrorModelling(Sealed):
     cir2ser_QAM64_34 = None
     PrintMappings = False
 
-    def __init__(self, cirProvider, phyModeProvider, **kw):
+    def __init__(self, cirProvider, phyModeProvider, symbolDuration_, dataSubCarrier_, **kw):
         self.cirProvider = cirProvider
         self.phyModeProvider = phyModeProvider
-        symbolDuration = ParametersOFDM.symbolDuration
-        subCarriersPerSubChannel = ParametersOFDM.dataSubCarrier # 192
+        symbolDuration = symbolDuration_
+        subCarriersPerSubChannel = dataSubCarrier_ # 192
         self.phyModeMapping = WIMAXMapper(symbolDuration, subCarriersPerSubChannel)
         self.cir2ser_BPSK12 = cir2ser_BPSK12
         self.cir2ser_QPSK12 = cir2ser_QPSK12

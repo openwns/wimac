@@ -175,8 +175,8 @@ wns::simulator::Time DLMapCollector::getCurrentDuration() const
     wns::simulator::Time symbolDuration = parameter::ThePHY::getInstance()->getSymbolDuration();
     wns::simulator::Time roundedDuration =
         ceil( (compoundSize / dataRate ) / symbolDuration ) * symbolDuration;
-
-    return roundedDuration;
+    //fixme(bmw) (fixed map overhead of one symbol due to wrong calculation of map duration with subchannels)
+    return symbolDuration; //roundedDuration;
 }
 
 void DLMapCollector::doOnData( const wns::ldk::CompoundPtr& compound )

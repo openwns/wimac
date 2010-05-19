@@ -168,7 +168,7 @@ hppFiles = [
 
 pyconfigs = [
     'wimac/Component.py',
-    'wimac/PhyMode.py',
+    'wimac/PhyMode.py', 
     'wimac/Probes.py',
     'wimac/ControlPlaneManagerSimple.py',
     'wimac/HandoverStrategy.py',
@@ -205,6 +205,7 @@ pyconfigs = [
     'wimac/support/scenarioSupport.py',
     'wimac/support/Transceiver.py',
     'wimac/support/WiMACParameters.py',
+    'wimac/support/Parameters16m.py',
     'wimac/support/Nodes.py',
     'wimac/support/nodecreators.py'
     ]

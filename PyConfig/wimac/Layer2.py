@@ -139,7 +139,8 @@ class Layer2(wimac.Component.Component):
         self.crcTick = openwns.Probe.Tick("wimac.crc", probeOutgoing = False,
             parentLogger = self.logger)
         
-        self.errormodelling = wimac.ErrorModelling.ErrorModelling('phyUser','phyUser',PrintMappings=False)
+        self.errormodelling = wimac.ErrorModelling.ErrorModelling('phyUser','phyUser',
+                                config.parametersPhy.symbolDuration, config.parametersPhy.dataSubCarrier, PrintMappings=False)
         self.compoundSwitch = wimac.CompoundSwitch.CompoundSwitch()
 
         self.phyUser = wimac.PhyUser.PhyUser(
