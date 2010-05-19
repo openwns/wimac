@@ -61,13 +61,13 @@ class BaseStation(Layer2):
             mapHandlerName = "dlmapcollector",
             strategy = strategyDL,
             freqChannels = config.parametersPhy.subchannels,
-            maxBeams = config.maxBeams,
-            beamforming = config.beamforming,
-            friendliness_dBm = config.friendliness_dBm,
+            maxBeams = 1, # Currently no beamforming
+            beamforming = False,
+            #friendliness_dBm = config.friendliness_dBm,
             plotFrames = False,
             uplink = False,
             callback = wimac.Scheduler.DLCallback(
-                    beamforming = config.beamforming, 
+                    beamforming = False, 
                     slotLength = config.parametersPhy.slotDuration),
                     numberOfTimeSlots = config.numberOfTimeSlots)
 
@@ -92,9 +92,9 @@ class BaseStation(Layer2):
             mapHandlerName = "ulmapcollector",
             strategy = strategyUL,
             freqChannels = config.parametersPhy.subchannels,
-            maxBeams = config.maxBeams,
-            beamforming =  config.beamforming,
-            friendliness_dBm = config.friendliness_dBm,
+            maxBeams = 1, # Cureently no beamforming
+            beamforming =  False,
+            #friendliness_dBm = config.friendliness_dBm,
             callback = wimac.Scheduler.ULMasterCallback(slotLength = config.parametersPhy.slotDuration),
             plotFrames = False,
             uplink = True,
@@ -299,9 +299,9 @@ class SubscriberStation(Layer2):
             mapHandlerName = "ulmapcollector",
             strategy = strategyUL,
             freqChannels = config.parametersPhy.subchannels,
-            maxBeams = config.maxBeams,
-            beamforming =  config.beamforming,
-            friendliness_dBm = config.friendliness_dBm,
+            maxBeams = 1, # Currently no beamforming
+            beamforming =  False,
+            #friendliness_dBm = config.friendliness_dBm,
             callback = wimac.Scheduler.ULSlaveCallback(slotLength = config.parametersPhy.slotDuration),
             plotFrames = False,
             uplink = True,
@@ -335,9 +335,6 @@ class SubscriberStation(Layer2):
         self.qosCategory = 'BE'
         self.ring = destination.ring + 1
         self.connectionControl.associateTo(destination.stationID)
-        self.phyUser.config.bandwidth = destination.phyUser.config.bandwidth
-        self.phyUser.config.centerFrequency = destination.phyUser.config.centerFrequency
-        self.phyUser.config.numberOfSubCarrier = destination.phyUser.config.numberOfSubCarrier
 
     def connect(self):
         # Connections Dataplane

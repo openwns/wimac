@@ -207,7 +207,8 @@ pyconfigs = [
     'wimac/support/WiMACParameters.py',
     'wimac/support/Parameters16m.py',
     'wimac/support/Nodes.py',
-    'wimac/support/nodecreators.py'
+    'wimac/support/nodecreators.py',
+    'wimac/support/helper.py'
     ]
 dependencies = []
 Return('libname srcFiles hppFiles pyconfigs dependencies')

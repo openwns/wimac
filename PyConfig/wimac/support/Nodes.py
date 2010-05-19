@@ -1,5 +1,6 @@
 import openwns.geometry.position
 import openwns.node
+from openwns import dBm, dB
 import constanze.traffic
 import rise.Mobility
 import ip.Component
@@ -16,14 +17,13 @@ import scenarios.interfaces
 def getOFDMAComponent(node, typeString, _config):
     transceiver = Transceiver(_config)
     phyStation = ofdmaphy.Station.OFDMAStation([transceiver.receiver[typeString]],
-                                [transceiver.transmitter[typeString]],
-                                eirpLimited = _config.eirpLimited,
-                                noOfAntenna = _config.parametersSystem.numberOfAntennaRxTx[typeString],
-                                arrayLayout = _config.arrayLayout,
-                                positionErrorVariance = _config.positionErrorVariance)
-    phyStation.txFrequency = _config.parametersSystem.centerFrequency
-    phyStation.rxFrequency = _config.parametersSystem.centerFrequency
-    phyStation.txPower = _config.parametersSystem.txPower[typeString]
+                                [transceiver.transmitter[typeString]])
+                                
+    # The following three are default values changed in a later step
+    # by the scenario module
+    phyStation.txFrequency = 5470 # MHz
+    phyStation.rxFrequency = 5470 # MHz
+    phyStation.txPower = dBm(30)
     phyStation.numberOfSubCarrier = _config.parametersPhy.subchannels
     phyStation.bandwidth =  _config.parametersPhy.channelBandwidth
     phyStation.systemManagerName = 'ofdma'
@@ -71,7 +71,7 @@ class SubscriberStation(openwns.node.Node, scenarios.interfaces.INode):
         self.mobility.mobility.setCoords(position)      
 
     def getPosition(self):
-        return self.mobility.getCoords()
+        return self.mobility.mobility.getCoords()
 
     def setAntenna(self, antenna):
         pass
@@ -170,9 +170,10 @@ class BaseStation(openwns.node.Node, scenarios.interfaces.INode):
         self.mobility.mobility.setCoords(position)      
 
     def getPosition(self):
-        return self.mobility.getCoords()
+        return self.mobility.mobility.getCoords()
 
     def setAntenna(self, antenna):
+        self.phy.ofdmaStation.antennas = [antenna]
         pass
 
     def getNodeType(self):

@@ -39,7 +39,7 @@ class BasicFrameSetup(Sealed):
     bwReq              = 0
     ############################
 
-    def __init__(self, _config, _symbolsPerFrame, _servedSS):
+    def __init__(self, _config, _symbolsPerFrame):
 
         if _symbolsPerFrame == 0:
             self.frameHead          = 0
@@ -68,38 +68,17 @@ class BasicFrameSetup(Sealed):
             # need to separate between DL and UL?
             mapHeaderBits               = _config.parametersPhy.mapBase
             mapFieldBits                = _config.parametersPhy.ie
-            dlStrategy                  = _config.dlStrategy
-            ulStrategy                  = _config.ulStrategy
-            maxBursts                   = _config.maxBursts
 
             # Frame head:
             self.frameHead              = _config.parametersPhy.frameHead
 
             # DL MAP:
 
-            # model behaviour of the scheduler:
-            maxNumberIEs = _servedSS * subchannels
-            if dlStrategy == "ProportionalFairDL":
-                if ( maxBursts < _servedSS ):
-                    maxNumberIEs = maxBursts * subchannels
-            elif dlStrategy == "RelayPreferredProportionalFair":
-                if ( maxBursts < _servedSS ):
-                    maxNumberIEs = maxBursts * subchannels
-            else:
-                print 'unknown dl scheduler strategy'
-
-            # TODO: the sum of both, DL and UL MAP, needs to be rounded to OFDM boundaries
-            self.dlMap = ceil( (mapHeaderBits + (mapFieldBits * maxNumberIEs) ) / float(minBitsPerSymbol))
+            self.dlMap = 2.0 # Currently fixed at one symbol
 
             # UL MAP:
-            maxNumberIEs = _servedSS * subchannels
-            if ulStrategy == "ProportionalFairUL":
-                if ( maxBursts < _servedSS ):
-                    maxNumberIEs = maxBursts * subchannels
-            else:
-                print 'unknown ul scheduler strategy'
-
-            self.ulMap = ceil( (mapHeaderBits + (mapFieldBits * maxNumberIEs) ) / float(minBitsPerSymbol))
+            
+            self.ulMap = 2.0 # Currently fixed at one symbol
 
             # DL+UL subframe:
             dataPhaseLength = _symbolsPerFrame - (self.frameHead + self.dlMap + self.ulMap)
@@ -216,9 +195,7 @@ class FrameSetup(Sealed):
         # maybe get useful number of OFDM symbols from config.parametersPhy
         self.frameDuration          = _config.parametersPhy.frameDuration
 
-        nRSs                        = _config.nRSs
-        nSSs                        = _config.nSSs
-        nRmSs                       = _config.nRmSs
+        nRSs                        = 0 # Currently no RSs
 
         if nRSs == 0:
             subframeRatio           = 0
@@ -252,8 +229,8 @@ class FrameSetup(Sealed):
         mainFrame = self.usefulFrame - self.subframe
         #print '### ### ### subframe usefulSubframe subframeLength mainFrame subframeRatio nRSs',  self.subframe , self.usefulSubframe, self.subframeLength, mainFrame, subframeRatio, nRSs
 
-        mainFrameSetup = BasicFrameSetup(_config, mainFrame, (nSSs + nRSs) )
-        subFrameSetup  = BasicFrameSetup(_config, self.usefulSubframe, nRmSs)
+        mainFrameSetup = BasicFrameSetup(_config, mainFrame)
+        subFrameSetup  = BasicFrameSetup(_config, self.usefulSubframe)
 
 
         self.frameHead            = mainFrameSetup.frameHead

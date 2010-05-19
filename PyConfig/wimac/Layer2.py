@@ -143,10 +143,7 @@ class Layer2(wimac.Component.Component):
                                 config.parametersPhy.symbolDuration, config.parametersPhy.dataSubCarrier, PrintMappings=False)
         self.compoundSwitch = wimac.CompoundSwitch.CompoundSwitch()
 
-        self.phyUser = wimac.PhyUser.PhyUser(
-            centerFrequency = config.parametersSystem.centerFrequency,
-            bandwidth = config.parametersPhy.channelBandwidth,
-            numberOfSubCarrier = config.parametersPhy.subchannels )
+        self.phyUser = wimac.PhyUser.PhyUser()
 
         self.topTpProbe = openwns.Probe.Window( "TopTp", "wimac.top", windowSize=0.005 )        
         self.topPProbe = openwns.Probe.Packet( "TopP", "wimac.top" )
