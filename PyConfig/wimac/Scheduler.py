@@ -32,7 +32,8 @@ from openwns.logger import Logger
 import openwns.qos
 import openwns.FCF
 import openwns.Scheduler
-from support.WiMACParameters import ParametersOFDM, ParametersSystem
+#from support.WiMACParameters import ParametersOFDM, ParametersSystem
+from support.WiMACParameters import ParametersSystem
 from LLMapping import WIMAXMapper
 
 class PhyModeMapper:
@@ -56,7 +57,7 @@ class RegistryProxyWiMAC(openwns.Scheduler.RegistryProxy):
     def __init__(self, isDL = True):
         self.isDL = isDL
         
-    def setPhyModeMapper(self, phyModeMapper):
+    def setPhyModeMapper(self, phyModeMapper, ):
         self.phyModeMapper = phyModeMapper
         # for the moment, max, avg and overall power are set the same. change it when necessary
         self.powerCapabilitiesUT = openwns.Scheduler.PowerCapabilities(ParametersSystem.txPower['UT'],
@@ -115,6 +116,7 @@ class Scheduler(openwns.FCF.CompoundCollector):
     def __init__(self, frameBuilder,
                  symbolDuration,
                  slotDuration,
+                 dataSubCarrier,
                  mapHandlerName,
                  strategy,
                  beamforming = True,
@@ -137,7 +139,7 @@ class Scheduler(openwns.FCF.CompoundCollector):
         self.alwaysAcceptIfQueueAccepts = False
         self.grouper.uplink = self.uplink
         self.registry = RegistryProxyWiMAC(isDL = (not uplink))
-        subCarriersPerSubChannel = ParametersOFDM.dataSubCarrier
+        subCarriersPerSubChannel = dataSubCarrier
         phyModeMapper = WIMAXMapper(symbolDuration,subCarriersPerSubChannel)
         self.registry.setPhyModeMapper(phyModeMapper)
         self.maxBeams = maxBeams

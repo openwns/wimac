@@ -29,9 +29,6 @@ from openwns.pyconfig import Sealed, attrsetter
 
 class PhyUser(Sealed):
     __plugin__ = 'wimac.PhyUser'
-    centerFrequency = None
-    bandwidth = None
-    numberOfSubCarrier = None
         
     iProbeName = None
     cirProbeName = None

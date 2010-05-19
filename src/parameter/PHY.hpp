@@ -26,6 +26,7 @@
 #ifndef WIMAC_PARAMETER_PHY_HPP
 #define WIMAC_PARAMETER_PHY_HPP
 
+#include <ios>
 #include <WNS/Singleton.hpp>
 #include <WNS/pyconfig/View.hpp>
 
@@ -42,27 +43,17 @@ namespace wimac { namespace parameter {
         public:
 
             double getChannelBandwidth() const { return channelBandwidth; }
-            double getCyclicPrefix() const { return cyclicPrefix;}
-            double getSamplingFrequency() const { return samplingFrequency; }
-            int getFFTSize() const { return fftSize;}
-            double getSubCarrierSpacing() const { return subCarrierSpacing; }
-            double getUsefulSymbolTime() const { return usefulSymbolTime; }
-            double getGuardTime() const { return guardTime; }
             double getSymbolDuration() const { return symbolDuration; }
             double getFrameDuration() const { return frameDuration; }
             int getSymbolsPerFrame() const { return symbolsPerFrame; }
             double getTTGDuration() const { return ttg; }
             double getRTGDuration() const { return rtg; }
-            int getGuardSubCarrier() const {return guardSubCarrier; }
-            int getDCDubCarrier() const { return dcSubCarrier; }
-            int getPilotSubCarrier() const { return pilotSubCarrier; }
             int getDataSubCarrier() const {return dataSubCarrier; }
             int getSubCahnnels() const { return subChannels; }
             int getSubCarrierPerSubChannel() const { return subCarrierPerSubChannel; }
             int getMinimumBitsPerSymbol() const { return minimumBitsPerSymbol; }
 
             int getDLPreamble() const { return dlPreamble; }
-            int getFCH() const { return fch; }
             int getFrameHead() const { return frameHead; }
 
             int getMapBase() const { return mapBase; }

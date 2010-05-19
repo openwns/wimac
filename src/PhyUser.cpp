@@ -80,11 +80,6 @@ PhyUser::PhyUser(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config) :
     friends_.frameBuilder = NULL;
     friends_.connectionClassifier = NULL;
 
-
-    tune_.frequency = config.get<double>("centerFrequency");
-    tune_.bandwidth = config.get<double>("bandwidth");
-    tune_.numberOfSubCarrier = config.get<int>("numberOfSubCarrier");
-
     // Probes configure
 	wns::probe::bus::ContextProviderCollection* cpcParent = &fun->getLayer()->getContextProviderCollection();
 
@@ -246,6 +241,9 @@ void PhyUser::onFUNCreated()
 
 	cacheEntryTimeStamp = -maxAgeCacheEntry;
 
+    // This is left over from old synchronization procedure code
+    // will be removed later
+    tune_ = dataTransmission->getRxTune();
 	setTxFrequency(tune_);
 	setRxFrequency(tune_);
 }

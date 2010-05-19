@@ -184,7 +184,8 @@ wns::simulator::Time ULMapCollector::getCurrentDuration() const
     wns::simulator::Time roundedDuration =
         ceil( (compoundSize / dataRate ) / symbolDuration ) * symbolDuration;
 
-    return roundedDuration;
+    //fixme(bmw) (fixed map overhead of one symbol due to wrong calculation of map duration with subchannels)
+    return symbolDuration; //roundedDuration;
 }
 
 void ULMapCollector::doOnData( const wns::ldk::CompoundPtr& compound )

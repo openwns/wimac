@@ -34,20 +34,11 @@ PHY::init(const wns::pyconfig::View& config)
     LOG_INFO("Loading WiMAC PHY parameters from config");
 
     channelBandwidth = config.get<double>("channelBandwidth");
-    cyclicPrefix = config.get<double>("cyclicPrefix");
-    samplingFrequency = config.get<double>("samplingFrequency");
-    fftSize = config.get<int>("fftSize");
-    subCarrierSpacing = config.get<double>("subCarrierSpacing");
-    usefulSymbolTime = config.get<double>("usefulSymbolTime");
-    guardTime = config.get<double>("guardTime");
     symbolDuration = config.get<double>("symbolDuration");
     frameDuration = config.get<double>("frameDuration");
     symbolsPerFrame = config.get<int>("symbolsFrame");
     ttg = config.get<double>("ttg");
     rtg = config.get<double>("rtg");
-    guardSubCarrier = config.get<int>("guardSubCarriers");
-    dcSubCarrier = config.get<int>("dcSubCarrier");
-    pilotSubCarrier = config.get<int>("pilotSubCarrier");
     dataSubCarrier = config.get<int>("dataSubCarrier");
     subChannels = config.get<int>("subchannels");
     subCarrierPerSubChannel = config.get<int>("subcarrierPerSubchannel");

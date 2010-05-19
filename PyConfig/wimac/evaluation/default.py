@@ -92,7 +92,7 @@ def installDebugEvaluation(sim, loggingStationIDs, kind = "PDF"):
                             by = 'MAC.Id', forAll = loggingStationIDs, format = "Id%d"))
 
         if kind == "Moments":                            
-            node.gettLeafs().appendChildren(openwns.evaluation.generators.Moments())
+            node.getLeafs().appendChildren(openwns.evaluation.generators.Moments())
         else:
             if src == "wimac.cirSDMA":
                 node.getLeafs().appendChildren(openwns.evaluation.generators.PDF(

@@ -56,7 +56,7 @@ from wimac.support.Transceiver import Transceiver
 
 class WiMAXBSCreator(scenarios.interfaces.INodeCreator):
 
-    def __init__(self, stationIDs, config, oneRANGperBS = True):
+    def __init__(self, stationIDs, config, oneRANGperBS = False):
         self.rang = None
         self.stationIDs = stationIDs
         self.config = config
@@ -66,14 +66,20 @@ class WiMAXBSCreator(scenarios.interfaces.INodeCreator):
         bs = wimac.support.Nodes.BaseStation(self.stationIDs.next(), self.config)
         bs.dll.logger.level = 2
 
-        if self.oneRANGperBS == True:
-            rang = wimac.support.Nodes.RANG("WiMAXRang" + str(bs.nodeID), bs.nodeID)
+        if self.rang == None or self.oneRANGperBS == True:
+            if self.oneRANGperBS:
+                rang = wimac.support.Nodes.RANG("WiMAXRang" + str(bs.nodeID), bs.nodeID)
+            else:
+                rang = wimac.support.Nodes.RANG()
+                self.rang = rang
+                
             # The RANG only has one IPListenerBinding that is attached
             # to the listener. The listener is the only traffic sink
             # within the RANG
             ipListenerBinding = IPListenerBinding(rang.nl.domainName)
             listener = Listener(rang.nl.domainName + ".listener")
             rang.load.addListener(ipListenerBinding, listener)
+            rang.dll.addAP(bs)
 
             openwns.simulator.getSimulator().simulationModel.nodes.append(rang)
 

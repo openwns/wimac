@@ -28,7 +28,7 @@
 from openwns.pyconfig import Sealed, attrsetter
 from openwns.interval import Interval
 
-from support.WiMACParameters import ParametersOFDM,ParametersOFDMA
+#from support.WiMACParameters import ParametersOFDM,ParametersOFDMA
 
 from rise.PhyMode import PhyMode,PhyModeMapper
 
@@ -36,8 +36,9 @@ from rise.PhyMode import PhyMode,PhyModeMapper
 # Info on MI: http://en.wikipedia.org/wiki/Mutual_information
 
 # WIMAX PHY Modes
-symbolDuration = ParametersOFDMA.symbolDuration
-subCarriersPerSubChannel = ParametersOFDM.dataSubCarrier
+
+#symbolDuration = ParametersOFDMA.symbolDuration
+#subCarriersPerSubChannel = ParametersOFDM.dataSubCarrier
 WIMAXPhyMode1 = PhyMode(modulation = "BPSK",  coding = "WIMAX-1/2")
 WIMAXPhyMode2 = PhyMode(modulation = "QPSK",  coding = "WIMAX-1/2")
 WIMAXPhyMode3 = PhyMode(modulation = "QPSK",  coding = "WIMAX-3/4")
@@ -45,20 +46,7 @@ WIMAXPhyMode4 = PhyMode(modulation = "QAM16", coding = "WIMAX-1/2")
 WIMAXPhyMode5 = PhyMode(modulation = "QAM16", coding = "WIMAX-3/4")
 WIMAXPhyMode6 = PhyMode(modulation = "QAM64", coding = "WIMAX-2/3")
 WIMAXPhyMode7 = PhyMode(modulation = "QAM64", coding = "WIMAX-3/4")
-WIMAXPhyMode1.setSymbolDuration(symbolDuration)
-WIMAXPhyMode2.setSymbolDuration(symbolDuration)
-WIMAXPhyMode3.setSymbolDuration(symbolDuration)
-WIMAXPhyMode4.setSymbolDuration(symbolDuration)
-WIMAXPhyMode5.setSymbolDuration(symbolDuration)
-WIMAXPhyMode6.setSymbolDuration(symbolDuration)
-WIMAXPhyMode7.setSymbolDuration(symbolDuration)
-WIMAXPhyMode1.setSubCarriersPerSubChannel(subCarriersPerSubChannel)
-WIMAXPhyMode2.setSubCarriersPerSubChannel(subCarriersPerSubChannel)
-WIMAXPhyMode3.setSubCarriersPerSubChannel(subCarriersPerSubChannel)
-WIMAXPhyMode4.setSubCarriersPerSubChannel(subCarriersPerSubChannel)
-WIMAXPhyMode5.setSubCarriersPerSubChannel(subCarriersPerSubChannel)
-WIMAXPhyMode6.setSubCarriersPerSubChannel(subCarriersPerSubChannel)
-WIMAXPhyMode7.setSubCarriersPerSubChannel(subCarriersPerSubChannel)
+
 WIMAXLowestPhyMode = WIMAXPhyMode1 # this is the PhyMode for MAP/BCH/RACH etc
 
 
@@ -66,7 +54,23 @@ WIMAXLowestPhyMode = WIMAXPhyMode1 # this is the PhyMode for MAP/BCH/RACH etc
 class WIMAXMapper(PhyModeMapper):
     def __init__(self, symbolDuration, subCarriersPerSubChannel):
         super(WIMAXMapper, self).__init__(symbolDuration, subCarriersPerSubChannel)
-
+        
+        symbolDuration_ = symbolDuration
+        subCarriersPerSubChannel_ = subCarriersPerSubChannel
+        WIMAXPhyMode1.setSymbolDuration(symbolDuration_)
+        WIMAXPhyMode2.setSymbolDuration(symbolDuration_)
+        WIMAXPhyMode3.setSymbolDuration(symbolDuration_)
+        WIMAXPhyMode4.setSymbolDuration(symbolDuration_)
+        WIMAXPhyMode5.setSymbolDuration(symbolDuration_)
+        WIMAXPhyMode6.setSymbolDuration(symbolDuration_)
+        WIMAXPhyMode7.setSymbolDuration(symbolDuration_)
+        WIMAXPhyMode1.setSubCarriersPerSubChannel(subCarriersPerSubChannel_)
+        WIMAXPhyMode2.setSubCarriersPerSubChannel(subCarriersPerSubChannel_)
+        WIMAXPhyMode3.setSubCarriersPerSubChannel(subCarriersPerSubChannel_)
+        WIMAXPhyMode4.setSubCarriersPerSubChannel(subCarriersPerSubChannel_)
+        WIMAXPhyMode5.setSubCarriersPerSubChannel(subCarriersPerSubChannel_)
+        WIMAXPhyMode6.setSubCarriersPerSubChannel(subCarriersPerSubChannel_)
+        WIMAXPhyMode7.setSubCarriersPerSubChannel(subCarriersPerSubChannel_)
         self.setMinimumSINR(6.4);
         self.addPhyMode(Interval(   6.4,   9.4, "(]"), WIMAXPhyMode1)
         self.addPhyMode(Interval(   9.4,  11.2, "(]"), WIMAXPhyMode2)
