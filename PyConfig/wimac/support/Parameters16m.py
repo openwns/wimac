@@ -126,6 +126,8 @@ class ParametersOFDMA(object):
     #fixme(bmw)
     #symbolDuration = 102.857 * 1e-6
     #subcarrierPerSubchannel = 16
+    __name__ = "ParametersOFDMA"
+    
     def __init__(self, _bandwidth):
         # OFDMA parameters not yet completed
         # check this before usage!!
