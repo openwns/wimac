@@ -188,6 +188,7 @@ DLCallback::processPacket(const wns::scheduler::SchedulingCompound & compound)
         omniUnicastFunc->transmissionStop_ =
         startTime + pduDuration - Utilities::getComputationalAccuracyFactor();
         omniUnicastFunc->subBand_ = fSlot;
+        omniUnicastFunc->requestedTxPower_ = txPower;
         func = omniUnicastFunc;
     }
     else

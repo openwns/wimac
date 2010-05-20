@@ -27,17 +27,18 @@
 
 import constanze.traffic
 from constanze.node import IPBinding, IPListenerBinding, Listener
+from openwns import dBm, dB, fromdB, fromdBm
 
 def createDLPoissonTraffic(simulator, rate, packetSize):
     rangs = simulator.simulationModel.getNodesByType("RANG")
     rang = rangs[0]
     utNodes = simulator.simulationModel.getNodesByType("UE")
-    
-    poisDL = constanze.traffic.Poisson(offset = 0.05, 
-        throughput = rate,
-        packetSize = packetSize)
-        
+            
     for ut in utNodes:
+        poisDL = constanze.traffic.Poisson(offset = 0.05, 
+            throughput = rate,
+            packetSize = packetSize)
+
         ipBinding = IPBinding(rang.nl.domainName, ut.nl.domainName)
         rang.load.addTraffic(ipBinding, poisDL)
 
@@ -49,35 +50,35 @@ def createULPoissonTraffic(simulator, rate, packetSize):
     rangs = simulator.simulationModel.getNodesByType("RANG")
     rang = rangs[0]
     utNodes = simulator.simulationModel.getNodesByType("UE")
-
-    if rate > 0.0:
-        poisUL = constanze.traffic.Poisson(offset = 0.0, 
-                                        throughput = rate,
-                                        packetSize = packetSize)
-    else:
-        # Send one PDU to establish connection
-        poisUL = constanze.traffic.CBR0(duration = 15E-3, 
-                                        packetSize = packetSize, 
-                                        throughput = 1.0)
             
     for ut in utNodes:
+        if rate > 0.0:
+            poisUL = constanze.traffic.Poisson(offset = 0.0, 
+                                            throughput = rate,
+                                            packetSize = packetSize)
+        else:
+            # Send one PDU to establish connection
+            poisUL = constanze.traffic.CBR0(duration = 15E-3, 
+                                            packetSize = packetSize, 
+                                            throughput = 1.0)      
+      
         ipBinding = IPBinding(ut.nl.domainName, rang.nl.domainName)
         ut.load.addTraffic(ipBinding, poisUL)
 
-def setupPhy(simulator, scenario):
+def setupPhy(simulator, config, scenario):
     import rise.scenario.Pathloss
     from openwns.interval import Interval
 
     if scenario == "InH":
-        setupPhyDetail(simulator, 3400, rise.scenario.Pathloss.ITUInH())
+        setupPhyDetail(simulator, 3400, rise.scenario.Pathloss.ITUInH(), dBm(24), config)
     elif scenario == "UMa":
-        setupPhyDetail(simulator, 2000, rise.scenario.Pathloss.ITUUMa())
+        setupPhyDetail(simulator, 2000, rise.scenario.Pathloss.ITUUMa(), dBm(46), config)
     elif scenario == "UMi":
-        setupPhyDetail(simulator, 2500, rise.scenario.Pathloss.ITUUMi())
+        setupPhyDetail(simulator, 2500, rise.scenario.Pathloss.ITUUMi(), dBm(41), config)
     elif scenario == "RMa":
-        setupPhyDetail(simulator, 800, rise.scenario.Pathloss.ITURMa())
+        setupPhyDetail(simulator, 800, rise.scenario.Pathloss.ITURMa(), dBm(46), config)
     elif scenario == "SMa":
-        setupPhyDetail(simulator, 2000, rise.scenario.Pathloss.ITUSMa())
+        setupPhyDetail(simulator, 2000, rise.scenario.Pathloss.ITUSMa(), dBm(46), config)
     elif scenario == "LoS_Test":
         pl = rise.scenario.Pathloss.SingleSlope(
             validFrequencies = Interval(4000, 6000),
@@ -90,17 +91,18 @@ def setupPhy(simulator, scenario):
             outOfMinRange = rise.scenario.Pathloss.Constant("49.06 dB"),
             outOfMaxRange = rise.scenario.Pathloss.Deny()
             )
-        setupPhyDetail(simulator, 5470, pl)
+        setupPhyDetail(simulator, 5470, pl, dBm(30), config)
     else:
         raise "Unknown scenario %s" % scenario
 
-def setupPhyDetail(simulator, freq, pathloss):
+def setupPhyDetail(simulator, freq, pathloss, bsTxPower, config):
 
     from ofdmaphy.OFDMAPhy import OFDMASystem
     import rise.Scenario
     from rise.scenario import Shadowing
     from rise.scenario import FastFading
-    from openwns import dBm, dB
+    import openwns.Scheduler
+    import math
 
     bsNodes = simulator.simulationModel.getNodesByType("BS")
     utNodes = simulator.simulationModel.getNodesByType("UE")
@@ -114,6 +116,7 @@ def setupPhyDetail(simulator, freq, pathloss):
                               ("UT","UT"),("UT","FRS"),("UT","AP"),
                               ("FRS","FRS"),("FRS","AP"),("FRS","UT")]
 
+    # Large Scale fading model
     for node in bsNodes + utNodes:
         for pair in propagationConfigPairs:
             node.phy.ofdmaStation.receiver[0].propagation.setPair(pair[0],pair[1]).pathloss = pathloss
@@ -125,10 +128,34 @@ def setupPhyDetail(simulator, freq, pathloss):
             node.phy.ofdmaStation.transmitter[0].propagation.setPair(pair[0],pair[1]).fastFading = FastFading.No()
             
             
-            node.phy.ofdmaStation.receiver[0].receiverNoiseFigure = dB(5)
+    # TX frequency
+        node.phy.ofdmaStation.txFrequency = freq
+        node.phy.ofdmaStation.rxFrequency = freq
 
-            node.phy.ofdmaStation.txFrequency = freq
-            node.phy.ofdmaStation.rxFrequency = freq
+    # Noise figure 
+    for bs in bsNodes:
+        bs.phy.ofdmaStation.receiver[0].receiverNoiseFigure = dB(5)
+
+    for ut in utNodes:
+        ut.phy.ofdmaStation.receiver[0].receiverNoiseFigure = dB(7)
+
+    # TX Power 
+    numSubchannels = config.parametersPhy.subchannels
+    power = fromdBm(bsTxPower)
+    bsNominalTxPower = dBm(power - 10 * math.log10(numSubchannels))
+    
+    bsPower = openwns.Scheduler.PowerCapabilities(bsTxPower, bsNominalTxPower, bsNominalTxPower)
+    utPower = openwns.Scheduler.PowerCapabilities(dBm(24), dBm(24), dBm(24))
+    
+    for bs in bsNodes:
+        bs.dll.dlscheduler.config.txScheduler.registry.powerCapabilitiesAP = bsPower
+        bs.dll.dlscheduler.config.txScheduler.registry.powerCapabilitiesUT = utPower
+        bs.dll.ulscheduler.config.rxScheduler.registry.powerCapabilitiesAP = bsPower
+        bs.dll.ulscheduler.config.rxScheduler.registry.powerCapabilitiesUT = utPower
+    
+    for ut in utNodes:
+        ut.dll.ulscheduler.config.txScheduler.registry.powerCapabilitiesAP = bsPower
+        ut.dll.ulscheduler.config.txScheduler.registry.powerCapabilitiesUT = utPower
 
 def setupScheduler(simulator, sched):
     import openwns.Scheduler
