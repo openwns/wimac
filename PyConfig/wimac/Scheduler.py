@@ -129,8 +129,8 @@ class Scheduler(openwns.FCF.CompoundCollector):
         self.slotDuration = slotDuration
         self.strategy = strategy
         self.strategy.logger.enabled = False
-        self.strategy.dsastrategy.logger.enabled = False
-        self.strategy.apcstrategy.logger.enabled = False
+        self.strategy.dsastrategy.logger.enabled = True
+        self.strategy.apcstrategy.logger.enabled = True
         self.strategy.symbolDuration = symbolDuration
         self.queue = openwns.Scheduler.SimpleQueue()
         self.grouper = openwns.Scheduler.SINRHeuristic(beamforming = beamforming)

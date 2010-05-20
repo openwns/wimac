@@ -39,9 +39,8 @@ void StopTransmission::operator()()
 void StartTransmission::operator()()
 {
     LOG_INFO(phyUser_->getFUN()->getName(), " start transmission to ", dstStation_->getName());
-    wns::Power defaultTxPower = phyUser_->getDataTransmissionService()->getMaxPowerPerSubband();
     assure(phyMode_,"invalid PhyMode");
-    phyUser_->getDataTransmissionService()->startUnicast( compound_, dstStation_, subBand_, defaultTxPower, phyMode_ );
+    phyUser_->getDataTransmissionService()->startUnicast( compound_, dstStation_, subBand_, requestedTxPower_, phyMode_ );
 }
 
 void StartBroadcastTransmission::operator()()
@@ -86,7 +85,7 @@ BroadcastPhyAccessFunc::operator()(wimac::PhyUser* phyUser, const wns::ldk::Comp
 void OmniUnicastPhyAccessFunc::operator()( PhyUser* pu, const wns::ldk::CompoundPtr& compound )
 {
     assureNotNull(phyMode_.getPtr());
-    StartTransmission start ( pu, compound, destination_, phyMode_ );
+    StartTransmission start ( pu, compound, destination_, phyMode_, subBand_,  requestedTxPower_);
 
     wns::simulator::getEventScheduler()
         ->schedule( start,  transmissionStart_ );

@@ -94,6 +94,7 @@ namespace wimac {
         virtual void operator()( PhyUser*, const wns::ldk::CompoundPtr& );
 
         wns::node::Interface* destination_;
+        wns::Power requestedTxPower_;
     };
 
     /**
@@ -190,13 +191,14 @@ namespace wimac {
                            const wns::ldk::CompoundPtr& compound,
                            wns::node::Interface* dstStation,
                            const wns::service::phy::phymode::PhyModeInterfacePtr phyMode,
-                           int subBand = 0
-            ) :
+                           int subBand,
+                           wns::Power requestedTxPower) :
             phyUser_( phyUser ),
             compound_( compound ),
             dstStation_( dstStation ),
             subBand_( subBand ),
-            phyMode_( phyMode )
+            phyMode_( phyMode ),
+            requestedTxPower_( requestedTxPower )
         {}
 
         void operator()();
@@ -205,8 +207,9 @@ namespace wimac {
         wimac::PhyUser* phyUser_;
         wns::ldk::CompoundPtr compound_;
         wns::node::Interface* dstStation_;
-        int subBand_;
         const wns::service::phy::phymode::PhyModeInterfacePtr phyMode_;
+        int subBand_;
+        wns::Power requestedTxPower_;
     };
 
     /**
@@ -224,18 +227,14 @@ namespace wimac {
                                       int subBand,
                                       wns::Power requestedTxPower,
                                       wns::service::phy::phymode::PhyModeInterfacePtr phyMode) :
-            StartTransmission( phyUser, compound, dstStation, phyMode ),
-            pattern_(pattern),
-            subBand_(subBand),
-            requestedTxPower_(requestedTxPower)
+            StartTransmission( phyUser, compound, dstStation, phyMode, subBand,  requestedTxPower),
+            pattern_(pattern)
         {}
 
         void operator()();
 
     protected:
         wns::service::phy::ofdma::PatternPtr pattern_;
-        int subBand_;
-        wns::Power requestedTxPower_;
     };
 
     /**

@@ -271,6 +271,11 @@ Scheduler::startScheduling()
     if(schedulerSpot_ == wns::scheduler::SchedulerSpot::ULSlave())
         return;
 
+    assure(slotDuration * numberOfTimeSlots_ < getDuration(),
+        "Too many resources (" << numberOfTimeSlots_ << " * " << slotDuration 
+        << "s = " << slotDuration * numberOfTimeSlots_ 
+        << "s) to fit in data phase of duration " << getDuration() << "s");
+
     /****************** Scheduling Phase ****************************************/
     // trigger the scheduling process of the strategy module
     wns::scheduler::strategy::StrategyInput strategyInput(freqChannels, 

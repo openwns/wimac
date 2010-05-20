@@ -154,6 +154,8 @@ class ParametersSystem(Frozen):
     antennaArrayLayout['FRS'] = "linear"  #  (verified 0)
     antennaArrayLayout['UT']  = "linear"  #  (verified 0)
 
+    # Will be changed for each scenario by scenario builder
+    # need a concept here
     txPower = {}
     txPower['AP']  = dBm(30) # [dBm]      # (verified 0)
     txPower['FRS'] = dBm(30) # [dBm]      # (verified 0)
@@ -162,7 +164,7 @@ class ParametersSystem(Frozen):
     noiseFigure = {}
     noiseFigure['AP']  = dB(5) # [dB]     # (verified 0)
     noiseFigure['FRS'] = dB(5) # [dB]     # (verified 0)
-    noiseFigure['UT']  = dB(5) # [dB]     # (verified 0)
+    noiseFigure['UT']  = dB(7) # [dB]     # (verified 0)
 
 
 
