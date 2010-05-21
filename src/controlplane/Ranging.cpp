@@ -34,7 +34,6 @@
 #include <WNS/rng/RNGen.hpp>
 #include <WNS/ldk/Classifier.hpp>
 
-#include <WIMAC/frame/ContentionCollector.hpp>
 #include <WIMAC/services/ConnectionManager.hpp>
 #include <WNS/service/dll/StationTypes.hpp>
 #include <WIMAC/Component.hpp>
@@ -275,13 +274,10 @@ RangingSS::RangingSS(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config)
         = config.get<std::string>("connectionClassifier");
     friends_.newFrameProviderName
         = config.get<std::string>("newFrameProvider");
-    friends_.rngCompoundCollectorName
-        = config.get<std::string>("rngCompoundCollector");
 
     friends_.connectionManager = NULL;
     friends_.connectionClassifier = NULL;
     friends_.newFrameProvider = NULL;
-    friends_.rngCompoundCollector = NULL;
 }
 
 void
@@ -446,10 +442,6 @@ RangingSS::onFUNCreated()
         ->findFriend<wns::ldk::fcf::NewFrameProvider*>
         (friends_.newFrameProviderName);
 
-    friends_.rngCompoundCollector = getFUN()
-        ->findFriend<frame::ContentionCollector*>
-        (friends_.rngCompoundCollectorName);
-
 }
 
 void
@@ -589,7 +581,6 @@ RangingSS::sendContentionAccess(const wns::ldk::CompoundPtr compound)
              "   WindowsSize: ", windowSize);
 
     /********* Send or queue Compound  ***********/
-    friends_.rngCompoundCollector->setBackOff(backOff);
     compoundQueue_.push_back(compound);
     doWakeup();
 }

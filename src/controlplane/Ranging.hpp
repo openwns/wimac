@@ -54,10 +54,6 @@ namespace wimac {
         class ConnectionManager;
     }
 
-    namespace frame{
-        class ContentionCollector;
-    }
-
     namespace controlplane {
 
 
@@ -275,7 +271,6 @@ namespace wimac {
                 service::ConnectionManager* connectionManager;
                 wns::ldk::FunctionalUnit* connectionClassifier;
                 wns::ldk::fcf::NewFrameProvider* newFrameProvider;
-                frame::ContentionCollector* rngCompoundCollector;
             } friends_;
         };
     }}
