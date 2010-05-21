@@ -37,6 +37,7 @@
 #include <WNS/ldk/fun/Main.hpp>
 #include <WNS/ldk/utils.hpp>
 #include <WNS/ldk/Group.hpp>
+#include <WNS/ldk/FlowSeparator.hpp>
 #include <WNS/service/phy/ofdma/Handler.hpp>
 #include <WNS/service/phy/ofdma/DataTransmission.hpp>
 #include <WNS/service/dll/StationTypes.hpp>
@@ -45,9 +46,6 @@
 #include <WIMAC/Logger.hpp>
 #include <WIMAC/PhyUser.hpp>
 #include <WIMAC/services/ConnectionManager.hpp>
-#include <WIMAC/services/ControlPlaneManager.hpp>
-#include <WIMAC/services/ControlPlaneManagerSimple.hpp>
-#include <WIMAC/services/DeadStationDetect.hpp>
 #include <WIMAC/StationManager.hpp>
 #include <WIMAC/UpperConvergence.hpp>
 #include <WIMAC/helper/ContextProvider.hpp>
@@ -59,29 +57,6 @@ STATIC_FACTORY_REGISTER_WITH_CREATOR(Component,
                                      wns::node::component::Interface,
                                      "wimac.Component",
                                      wns::node::component::ConfigCreator);
-
-
-class StartControlPlaneManagerSS
-{
-public:
-    StartControlPlaneManagerSS(wimac::service::ControlPlaneManagerInterface* cpm,
-                               ConnectionIdentifier::StationID associateTo,
-                               int qosCategory) :
-        controlPlaneManagerSS_(cpm),
-        associateTo_(associateTo),
-        qosCategory_(qosCategory)
-    {}
-
-    virtual void execute()
-    {
-        controlPlaneManagerSS_->start(associateTo_, qosCategory_);
-    }
-
-private:
-    service::ControlPlaneManagerInterface* controlPlaneManagerSS_;
-    ConnectionIdentifier::StationID associateTo_;
-    int qosCategory_;
-};
 
 
 Component::Component(wns::node::Interface* node, const wns::pyconfig::View& config) :

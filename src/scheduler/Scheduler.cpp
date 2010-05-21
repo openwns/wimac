@@ -58,7 +58,6 @@ STATIC_FACTORY_REGISTER_WITH_CREATOR(
 using namespace wimac::scheduler;
 
 Scheduler::Scheduler(wns::ldk::FunctionalUnit* parent, const wns::pyconfig::View& config) :
-    PDUWatchProvider(parent->getFUN()),
 	plotFrames(config.get<bool>("plotFrames")),
 	usedSlotDuration(0.0),
 	offsetInSlot(0.0),

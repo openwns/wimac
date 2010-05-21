@@ -41,7 +41,6 @@
 #include <WNS/scheduler/strategy/StrategyInterface.hpp>
 
 #include <WIMAC/Classifier.hpp>
-#include <WIMAC/scheduler/PDUWatchProviderObserver.hpp>
 #include <WIMAC/Logger.hpp>
 #include <WIMAC/scheduler/Interface.hpp>
 #include <WIMAC/services/ConnectionManager.hpp>
@@ -100,7 +99,6 @@ namespace wimac { namespace scheduler {
             public virtual wimac::scheduler::Interface,
             public wns::scheduler::MapInfoProviderInterface,
             public wns::Cloneable<Scheduler>,
-            public wimac::scheduler::PDUWatchProvider,
             public wns::Observer<wimac::service::ConnectionDeletedNotification>
         {
         public:

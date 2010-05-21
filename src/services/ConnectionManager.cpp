@@ -40,7 +40,6 @@
 #include <WIMAC/UpperConvergence.hpp>
 
 #include <WIMAC/ConnectionRule.hpp>
-#include <WIMAC/services/FUReseter.hpp>
 #include <WIMAC/Component.hpp>
 #include <WIMAC/Logger.hpp>
 #include <WIMAC/Classifier.hpp>
@@ -139,7 +138,6 @@ ConnectionManager::deleteAllConnections()
         wns::Subject<ConnectionDeletedNotification>::sendNotifies
             (&ConnectionDeletedNotification::notifyAboutConnectionDeleted, **it);
 
-        //friends_.fuReseter->resetAll((*it));
     }
     connectionIdentifiers_.clear();
 }

@@ -77,7 +77,7 @@ class Layer2(wimac.Component.Component):
             symbolDuration = config.parametersPhy.symbolDuration )
         
         self.managementServices.append(
-            wimac.Services.ConnectionManager( "connectionManager", "fuReseter" ) )  
+            wimac.Services.ConnectionManager( "connectionManager"))  
 
         interferenceCache = wimac.Services.InterferenceCache( 
             "interferenceCache", alphaLocal = 0.2, alphaRemote= 0.05 ) 
