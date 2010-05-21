@@ -315,12 +315,10 @@ ScanningSS::ScanningSS(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& confi
     scan_.stopTime = 0;
 
     friends_.connectionManagerName = config.get<std::string>("connectionManager");
-    friends_.cirMeasureProviderName = config.get<std::string>("cirMeasureProvider");
     friends_.newFrameProviderName = config.get<std::string>("newFrameProvider");
     friends_.connectionClassifierName = config.get<std::string>("connectionClassifier");
 
     friends_.connectionManager = NULL;
-    friends_.cirMeasureProvider = NULL;
     friends_.newFrameProvider = NULL;
     friends_.connectionClassifier = NULL;
 }
@@ -457,9 +455,6 @@ ScanningSS::messageNewFrame()
             friends_.connectionManager->changeConnections(cis);
 
             // start measuring
-            dynamic_cast<wimac::CIRMeasureInterface*>(friends_.cirMeasureProvider)
-                ->startMeasuring();
-            friends_.cirMeasureProvider->setRxFrequency( scan_.itStationsToScan->tune );
             --scan_.remainingScanDuration;
             ++scan_.itStationsToScan;
         }else if( scan_.remainingScanDuration == 0 )
@@ -469,7 +464,6 @@ ScanningSS::messageNewFrame()
             scan_.scan = false;
             scan_.remainingScanDuration = -1;
             wimac::CIRMeasureInterface::MeasureValues measureValuesOutput;
-            measureValuesOutput = friends_.cirMeasureProvider->stopMeasuring();
 
             // Return measureValuesOutput to callBackInterface
             resultScanning(measureValuesOutput);
@@ -478,8 +472,6 @@ ScanningSS::messageNewFrame()
             if(  !(scan_.remainingScanDuration % timerBetweenFChange_)
                  &&(scan_.itStationsToScan != scan_.stationsToScan.end()) )
             {
-                friends_.cirMeasureProvider->
-                    setRxFrequency( scan_.itStationsToScan->tune );
                 ++scan_.itStationsToScan;
             }
             --scan_.remainingScanDuration;
@@ -503,10 +495,6 @@ ScanningSS::onFUNCreated()
     assure(dynamic_cast<wimac::Component*>(getFUN()->getLayer())->getStationType() !=
            wns::service::dll::StationTypes::AP(),
            "wimac::ScanningBS: Station is not a BS! \n" );
-
-
-    friends_.cirMeasureProvider = getFUN()
-        ->findFriend<wimac::CIRMeasureInterface*>(friends_.cirMeasureProviderName);
 
     friends_.newFrameProvider = getFUN()
         ->findFriend<wns::ldk::fcf::NewFrameProvider*>(friends_.newFrameProviderName);

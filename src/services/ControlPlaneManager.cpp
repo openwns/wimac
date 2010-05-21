@@ -34,7 +34,6 @@
 #include <WNS/probe/bus/ContextProviderCollection.hpp>
 #include <WNS/probe/bus/utils.hpp>
 
-#include <WIMAC/PhyUser.hpp>
 #include <WIMAC/services/ConnectionManager.hpp>
 #include <WIMAC/services/FUReseter.hpp>
 #include <WIMAC/services/scanningStrategy/Plain.hpp>
@@ -124,10 +123,8 @@ ControlPlaneManagerSS::ControlPlaneManagerSS( wns::ldk::ManagementServiceRegistr
     tuneSiding_.numberOfSubCarrier = 1;
 
     friends_.connectionManagerName = config.get<std::string>("connectionManager");
-    friends_.phyUserName = config.get<std::string>("phyUser");
 
     friends_.connectionManager = NULL;
-    friends_.phyUser = NULL;
 }
 
 
@@ -231,8 +228,6 @@ ControlPlaneManagerSS::onMSRCreated()
         ->getManagementService<service::ConnectionManager>
         (friends_.connectionManagerName);
 
-    friends_.phyUser = dynamic_cast<Component*>( getMSR()->getLayer() )
-        ->getFUN()->findFriend<PhyUser*>(friends_.phyUserName);
 }
 
 
@@ -415,9 +410,6 @@ ControlPlaneManagerSS::doNextStep(const State state)
 
         // Reset UT: Remove all Connection Idenfifier and set station to siding
         this->setScanningStrategy(Initial);
-        friends_.phyUser->startMeasuring();
-        friends_.phyUser->setRxFrequency(tuneSiding_);
-        friends_.phyUser->setTxFrequency(tuneSiding_);
         friends_.connectionManager->deleteAllConnections();
 
 

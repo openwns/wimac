@@ -254,19 +254,10 @@ Component::onNodeCreated()
     getCSR()->onCSRCreated();
 
     // Start the Framebuilder and set it to pause state for synchronizing the
-    // periodically event of all stations. Afterwards the PhyUser controls
-    // the FrameBuilder by the startMeasuring and stopMeasuring methods.
+    // periodically event of all stations. 
     wns::ldk::fcf::FrameBuilder* frameBuilder =
         getFUN()->findFriend<wns::ldk::fcf::FrameBuilder*>("frameBuilder");
     frameBuilder->start();
-    frameBuilder->pause();
-
-    // Set PhyUser receiving for AP
-    if( getStationType() == wns::service::dll::StationTypes::AP() )
-    {
-        phyUser->startMeasuring();
-        phyUser->stopMeasuring();
-    }
 }
 
 void

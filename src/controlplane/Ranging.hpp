@@ -50,8 +50,6 @@
 
 namespace wimac {
 
-    class PhyUser;
-
     namespace service {
         class ConnectionManager;
     }
@@ -271,13 +269,11 @@ namespace wimac {
             struct{
                 std::string connectionManagerName;
                 std::string connectionClassifierName;
-                std::string phyUserName;
                 std::string newFrameProviderName;
                 std::string rngCompoundCollectorName;
 
                 service::ConnectionManager* connectionManager;
                 wns::ldk::FunctionalUnit* connectionClassifier;
-                PhyUser* phyUser;
                 wns::ldk::fcf::NewFrameProvider* newFrameProvider;
                 frame::ContentionCollector* rngCompoundCollector;
             } friends_;

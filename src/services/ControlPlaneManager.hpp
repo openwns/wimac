@@ -189,10 +189,8 @@ namespace wimac { namespace service {
 
             struct{
                 std::string connectionManagerName;
-                std::string phyUserName;
                 
                 wimac::service::ConnectionManager* connectionManager;
-                wimac::PhyUser* phyUser;
             } friends_;
         };
     }

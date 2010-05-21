@@ -92,7 +92,8 @@ void TimingControl::start()
     running_ = true;
 
     if ( !this->hasPeriodicTimeoutSet() )
-        this->startPeriodicTimeout(parameter::ThePHY::getInstance()->getFrameDuration());
+        this->startPeriodicTimeout(parameter::ThePHY::getInstance()->getFrameDuration(),
+            parameter::ThePHY::getInstance()->getFrameDuration());
 
     // to allow first frame to begin immediately do:
     // this->periodically();

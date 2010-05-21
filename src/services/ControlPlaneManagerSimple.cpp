@@ -36,7 +36,6 @@
 #include <WIMAC/Component.hpp>
 #include <WIMAC/services/ConnectionManager.hpp>
 #include <WIMAC/services/ConnectionControl.hpp>
-#include <WIMAC/PhyUser.hpp>
 
 using namespace wimac;
 using namespace wimac::service;
@@ -179,9 +178,6 @@ ControlPlaneManagerSimpleSS::associateAndConnectTo(StationID associateTo,
                                       qosCategory);
   }
 
- // Set PhyUser receiving
-  component_->getFUN()->findFriend<PhyUser*>("phyUser")->startMeasuring();
-  component_->getFUN()->findFriend<PhyUser*>("phyUser")->stopMeasuring();
 }
 
 

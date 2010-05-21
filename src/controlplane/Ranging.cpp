@@ -273,8 +273,6 @@ RangingSS::RangingSS(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config)
         = config.get<std::string>("connectionManager");
     friends_.connectionClassifierName
         = config.get<std::string>("connectionClassifier");
-    friends_.phyUserName
-        = config.get<std::string>("phyUser");
     friends_.newFrameProviderName
         = config.get<std::string>("newFrameProvider");
     friends_.rngCompoundCollectorName
@@ -282,7 +280,6 @@ RangingSS::RangingSS(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config)
 
     friends_.connectionManager = NULL;
     friends_.connectionClassifier = NULL;
-    friends_.phyUser = NULL;
     friends_.newFrameProvider = NULL;
     friends_.rngCompoundCollector = NULL;
 }
@@ -308,11 +305,6 @@ RangingSS::start(wns::service::phy::ofdma::Tune tune,
     }
 
     callBackInterface_ = callBackInterface;
-
-    /********* tune Phy ****************/
-    friends_.phyUser->setRxFrequency(tune);
-    friends_.phyUser->setTxFrequency(tune);
-
 
     /********* Create Connection Identifier for CID 0 (Ranging) ***********/
     // Necessary to tune scheduler to the right baseStation
@@ -449,9 +441,6 @@ RangingSS::onFUNCreated()
 
     friends_.connectionClassifier = getFUN()
         ->findFriend<FunctionalUnit*>(friends_.connectionClassifierName);
-
-    friends_.phyUser = getFUN()
-        ->findFriend<PhyUser*>(friends_.phyUserName);
 
     friends_.newFrameProvider = getFUN()
         ->findFriend<wns::ldk::fcf::NewFrameProvider*>

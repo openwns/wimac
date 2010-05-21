@@ -28,7 +28,6 @@
 #include <WIMAC/services/ConnectionManager.hpp>
 #include <WNS/service/dll/StationTypes.hpp>
 #include <WIMAC/relay/RelayMapper.hpp>
-#include <WIMAC/PhyUser.hpp>
 #include <WIMAC/StationManager.hpp>
 
 STATIC_FACTORY_REGISTER_WITH_CREATOR(
@@ -160,8 +159,6 @@ ConnectionControl::associateTo(StationID associateTo,
     Component* layer2 =
         dynamic_cast<Component*>(getCSR()->getLayer());
     assure(layer2, "ConnectionControl only works in a dll::Layer2.");
-    layer2->getFUN()->findFriend<PhyUser*>("phyUser")->startMeasuring();
-    layer2->getFUN()->findFriend<PhyUser*>("phyUser")->stopMeasuring();
 }
 
 void
@@ -259,7 +256,5 @@ ConnectionControl::createRecursiveConnection(ConnectionIdentifier::CID basicCID,
     Component* layer2 =
         dynamic_cast<Component*>(getCSR()->getLayer());
     assure(layer2, "ConnectionControl only works in a wimac component.");
-    layer2->getFUN()->findFriend<PhyUser*>("phyUser")->startMeasuring();
-    layer2->getFUN()->findFriend<PhyUser*>("phyUser")->stopMeasuring();
 }
 
