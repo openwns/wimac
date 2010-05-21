@@ -157,9 +157,6 @@ ConnectionClassifier::classifyOutgoing( const wns::ldk::CompoundPtr& compound )
         if(friends_.component->getStationType() == wns::service::dll::StationTypes::UT() ||
            friends_.component->getStationType() == wns::service::dll::StationTypes::RUT() )
         {
-            //FIXME If no CI exist for this target MACAdress, it should start
-            //      controlplane::SetupConnection or controlplaneSimple::SetupConnection
-            //      to creat an dataconnection
             cis = friends_.connectionManager
                 ->getAllDataConnections( ConnectionIdentifier::Uplink );
         }
