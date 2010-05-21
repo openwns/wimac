@@ -49,7 +49,6 @@ class Layer2(wimac.Component.Component):
     FlowSeparator = None
     crc = None
     errormodelling = None
-    compoundSwitch = None
     phyUser = None
 
     # functional units for scheduling
@@ -141,7 +140,6 @@ class Layer2(wimac.Component.Component):
         
         self.errormodelling = wimac.ErrorModelling.ErrorModelling('phyUser','phyUser',
                                 config.parametersPhy.symbolDuration, config.parametersPhy.dataSubCarrier, PrintMappings=False)
-        self.compoundSwitch = wimac.CompoundSwitch.CompoundSwitch()
 
         self.phyUser = wimac.PhyUser.PhyUser()
 
@@ -174,10 +172,8 @@ class Layer2(wimac.Component.Component):
         self.frameBuilder = Node('frameBuilder', self.frameBuilder)
 
         #Dataplane
-        self.compoundSwitch = Node('compoundSwitchWiMAX', self.compoundSwitch)
 
         self.fun.setFunctionalUnits(
-        self.compoundSwitch,
         self.upperconvergence,
         self.topTpProbe,
         self.topPProbe,
