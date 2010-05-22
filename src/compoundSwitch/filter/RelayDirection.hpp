@@ -28,7 +28,7 @@
 
 #include <WNS/pyconfig/View.hpp>
 
-#include <WIMAC/compoundSwitch/Filter.hpp>
+#include <DLL/compoundSwitch/Filter.hpp>
 
 namespace wimac { namespace relay {
         class RelayMapper;
@@ -37,10 +37,10 @@ namespace wimac { namespace relay {
 namespace wimac { namespace compoundSwitch { namespace filter {
 
             class RelayDirection :
-                public Filter
+                public dll::compoundSwitch::Filter
             {
             public:
-                RelayDirection(CompoundSwitch*, wns::pyconfig::View&);
+                RelayDirection(dll::compoundSwitch::CompoundSwitch*, wns::pyconfig::View&);
 
                 void onFUNCreated();
 

@@ -7,6 +7,9 @@ from math import ceil
 import openwns.ldk
 import wimac.KeyBuilder
 
+# Must be imported to resolve dependancy for CompoundSwitch
+import dll
+
 from openwns.FUN import FUN, Node
 from openwns.FlowSeparator import FlowSeparator
 

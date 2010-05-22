@@ -26,18 +26,18 @@
 
 #include <WIMAC/compoundSwitch/filter/RelayDirection.hpp>
 #include <WIMAC/relay/RelayMapper.hpp>
-#include <WIMAC/compoundSwitch/CompoundSwitch.hpp>
+#include <DLL/compoundSwitch/CompoundSwitch.hpp>
 
 STATIC_FACTORY_REGISTER_WITH_CREATOR(
     wimac::compoundSwitch::filter::RelayDirection,
-    wimac::compoundSwitch::Filter,
+    dll::compoundSwitch::Filter,
     "wimac.compoundSwitch.filter.RelayDirection",
-    wimac::compoundSwitch::CompoundSwitchConfigCreator);
+    dll::compoundSwitch::CompoundSwitchConfigCreator);
 
 using namespace wimac::compoundSwitch::filter;
 
-RelayDirection::RelayDirection(wimac::compoundSwitch::CompoundSwitch* compoundSwitch, wns::pyconfig::View& config) :
-    wimac::compoundSwitch::Filter(compoundSwitch, config)
+RelayDirection::RelayDirection(dll::compoundSwitch::CompoundSwitch* compoundSwitch, wns::pyconfig::View& config) :
+    dll::compoundSwitch::Filter(compoundSwitch, config)
 {
     direction_ = config.get<int>("direction");
 }
