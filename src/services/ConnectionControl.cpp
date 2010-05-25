@@ -128,7 +128,6 @@ ConnectionControl::associateTo(StationID associateTo,
 
     // get master ConnectionManager from destination access point
     wimac::service::ConnectionManager* destinationConnectionManager
-        //	  = this->getConnectionManagerMaster();
         = destination->getManagementService<service::ConnectionManager>("connectionManager");
 
     // append ConnectionIdentifier to access point and get CID
@@ -217,8 +216,8 @@ ConnectionControl::createRecursiveConnection(ConnectionIdentifier::CID basicCID,
                                qosCategory );
 
     // get master ConnectionManager from destination access point
-    wimac::service::ConnectionManager* associatedWithConnectionManager
-        = layer->getConnectionManagerMaster();
+    wimac::service::ConnectionManager* associatedWithConnectionManager = 
+        associatedWith->getManagementService<service::ConnectionManager>("connectionManager");
 
     // append ConnectionIdentifier to access point and get CID
     bCI = associatedWithConnectionManager->appendConnection( bCI );

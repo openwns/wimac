@@ -61,9 +61,6 @@ STATIC_FACTORY_REGISTER_WITH_CREATOR(Component,
 
 Component::Component(wns::node::Interface* node, const wns::pyconfig::View& config) :
     wns::node::component::Component(node, config),
-    associateTo_(0),
-    qosCategory_(ConnectionIdentifier::NoQoS),
-    randomStartDelayMax_(config.get<wns::simulator::Time>("randomStartDelayMax")),
     stationType_(wns::service::dll::StationTypes::fromString(config.get<std::string>("stationType"))),
     id_(config.get<unsigned int>("stationID")),
     address_(config.get<wns::service::dll::UnicastAddress>("address")),
@@ -71,25 +68,6 @@ Component::Component(wns::node::Interface* node, const wns::pyconfig::View& conf
 {
     LOG_INFO( "Creating station ", node->getName(), " with station ID ", id_,
               " and station type ", wns::service::dll::StationTypes::toString(stationType_) );
-
-    if ( !config.isNone("associateTo") )
-        associateTo_ = config.get<StationID>("associateTo");
-
-    // get qosCategory
-    std::string qosCategory = config.get<std::string>("qosCategory");
-    if (qosCategory == "Signaling"){
-        qosCategory_ = ConnectionIdentifier::Signaling;
-    }else if (qosCategory == "UGS"){
-        qosCategory_ = ConnectionIdentifier::UGS;
-    }else if (qosCategory == "rtPS"){
-        qosCategory_ = ConnectionIdentifier::rtPS;
-    }else if (qosCategory ==  "nrtPS"){
-        qosCategory_ = ConnectionIdentifier::nrtPS;
-    }else if (qosCategory ==  "BE"){
-        qosCategory_ = ConnectionIdentifier::BE;
-    }else{
-        qosCategory_ = ConnectionIdentifier::NoQoS;
-    }
 
     // build FUN
     fun_ = new wns::ldk::fun::Main(this);
@@ -243,29 +221,6 @@ Component::onWorldCreated()
 void
 Component::onShutdown()
 {
-}
-
-service::ConnectionManager*
-Component::getConnectionManagerMaster()
-{
-    Component* associatedWith = dynamic_cast<wimac::Component*>
-        ( TheStationManager::getInstance()->getStationByID(associateTo_) );
-
-    if ( !associatedWith ) {
-        std::stringstream error;
-        error << getMSR()->getLayer()->getName() << " has not found the station it is associated with";
-        throw wns::Exception( error.str() );
-    }
-
-    LOG_TRACE(getName(),
-              ": associatedWith: ", associatedWith->getStationType());
-
-    if ( associatedWith->getStationType() == wns::service::dll::StationTypes::AP() )
-        return associatedWith
-            ->getManagementService<service::ConnectionManager>("connectionManager");
-    else
-        return associatedWith
-            ->getConnectionManagerMaster();
 }
 
 int
