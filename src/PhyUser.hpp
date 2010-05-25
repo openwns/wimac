@@ -41,7 +41,6 @@
 #include <WNS/ldk/HasDeliverer.hpp>
 #include <WNS/ldk/Receptor.hpp>
 #include <WNS/ldk/Connector.hpp>
-#include <WNS/ldk/fcf/NewFrameProviderObserver.hpp>
 
 #include <WNS/service/phy/ofdma/Handler.hpp>
 #include <WNS/service/phy/ofdma/Notification.hpp>
@@ -50,7 +49,6 @@
 
 #include <WNS/pyconfig/View.hpp>
 
-#include <WIMAC/CIRMeasureInterface.hpp>
 #include <WIMAC/PhyUserCommand.hpp>
 
 
@@ -92,9 +90,7 @@ namespace wimac {
         public wns::ldk::HasReceptor<>,
         public wns::ldk::HasConnector<>,
         public wns::ldk::HasDeliverer<>,
-        public wns::Cloneable<PhyUser>,
-        public wns::ldk::fcf::NewFrameObserver,
-        public wimac::CIRMeasureInterface
+        public wns::Cloneable<PhyUser>
     {
         enum States {initial, receiving, measuring};
 
@@ -136,26 +132,9 @@ namespace wimac {
 
         void onFUNCreated();
 
-        // CIRMeassuring Interface
-        virtual void startMeasuring();
-        virtual wimac::CIRMeasureInterface::MeasureValues stopMeasuring();
-
-        // NewFrameObserver Interface
-        void messageNewFrame();
-
-        void
-        setRxFrequency(wns::service::phy::ofdma::Tune tune);
-
-        void
-        setTxFrequency(wns::service::phy::ofdma::Tune tune);
-
     private:
 
         bool filter( const wns::ldk::CompoundPtr& compound);
-        void storeMValue(MValue mValue);
-
-        States state_;
-        States oldState_;
 
         // point in time when last C/I measurement was written to
         // interference cache
@@ -165,14 +144,6 @@ namespace wimac {
          * @todo make max waiting time of 1.0 second configurable
          */
         const wns::simulator::Time maxAgeCacheEntry;
-
-        // Flag to indicate that this frame could not be received completely.
-        // For this flag we need a time stamp to assure that we are
-        // in the next frame.
-        wns::simulator::Time waitOneFrameRx_;
-        wns::simulator::Time waitOneFrameTx_;
-
-        CIRMeasureInterface::MeasureValues measureValues_;
 
         struct{
 
@@ -197,18 +168,14 @@ namespace wimac {
         wns::service::phy::ofdma::DataTransmission* dataTransmission;
         wns::service::phy::ofdma::Notification* notificationService;
 
-        wns::service::phy::ofdma::Tune tune_;
-
         struct Friends {
             std::string interferenceCacheName;
             std::string connectionManagerName;
-            std::string frameBuilderName;
             std::string connectionClassifierName;
 
             wimac::Component* layer;
             service::InterferenceCache* interferenceCache;
             service::ConnectionManager* connectionManager;
-            wns::ldk::fcf::FrameBuilder* frameBuilder;
             ConnectionClassifier* connectionClassifier;
         } friends_;
 

@@ -33,7 +33,6 @@
 #include <WIMAC/PhyUserCommand.hpp>
 #include <WIMAC/PhyAccessFunc.hpp>
 #include <WIMAC/Utilities.hpp>
-#include <WIMAC/frame/SingleCompoundCollector.hpp>
 #include <WIMAC/frame/DataCollector.hpp>
 #include <WIMAC/scheduler/Scheduler.hpp>
 #include <WIMAC/parameter/PHY.hpp>

@@ -1,7 +1,5 @@
 from wimac.Layer2 import *
-import wimac.CompoundSwitch
 import wimac.Scheduler
-import wimac.FUReseter
 import wimac.FUs
 import openwns.SAR
 import openwns.Tools

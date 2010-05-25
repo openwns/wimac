@@ -53,7 +53,6 @@ namespace wimac {
 
 
     namespace service {
-        class FUReseter;
 
         class CIDNotFound :
             public wns::Exception

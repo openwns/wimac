@@ -32,7 +32,6 @@
 #include <WIMAC/PhyUser.hpp>
 #include <WIMAC/PhyUserCommand.hpp>
 #include <WIMAC/PhyAccessFunc.hpp>
-#include <WIMAC/frame/SingleCompoundCollector.hpp>
 #include <WIMAC/PhyAccessFunc.hpp>
 #include <WIMAC/Utilities.hpp>
 #include <WIMAC/frame/DataCollector.hpp>

@@ -32,35 +32,6 @@ from wimac.LLMapping import WIMAXLowestPhyMode
 import openwns.FCF
 import openwns.Multiplexer
 
-class SingleCompoundCollector(Sealed):
-    __plugin__ = "wimac.frame.SingleCompoundCollector"
-    phyMode = None
-
-    def __init__(self):
-        self.phyMode = WIMAXLowestPhyMode
-
-class ContentionCollector(openwns.FCF.CompoundCollector):
-    __plugin__ = "wimac.frame.ContentionCollector"
-    contentionAccess = None
-    phyMode = None
-
-    class ContentionAccess:
-        enabled = None
-        slotLengthInSymbols = None
-        numberOfSlots = None
-
-        def __init__(self, enabled, slotLengthInSymbols, numberOfSlots):
-            self.enabled = enabled
-            self.slotLengthInSymbols = slotLengthInSymbols
-            self.numberOfSlots = numberOfSlots
-
-    def __init__(self, frameBuilder, **kw):
-        openwns.FCF.CompoundCollector.__init__(self, frameBuilder)
-        self.contentionAccess = self.ContentionAccess(False,0 , 0)
-        self.phyMode = WIMAXLowestPhyMode
-        attrsetter(self, kw)
-
-
 class FrameHeadCollector(openwns.FCF.CompoundCollector):
     __plugin__ = "wimac.frame.FrameHeadCollector"
     phyMode = None
@@ -91,21 +62,6 @@ class ULMapCollector(openwns.FCF.CompoundCollector):
         self.ulSchedulerName = ulSchedulerName
         self.phyMode = WIMAXLowestPhyMode
 
-class MultiCompoundBSDLScheduler(ContentionCollector):
-    __plugin__ = "wimac.frame.MultiCompoundBSDLScheduler"
-
-    def __init__(self, frameBuilder):
-        super(MultiCompoundBSDLScheduler, self).__init__(frameBuilder)
-
-
-class SSDLScheduler(openwns.FCF.CompoundCollector):
-    __plugin__ = "wimac.frame.SSDLScheduler"
-    dlMapRetrieverName = None
-
-    def __init__(self, frameBuilder, dlMapRetrieverName):
-        openwns.FCF.CompoundCollector.__init__(self, frameBuilder)
-        self.dlMapRetrieverName = dlMapRetrieverName
-
 class DataCollector(openwns.FCF.CompoundCollector):
     __plugin__ = "wimac.frame.DataCollector"
 
@@ -115,28 +71,6 @@ class DataCollector(openwns.FCF.CompoundCollector):
     def __init__(self, frameBuilder):
         openwns.FCF.CompoundCollector.__init__(self, frameBuilder)
         
-
-class StaticBSULScheduler(openwns.FCF.CompoundCollector):
-    __plugin__ = "wimac.frame.StaticBSULScheduler"
-    phyMode = None
-
-    def __init__(self, frameBuilder):
-        openwns.FCF.CompoundCollector.__init__(self, frameBuilder)
-        self.phyMode = WIMAXLowestPhyMode
-
-
-class SSULScheduler(openwns.FCF.CompoundCollector):
-    __plugin__ = "wimac.frame.SSULScheduler"
-    ulMapRetrieverName = None
-    symbolDuration = None #ParametersOFDMA.symbolDuration
-    phyMode = None
-
-    def __init__(self, frameBuilder, ulMapRetrieverName, symbolDuration_):
-        openwns.FCF.CompoundCollector.__init__(self, frameBuilder)
-        self.ulMapRetrieverName = ulMapRetrieverName
-        self.phyMode = WIMAXLowestPhyMode
-        self.symbolDuration = symbolDuration_
-
 class ActivationAction(Sealed):
     Start = 0
     StartCollection = 1

@@ -43,11 +43,9 @@ class QueueManager(object):
 
 class ConnectionManager():
     __plugin__ = 'wimac.services.ConnectionManager'
-    fuReseter = None
 
-    def __init__(self, serviceName, fuReseter):
+    def __init__(self, serviceName):
         self.serviceName = serviceName
-        self.fuReseter = fuReseter
 
 class ConnectionControl():
     __plugin__ = 'wimac.services.ConnectionControl'
