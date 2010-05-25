@@ -70,7 +70,6 @@ class Layer2(wimac.Component.Component):
         super(Layer2, self).__init__(node, stationName)
         self.nameInComponentFactory = "wimac.Component"
 
-        self.associations = []
         self.randomStartDelayMax = 0.0
         
         self.upperconvergence = wimac.FUs.UpperConvergence()

@@ -36,9 +36,6 @@ class Component( openwns.node.Component ):
     # station ID, user must make sure this is set uniquely. Used for Probes Access Control
     stationID = None
 
-    # a list of associations
-    associations = None
-
     # String, can be "BS", "FRS" or "UT"
     stationType = None
 

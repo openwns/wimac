@@ -448,9 +448,21 @@ bool PhyUser::filter( const wns::ldk::CompoundPtr& compound)
     {
         ConnectionIdentifier::Ptr rngCI;
         rngCI = friends_.connectionManager->getConnectionWithID(0);
-        assure(rngCI ,
-                "PhyUser::filter: Can't filter Compounds without ConnectionIdentifier with CID=0");
 
+        if(rngCI == NULL)
+        {
+            if(phyCommand->magic.frameHead_)
+            {
+                // Receive frame head from other BSs while not associated
+                return true;
+            }
+            else
+            {
+                // Do not receive other broadcasts like MAPs
+                return false;
+            }
+
+        }
         if ( !phyCommand->peer.destination_       //broadcast
                 && ( phyCommand->magic.sourceComponent_->getID()
                     == rngCI->baseStation_ )                // from our BaseStation

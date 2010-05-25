@@ -128,13 +128,6 @@ void FrameHeadCollector::doOnData( const wns::ldk::CompoundPtr& compound )
     FrameHeadCommand* command =
         getCommand( compound->getCommandPool() );
 
-    if(command->peer.baseStationID !=
-       connectionManager_->getConnectionWithID( 0 )->baseStation_ )
-    {
-        throw wns::Exception(
-            "FrameHeadRetriever::doOnData: compound is not from associated BaseStation");
-    }
-
     LOG_INFO( getFUN()->getLayer()->getName(), ": received FCH from station:",command->peer.baseStationID);
 
     getFrameBuilder()->getTimingControl()->finishedPhase( this );

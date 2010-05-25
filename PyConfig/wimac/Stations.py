@@ -7,13 +7,6 @@ import math
 from wimac.FrameBuilder import ActivationAction, OperationMode
 import wimac.support.FrameSetup as FrameSetup
 
-class Association:
-    def __init__(self,source, destination, id):
-        self.source = source
-        self.destination = destination
-        self.id = id
-
-
 class BaseStation(Layer2):
 
     subscriberStations = None
@@ -24,7 +17,6 @@ class BaseStation(Layer2):
         myFrameSetup = FrameSetup.FrameSetup(config)
 
         self.ring = 1
-        self.qosCategory = 'NoQoS'
 
         # BaseStation specific components
         self.upperconvergence = wimac.FUs.UpperConvergence()
@@ -327,10 +319,6 @@ class SubscriberStation(Layer2):
 
     def associate(self, destination):
         assert isinstance(destination, Layer2)
-        it = Association(self, destination, destination.getAssociationID())
-        self.associations.append(it)
-        self.associateTo = destination.stationID
-        self.qosCategory = 'BE'
         self.ring = destination.ring + 1
         self.connectionControl.associateTo(destination.stationID)
 
