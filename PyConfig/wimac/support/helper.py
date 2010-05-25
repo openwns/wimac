@@ -30,9 +30,9 @@ from constanze.node import IPBinding, IPListenerBinding, Listener
 from openwns import dBm, dB, fromdB, fromdBm
 
 def createDLPoissonTraffic(simulator, rate, packetSize):
-    rangs = simulator.simulationModel.getNodesByType("RANG")
+    rangs = simulator.simulationModel.getNodesByProperty("Type", "RANG")
     rang = rangs[0]
-    utNodes = simulator.simulationModel.getNodesByType("UE")
+    utNodes = simulator.simulationModel.getNodesByProperty("Type", "UE")
             
     for ut in utNodes:
         poisDL = constanze.traffic.Poisson(offset = 0.05, 
@@ -47,9 +47,9 @@ def createDLPoissonTraffic(simulator, rate, packetSize):
         ut.load.addListener(ipListenerBinding, listener)
 
 def createULPoissonTraffic(simulator, rate, packetSize):
-    rangs = simulator.simulationModel.getNodesByType("RANG")
+    rangs = simulator.simulationModel.getNodesByProperty("Type", "RANG")
     rang = rangs[0]
-    utNodes = simulator.simulationModel.getNodesByType("UE")
+    utNodes = simulator.simulationModel.getNodesByProperty("Type", "UE")
             
     for ut in utNodes:
         if rate > 0.0:
@@ -104,8 +104,8 @@ def setupPhyDetail(simulator, freq, pathloss, bsTxPower, utTxPower, config):
     import openwns.Scheduler
     import math
 
-    bsNodes = simulator.simulationModel.getNodesByType("BS")
-    utNodes = simulator.simulationModel.getNodesByType("UE")
+    bsNodes = simulator.simulationModel.getNodesByProperty("Type", "BS")
+    utNodes = simulator.simulationModel.getNodesByProperty("Type", "UE")
 
     ofdmaPhySystem = OFDMASystem('ofdma')
     ofdmaPhySystem.Scenario = rise.Scenario.Scenario()
@@ -169,7 +169,7 @@ def setupScheduler(simulator, sched):
     else:
         raise "Unknown scheduler %s" % sched
     
-    bsNodes = simulator.simulationModel.getNodesByType("BS")
+    bsNodes = simulator.simulationModel.getNodesByProperty("Type", "BS")
     
     for bs in bsNodes:
         bs.dll.dlscheduler.config.txScheduler.strategy.subStrategies[0] = scheduler
@@ -178,16 +178,16 @@ def setupScheduler(simulator, sched):
 
 def disableIPHeader(simulator):
   
-    rang = simulator.simulationModel.getNodesByType("RANG")
-    utNodes = simulator.simulationModel.getNodesByType("UE")
+    rang = simulator.simulationModel.getNodesByProperty("Type", "RANG")
+    utNodes = simulator.simulationModel.getNodesByProperty("Type", "UE")
     
     for node in rang + utNodes:    
         node.nl.ipHeader.config.headerSize = 0
     
 def setL2ProbeWindowSize(simulator, size):
 
-    bsNodes = simulator.simulationModel.getNodesByType("BS")
-    utNodes = simulator.simulationModel.getNodesByType("UE")
+    bsNodes = simulator.simulationModel.getNodesByProperty("Type", "BS")
+    utNodes = simulator.simulationModel.getNodesByProperty("Type", "UE")
     
     for node in bsNodes + utNodes:
         node.dll.topTpProbe.config.windowSize = size
