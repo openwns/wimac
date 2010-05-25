@@ -23,7 +23,7 @@
  *
  ******************************************************************************/
 
-#include <WIMAC/services/ConnectionControl.hpp>
+#include <WIMAC/services/AssociationControl.hpp>
 
 #include <WIMAC/services/ConnectionManager.hpp>
 #include <WNS/service/dll/StationTypes.hpp>
@@ -31,39 +31,56 @@
 #include <WIMAC/StationManager.hpp>
 
 STATIC_FACTORY_REGISTER_WITH_CREATOR(
-    wimac::service::ConnectionControl,
+    wimac::service::associationcontrol::Fixed,
     wns::ldk::ControlServiceInterface,
-    "wimac.services.ConnectionControl",
+    "wimac.services.AssociationControl.Fixed",
     wns::ldk::CSRConfigCreator);
 
+using namespace wimac::service::associationcontrol;
 using namespace wimac::service;
 using namespace wimac;
 
-ConnectionControl::ConnectionControl( wns::ldk::ControlServiceRegistry* csr,
-                                      wns::pyconfig::View& config ) :
-    wns::ldk::ControlService(csr),
+Fixed::Fixed(wns::ldk::ControlServiceRegistry* csr,
+                                      wns::pyconfig::View& config) :
+    AssociationControl(csr, config),
     associatedWithID_(0)
 {
-    if ( !config.isNone("associatedWith") )
-    {
-        associatedWithID_ = config.get<wimac::StationID>("associatedWith");
-    }
+    assure(!config.isNone("associatedWith"), "Missing association target ID in PyConfig");
+
+    associatedWithID_ = config.get<wimac::StationID>("associatedWith");
+}
+
+Fixed::~Fixed()
+{
 }
 
 void
-ConnectionControl::onCSRCreated()
+Fixed::doOnCSRCreated()
+{
+    associateTo(associatedWithID_, ConnectionIdentifier::BE);
+}
+
+AssociationControl::AssociationControl( wns::ldk::ControlServiceRegistry* csr,
+                                      wns::pyconfig::View& config ) :
+    wns::ldk::ControlService(csr)
+{
+}
+
+
+
+void
+AssociationControl::onCSRCreated()
 {
     friends_.connectionManager = getCSR()->getLayer()
         ->getManagementService<wimac::service::ConnectionManager>("connectionManager");
     assure(friends_.connectionManager,
            "ConnectionManager must be of type wimac::service::ConnectionManager");
 
-    if (associatedWithID_)
-        associateTo(associatedWithID_, ConnectionIdentifier::BE);
+    doOnCSRCreated();        
 }
 
 void
-ConnectionControl::associateTo(StationID associateTo,
+AssociationControl::associateTo(StationID associateTo,
                                ConnectionIdentifier::QoSCategory qosCategory)
 {
 
@@ -146,7 +163,7 @@ ConnectionControl::associateTo(StationID associateTo,
     if( destination->getStationType() == wns::service::dll::StationTypes::FRS() )
     {
         destination
-            ->getControlService<service::ConnectionControl>("connectionControl")
+            ->getControlService<service::AssociationControl>("associationControl")
             ->createRecursiveConnection(bCI.cid_,
                                         pmCI.cid_,
                                         dlCI.cid_,
@@ -157,11 +174,11 @@ ConnectionControl::associateTo(StationID associateTo,
 
     Component* layer2 =
         dynamic_cast<Component*>(getCSR()->getLayer());
-    assure(layer2, "ConnectionControl only works in a dll::Layer2.");
+    assure(layer2, "AssociationControl only works in a dll::Layer2.");
 }
 
 void
-ConnectionControl::createRecursiveConnection(ConnectionIdentifier::CID basicCID,
+AssociationControl::createRecursiveConnection(ConnectionIdentifier::CID basicCID,
                                              ConnectionIdentifier::CID primaryCID,
                                              ConnectionIdentifier::CID downlinkTransportCID,
                                              ConnectionIdentifier::CID uplinkTransportCID,
@@ -243,7 +260,7 @@ ConnectionControl::createRecursiveConnection(ConnectionIdentifier::CID basicCID,
     if ( associatedWith->getStationType() == wns::service::dll::StationTypes::FRS() )
     {
         associatedWith
-            ->getControlService<ConnectionControl>("connectionControl")
+            ->getControlService<AssociationControl>("associationControl")
             ->createRecursiveConnection(bCI.cid_,
                                         pmCI.cid_,
                                         dlCI.cid_,
@@ -254,6 +271,6 @@ ConnectionControl::createRecursiveConnection(ConnectionIdentifier::CID basicCID,
 
     Component* layer2 =
         dynamic_cast<Component*>(getCSR()->getLayer());
-    assure(layer2, "ConnectionControl only works in a wimac component.");
+    assure(layer2, "AssociationControl only works in a wimac component.");
 }
 

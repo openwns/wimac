@@ -1,5 +1,6 @@
 from wimac.Layer2 import *
 import wimac.Scheduler
+import wimac.Services
 import wimac.FUs
 import openwns.SAR
 import openwns.Tools
@@ -251,10 +252,14 @@ class BaseStation(Layer2):
 
 class SubscriberStation(Layer2):
     forwarder = None
+    associationControl = None
 
     def __init__(self, node, config) : #, registryProxy = wimac.Scheduler.RegistryProxyWiMAC() ):
         super(SubscriberStation, self).__init__(node, "SS", config)       
         self.stationType = "UT"
+
+        self.associationControl = wimac.Services.FixedAssociation() 
+        self.controlServices.append( self.associationControl )
 
         # frame elements
         self.framehead = wimac.FrameBuilder.FrameHeadCollector('frameBuilder')
@@ -319,8 +324,13 @@ class SubscriberStation(Layer2):
 
     def associate(self, destination):
         assert isinstance(destination, Layer2)
+        assert isinstance(self.associationControl, wimac.Services.FixedAssociation), """
+        Do not call 'associate' if dynamic association is used. Change the type of the
+        Connection Control Service to FixedConnection!
+        """
+        
         self.ring = destination.ring + 1
-        self.connectionControl.associateTo(destination.stationID)
+        self.associationControl.associateTo(destination.stationID)
 
     def connect(self):
         # Connections Dataplane

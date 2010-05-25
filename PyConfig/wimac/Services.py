@@ -47,16 +47,33 @@ class ConnectionManager():
     def __init__(self, serviceName):
         self.serviceName = serviceName
 
-class ConnectionControl():
-    __plugin__ = 'wimac.services.ConnectionControl'
+
+class AssociationControl(object):
+    serviceName = "associationControl"
+                
+class FixedAssociation(AssociationControl):
+    __plugin__ = 'wimac.services.AssociationControl.Fixed'
 
     associatedWith = None
-    def __init__(self, serviceName):
-        self.serviceName = serviceName
+    def __init__(self, associatedWith = None):
+        self.associatedWith = associatedWith
 
     def associateTo(self, destination):
-        self.associatedWith = destination
+        self.associatedWith = destination                
                 
+class BestAssociation(AssociationControl):
+    __plugin__ = 'wimac.services.AssociationControl.Best'
+
+    # RxPower, SINR, Pathloss
+    criterion = None
+    def __init__(self, serviceName, criterion):
+        assert criterion == "RxPower" or criterion == "SINR" or criterion == "Pathlosss", """
+        Criterion must be RxPower, SINR or Pathloss
+        """
+        
+        self.criterion = criterion
+
+
 class ConstantValue(object):
     __plugin__ = 'wimac.services.InterferenceCache.ConstantValue'
     

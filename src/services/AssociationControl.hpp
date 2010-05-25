@@ -23,8 +23,8 @@
  *
  ******************************************************************************/
 
-#ifndef WIMAC_SERVICES_CONNECTIONCONTROL_H
-#define WIMAC_SERVICES_CONNECTIONCONTROL_H
+#ifndef WIMAC_SERVICES_ASSOCIATIONCONTROL_H
+#define WIMAC_SERVICES_ASSOCIATIONCONTROL_H
 
 #include <WNS/ldk/ControlServiceInterface.hpp>
 
@@ -35,11 +35,11 @@
 namespace wimac { namespace service {
 
         class ConnectionManager;
-        class ConnectionControl :
+        class AssociationControl :
             public wns::ldk::ControlService
         {
         public:
-            ConnectionControl( wns::ldk::ControlServiceRegistry* csr,
+            AssociationControl( wns::ldk::ControlServiceRegistry* csr,
                                wns::pyconfig::View& config );
 
 
@@ -52,6 +52,9 @@ namespace wimac { namespace service {
                                        int qosCategory);
             void onCSRCreated();
 
+            virtual void 
+            doOnCSRCreated() = 0;
+
             void associateTo( wimac::StationID destination,
                               ConnectionIdentifier::QoSCategory category);
 
@@ -60,8 +63,30 @@ namespace wimac { namespace service {
                 wimac::service::ConnectionManager* connectionManager;
             } friends_;
 
-            wimac::StationID associatedWithID_;
         };
+
+    namespace associationcontrol {
+
+        /** @brief Associate to node ID provided by PyConfig
+         */
+        class Fixed :
+            public AssociationControl
+        {
+        public:
+            Fixed(wns::ldk::ControlServiceRegistry* csr,
+                                wns::pyconfig::View& config );
+            virtual
+            ~Fixed();
+    
+        private:
+                virtual void
+                doOnCSRCreated();
+
+                wimac::StationID associatedWithID_;
+    
+        };
+    }
+
     }
 }
 
