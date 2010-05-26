@@ -58,7 +58,8 @@ def createULPoissonTraffic(simulator, rate, packetSize):
                                             packetSize = packetSize)
         else:
             # Send one PDU to establish connection
-            poisUL = constanze.traffic.CBR0(duration = 15E-3, 
+            poisUL = constanze.traffic.CBR0(offset = 5E-3,
+                                            duration = 15E-3, 
                                             packetSize = packetSize, 
                                             throughput = 1.0)      
       
