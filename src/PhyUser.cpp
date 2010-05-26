@@ -272,6 +272,8 @@ PhyUser::onData(wns::osi::PDUPtr pdu,
     //puCommand->local.txPower_   = txPower;
     puCommand->local.interference_ = interference;
 
+    puCommand->magic.rxMeasurement = rxPowerMeasurement;
+
     // Only proceed on filtered compounds
     if ( !filter( compound ) )
         return;

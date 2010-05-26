@@ -124,10 +124,7 @@ namespace wimac {
          *  UT(2)      UT(4)      UT(6)
          *
          */
-        unsigned int getRing() const
-        {
-            return ring_;
-        }
+        unsigned int getRing() const;
 
         /** @brief Access to the DLL Address */
         wns::service::dll::UnicastAddress getDLLAddress() const

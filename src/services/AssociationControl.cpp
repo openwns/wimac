@@ -30,15 +30,70 @@
 #include <WIMAC/relay/RelayMapper.hpp>
 #include <WIMAC/StationManager.hpp>
 
+using namespace wimac::service::associationcontrol;
+using namespace wimac::service;
+using namespace wimac;
+
 STATIC_FACTORY_REGISTER_WITH_CREATOR(
     wimac::service::associationcontrol::Fixed,
     wns::ldk::ControlServiceInterface,
     "wimac.services.AssociationControl.Fixed",
     wns::ldk::CSRConfigCreator);
 
-using namespace wimac::service::associationcontrol;
-using namespace wimac::service;
-using namespace wimac;
+STATIC_FACTORY_REGISTER_WITH_CREATOR(
+    wimac::service::associationcontrol::BestAtGivenTime,
+    wns::ldk::ControlServiceInterface,
+    "wimac.services.AssociationControl.BestAtGivenTime",
+    wns::ldk::CSRConfigCreator);
+
+STATIC_FACTORY_REGISTER(BestPathloss, IDecideBest, "wimac.services.AssociationControl.Best.BestPathloss");
+STATIC_FACTORY_REGISTER(BestRxPower, IDecideBest, "wimac.services.AssociationControl.Best.BestRxPower");
+STATIC_FACTORY_REGISTER(BestSINR, IDecideBest, "wimac.services.AssociationControl.Best.BestSINR");
+
+BestAtGivenTime::BestAtGivenTime(wns::ldk::ControlServiceRegistry* csr,
+                                      wns::pyconfig::View& config) :
+    AssociationControl(csr, config),
+    deciderStrategy_(NULL),
+    decisionTime_(config.get<wns::simulator::Time>("decisionTime"))
+{
+    std::string pluginName = config.get<std::string>("decisionStrategy.__plugin__");
+    deciderStrategy_ = IDecideBest::Factory::creator(pluginName)->create();
+}
+
+BestAtGivenTime::~BestAtGivenTime()
+{
+    assure(deciderStrategy_, "Decider strategy is NULL");
+
+    delete deciderStrategy_;
+}
+
+void
+BestAtGivenTime::doOnCSRCreated()
+{
+    wns::simulator::getEventScheduler()->scheduleDelay(
+        boost::bind(&BestAtGivenTime::associateNow, this),
+        decisionTime_);
+}
+
+void
+BestAtGivenTime::doStoreMeasurement(StationID source,
+    const wns::service::phy::power::PowerMeasurementPtr& pm)
+{
+    assure(deciderStrategy_, "Decider strategy is NULL");
+
+    deciderStrategy_->put(source, pm);
+}
+
+void
+BestAtGivenTime::associateNow()
+{
+    assure(deciderStrategy_, "Decider strategy is NULL");
+    assure(deciderStrategy_->isInitialized(), 
+        "Decision strategy did not receive any measurements yet.");
+
+    associateTo(deciderStrategy_->getBest(), ConnectionIdentifier::BE);
+}
+
 
 Fixed::Fixed(wns::ldk::ControlServiceRegistry* csr,
                                       wns::pyconfig::View& config) :
@@ -60,6 +115,12 @@ Fixed::doOnCSRCreated()
     associateTo(associatedWithID_, ConnectionIdentifier::BE);
 }
 
+void
+Fixed::doStoreMeasurement(StationID, 
+    const wns::service::phy::power::PowerMeasurementPtr&)
+{
+}
+
 AssociationControl::AssociationControl( wns::ldk::ControlServiceRegistry* csr,
                                       wns::pyconfig::View& config ) :
     wns::ldk::ControlService(csr)
@@ -78,6 +139,14 @@ AssociationControl::onCSRCreated()
 
     doOnCSRCreated();        
 }
+
+void
+AssociationControl::storeMeasurement(StationID source, 
+    const wns::service::phy::power::PowerMeasurementPtr& pm)
+{
+    doStoreMeasurement(source, pm);
+}
+
 
 void
 AssociationControl::associateTo(StationID associateTo,

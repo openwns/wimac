@@ -51,7 +51,7 @@ class ConnectionManager():
 class AssociationControl(object):
     serviceName = "associationControl"
                 
-class FixedAssociation(AssociationControl):
+class Fixed(AssociationControl):
     __plugin__ = 'wimac.services.AssociationControl.Fixed'
 
     associatedWith = None
@@ -61,17 +61,25 @@ class FixedAssociation(AssociationControl):
     def associateTo(self, destination):
         self.associatedWith = destination                
                 
-class BestAssociation(AssociationControl):
-    __plugin__ = 'wimac.services.AssociationControl.Best'
+class BestAtGivenTime(AssociationControl):
+    __plugin__ = 'wimac.services.AssociationControl.BestAtGivenTime'
+    decisionStrategy = None
+    decisionTime = None
+    
+    class BestPathloss:
+        __plugin__ = "wimac.services.AssociationControl.Best.BestPathloss"
+    
+    class BestRxPower:
+        __plugin__ = "wimac.services.AssociationControl.Best.BestRxPower"
+    
+    class BestSINR:
+        __plugin__ = "wimac.services.AssociationControl.Best.BestSINR"
 
     # RxPower, SINR, Pathloss
     criterion = None
-    def __init__(self, serviceName, criterion):
-        assert criterion == "RxPower" or criterion == "SINR" or criterion == "Pathlosss", """
-        Criterion must be RxPower, SINR or Pathloss
-        """
-        
-        self.criterion = criterion
+    def __init__(self, decisionStrategy, decisionTime):        
+        self.decisionStrategy = decisionStrategy
+        self.decisionTime = decisionTime
 
 
 class ConstantValue(object):

@@ -64,6 +64,12 @@ void FrameHeadCollector::onFUNCreated()
         layer_->getManagementService<service::ConnectionManager>
         ("connectionManager");
 
+    if(layer_->getStationType() != wns::service::dll::StationTypes::AP())
+    {
+        channelQualityObserver_ = layer_->getControlService<service::IChannelQualityObserver>
+            ("associationControl");
+    }
+
     wns::ldk::fcf::CompoundCollector::onFUNCreated();
 }
 
@@ -129,6 +135,13 @@ void FrameHeadCollector::doOnData( const wns::ldk::CompoundPtr& compound )
         getCommand( compound->getCommandPool() );
 
     LOG_INFO( getFUN()->getLayer()->getName(), ": received FCH from station:",command->peer.baseStationID);
+
+    if(channelQualityObserver_)
+    {
+        PhyUserCommand* phyCommand = phyUser_->getCommand(compound->getCommandPool());
+        channelQualityObserver_->storeMeasurement(command->peer.baseStationID, 
+            phyCommand->magic.rxMeasurement);
+    }
 
     getFrameBuilder()->getTimingControl()->finishedPhase( this );
 }

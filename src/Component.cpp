@@ -63,8 +63,7 @@ Component::Component(wns::node::Interface* node, const wns::pyconfig::View& conf
     wns::node::component::Component(node, config),
     stationType_(wns::service::dll::StationTypes::fromString(config.get<std::string>("stationType"))),
     id_(config.get<unsigned int>("stationID")),
-    address_(config.get<wns::service::dll::UnicastAddress>("address")),
-    ring_(config.get<unsigned int>("ring"))
+    address_(config.get<wns::service::dll::UnicastAddress>("address"))
 {
     LOG_INFO( "Creating station ", node->getName(), " with station ID ", id_,
               " and station type ", wns::service::dll::StationTypes::toString(stationType_) );
@@ -141,11 +140,41 @@ Component::Component(wns::node::Interface* node, const wns::pyconfig::View& conf
 
     // global station registry
     TheStationManager::getInstance()->registerStation(id_, address_, this);
+
+    if(getStationType() == wns::service::dll::StationTypes::AP())
+        ring_ = config.get<unsigned int>("ring");
+
 }
 
 void
 Component::doStartup()
 {
+}
+
+unsigned int
+Component::getRing() const
+{
+    if ( getStationType() == wns::service::dll::StationTypes::AP() )
+    {
+        return ring_;
+    } 
+    else
+    {
+        ConnectionIdentifier::Ptr ci;
+
+        ci = getManagementService<service::ConnectionManager>
+            ("connectionManager")->getConnectionWithID(0);
+
+        if( ci )
+        {
+            Component* associatedWith = dynamic_cast<wimac::Component*>
+                ( TheStationManager::getInstance()->getStationByID(ci->baseStation_) );
+            assure(associatedWith, "Station is not associated with a WiMAC station");
+
+            return associatedWith->getRing() + 1;
+        }
+        return 0;
+    }
 }
 
 unsigned int

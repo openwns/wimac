@@ -86,6 +86,7 @@ hppFiles = [
     'src/services/ConnectionManager.hpp',
     'src/services/InterferenceCache.hpp',
     'src/services/QueueManager.hpp',
+    'src/services/IChannelQualityObserver.hpp',
     'src/StationManager.hpp',
     'src/tests/ConnectionManagerTest.hpp',
     'src/tests/ErrorModellingTest.hpp',

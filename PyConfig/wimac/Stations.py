@@ -12,6 +12,9 @@ class BaseStation(Layer2):
 
     subscriberStations = None
     relayStations = None
+    
+    # an integer to denote how far away from the BS we are
+    ring = None
 
     def __init__(self, node, config) : #, registryProxy = wimac.Scheduler.RegistryProxyWiMAC):
         super(BaseStation, self).__init__(node, "BS", config)
@@ -258,8 +261,8 @@ class SubscriberStation(Layer2):
         super(SubscriberStation, self).__init__(node, "SS", config)       
         self.stationType = "UT"
 
-        self.associationControl = wimac.Services.FixedAssociation() 
-        self.controlServices.append( self.associationControl )
+        self.associationControl = config.parametersMAC.associationService
+        self.controlServices.append(self.associationControl)
 
         # frame elements
         self.framehead = wimac.FrameBuilder.FrameHeadCollector('frameBuilder')
@@ -324,12 +327,11 @@ class SubscriberStation(Layer2):
 
     def associate(self, destination):
         assert isinstance(destination, Layer2)
-        assert isinstance(self.associationControl, wimac.Services.FixedAssociation), """
+        assert isinstance(self.associationControl, wimac.Services.Fixed), """
         Do not call 'associate' if dynamic association is used. Change the type of the
-        Connection Control Service to FixedConnection!
+        Association Control Service to Fixed!
         """
         
-        self.ring = destination.ring + 1
         self.associationControl.associateTo(destination.stationID)
 
     def connect(self):
