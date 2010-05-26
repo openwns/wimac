@@ -69,6 +69,7 @@ class WiMAXBSCreator(scenarios.interfaces.INodeCreator):
         if self.rang == None or self.oneRANGperBS == True:
             if self.oneRANGperBS:
                 rang = wimac.support.Nodes.RANG("WiMAXRang" + str(bs.nodeID), bs.nodeID)
+                rang.dll.addAP(bs)
             else:
                 rang = wimac.support.Nodes.RANG()
                 self.rang = rang
@@ -79,10 +80,11 @@ class WiMAXBSCreator(scenarios.interfaces.INodeCreator):
             ipListenerBinding = IPListenerBinding(rang.nl.domainName)
             listener = Listener(rang.nl.domainName + ".listener")
             rang.load.addListener(ipListenerBinding, listener)
-            rang.dll.addAP(bs)
 
             openwns.simulator.getSimulator().simulationModel.nodes.append(rang)
 
+        if self.oneRANGperBS == False:
+            self.rang.dll.addAP(bs)
         return bs
 
 

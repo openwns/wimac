@@ -101,7 +101,8 @@ void FrameHeadCollector::doStart(int mode)
         phyCommand->local.pAFunc_.reset
             ( new BroadcastPhyAccessFunc);
         phyCommand->local.pAFunc_->transmissionStart_ = now;
-        phyCommand->local.pAFunc_->transmissionStop_ = now + command->local.duration - 1e-13;
+        phyCommand->local.pAFunc_->transmissionStop_ = now + command->local.duration
+             - Utilities::getComputationalAccuracyFactor();
         phyCommand->local.pAFunc_->phyMode_ = phyMode_;
 
         assure( command->local.duration <= this->getMaximumDuration(),

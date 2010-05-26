@@ -114,8 +114,8 @@ ULMasterCallback::processPacket(const wns::scheduler::SchedulingCompound & compo
     wns::service::phy::ofdma::PatternPtr pattern = compound.pattern;
 
     simTimeType timeSlotOffset = timeSlot * slotLength_;
-    startTime += timeSlotOffset - Utilities::getComputationalAccuracyFactor();
-    endTime += timeSlotOffset;
+    startTime += timeSlotOffset;
+    endTime += timeSlotOffset - Utilities::getComputationalAccuracyFactor();
     /* @TODO: enable measuring of SINR estimation error*/
     wns::CandI estimatedCandI = wns::CandI();
     //wns::CandI estimatedCandI = compound.estimatedCandI;
