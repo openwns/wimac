@@ -26,6 +26,8 @@
 #ifndef WIMAC_FRAME_FRAMEHEADCOLLECTOR_H
 #define WIMAC_FRAME_FRAMEHEADCOLLECTOR_H
 
+#include <WIMAC/services/IChannelQualityObserver.hpp>
+
 #include <WNS/scheduler/MapInfoProviderInterface.hpp>
 
 #include <WNS/ldk/ldk.hpp>
@@ -96,6 +98,7 @@ namespace wimac { namespace frame {
             wimac::Component* layer_;
             wimac::PhyUser* phyUser_;
             wimac::service::ConnectionManager* connectionManager_;
+            wimac::service::IChannelQualityObserver* channelQualityObserver_;
             wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface> phyMode_;
         };
     }

@@ -38,7 +38,7 @@ class SubscriberStation(openwns.node.Node, scenarios.interfaces.INode):
 
     def __init__(self, _id, _config):
         super(SubscriberStation, self).__init__("UT"+str(_id))
-        
+        self.setProperty("Type", "UE")        
         # create the WIMAX DLL
         self.dll = wimac.Stations.SubscriberStation(self, _config)#, ring = 2)
         self.dll.setStationID(_id)
@@ -75,9 +75,6 @@ class SubscriberStation(openwns.node.Node, scenarios.interfaces.INode):
 
     def setAntenna(self, antenna):
         pass
-
-    def getNodeType(self):
-        return "UE"
 
     def addTraffic(self, binding, load):
         self.load.addTraffic(binding, load) 
@@ -130,6 +127,7 @@ class RelayStation(openwns.node.Node):
 
     def __init__(self, _id, _config):
         super(RelayStation, self).__init__("FRS"+str(_id))
+        self.setProperty("Type", "RN")        
 
         # create the WIMAX DLL
         self.dll = wimac.Stations.RelayStation(self, _config)
@@ -154,6 +152,7 @@ class BaseStation(openwns.node.Node, scenarios.interfaces.INode):
     def __init__(self, _id, _config):
         super(BaseStation, self).__init__("BS"+str(_id))
         transceiver = Transceiver(_config)
+        self.setProperty("Type", "BS")        
 
         # create the WIMAC DLL
         self.dll = wimac.Stations.BaseStation(self, _config)
@@ -176,9 +175,6 @@ class BaseStation(openwns.node.Node, scenarios.interfaces.INode):
         self.phy.ofdmaStation.antennas = [antenna]
         pass
 
-    def getNodeType(self):
-        return "BS"
-
     def addTraffic(self, binding, load):
         assert false, "Don't deploy traffic to base stations"
 
@@ -194,6 +190,7 @@ class RANG(openwns.node.Node):
 
     def __init__(self, name = "RANGWiMAX", id = 1):
         super(RANG, self).__init__(name) 
+        self.setProperty("Type", "RANG")        
         # create dll for Rang
         self.dll = wimac.Rang.RANG(self)
         self.dll.setStationID((256*255)-id)
@@ -214,7 +211,4 @@ class RANG(openwns.node.Node):
                        _dllNotification = self.dll.notification)
 
         self.load = constanze.node.ConstanzeComponent(self, "constanze")
-
-    def getNodeType(self):
-        return "RANG"
 

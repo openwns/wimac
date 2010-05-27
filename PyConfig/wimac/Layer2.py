@@ -61,7 +61,6 @@ class Layer2(wimac.Component.Component):
     dlscheduler = None
     ulscheduler = None
 
-    connectionControl = None
     associateTo = None
     qosCategory = None
     randomStartDelayMax = None
@@ -70,7 +69,6 @@ class Layer2(wimac.Component.Component):
         super(Layer2, self).__init__(node, stationName)
         self.nameInComponentFactory = "wimac.Component"
 
-        self.associations = []
         self.randomStartDelayMax = 0.0
         
         self.upperconvergence = wimac.FUs.UpperConvergence()
@@ -90,9 +88,6 @@ class Layer2(wimac.Component.Component):
         interferenceCache.notFoundStrategy.deviationInterference = "0.0 mW"
         interferenceCache.notFoundStrategy.averagePathloss = "0.0 dB"
         self.managementServices.append( interferenceCache )
-
-        self.connectionControl = wimac.Services.ConnectionControl("connectionControl") 
-        self.controlServices.append( self.connectionControl )
         
         self.classifier = wimac.FUs.Classifier()
         self.synchronizer = openwns.Tools.Synchronizer()

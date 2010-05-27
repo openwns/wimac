@@ -33,6 +33,7 @@ using namespace wimac;
 void StopTransmission::operator()()
 {
     LOG_INFO(phyUser_->getFUN()->getName(), " stop transmission");
+    phyUser_->getNotificationService()->enableReception();
     phyUser_->getDataTransmissionService()->stopTransmission( compound_, subBand_ );
 }
 
@@ -40,6 +41,7 @@ void StartTransmission::operator()()
 {
     LOG_INFO(phyUser_->getFUN()->getName(), " start transmission to ", dstStation_->getName());
     assure(phyMode_,"invalid PhyMode");
+    phyUser_->getNotificationService()->disableReception();
     phyUser_->getDataTransmissionService()->startUnicast( compound_, dstStation_, subBand_, requestedTxPower_, phyMode_ );
 }
 
@@ -48,6 +50,7 @@ void StartBroadcastTransmission::operator()()
     LOG_INFO(phyUser_->getFUN()->getName(), " start broadcast transmission");
     wns::Power defaultTxPower = phyUser_->getDataTransmissionService()->getMaxPowerPerSubband();
     assure(phyMode_,"invalid PhyMode");
+    phyUser_->getNotificationService()->disableReception();
     phyUser_->getDataTransmissionService()->startBroadcast( compound_, subBand_, defaultTxPower, phyMode_ );
 }
 
@@ -57,6 +60,7 @@ void StartBeamformingTransmission::operator()()
     assure(pattern_ != wns::service::phy::ofdma::PatternPtr(), " pattern is required for beamforming transmission");
     assure(phyMode_,"invalid PhyMode");
     LOG_INFO(phyUser_->getFUN()->getName(), ": starts beamforming transmission to: ", dstStation_->getName());
+    phyUser_->getNotificationService()->disableReception();
     phyUser_->getDataTransmissionService()->startTransmission(compound_, dstStation_, subBand_, pattern_, requestedTxPower_, phyMode_ );
 }
 

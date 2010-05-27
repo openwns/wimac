@@ -272,6 +272,8 @@ PhyUser::onData(wns::osi::PDUPtr pdu,
     //puCommand->local.txPower_   = txPower;
     puCommand->local.interference_ = interference;
 
+    puCommand->magic.rxMeasurement = rxPowerMeasurement;
+
     // Only proceed on filtered compounds
     if ( !filter( compound ) )
         return;
@@ -313,8 +315,8 @@ PhyUser::onData(wns::osi::PDUPtr pdu,
     // Probes put
     if (!puCommand->peer.destination_ && !puCommand->magic.contentionAccess_ && puCommand->magic.frameHead_)
     { // Probe frameHead
-        probes_.interferenceFrameHead->put( interference.get_dBm() );
-        probes_.cirFrameHead->put( rxPower.get_dBm() - interference.get_dBm() );
+        probes_.interferenceFrameHead->put(compound, interference.get_dBm() );
+        probes_.cirFrameHead->put(compound, rxPower.get_dBm() - interference.get_dBm() );
 
         if(cacheEntryTimeStamp + maxAgeCacheEntry < wns::simulator::getEventScheduler()->getTime()){
             // write frame head C/I into interference cache
@@ -346,15 +348,15 @@ PhyUser::onData(wns::osi::PDUPtr pdu,
     }
     else if(puCommand->peer.destination_ && puCommand->magic.contentionAccess_ && !puCommand->magic.frameHead_)
     { // Probe contention based access
-        probes_.interferenceContention->put( interference.get_dBm() );
-        probes_.cirContention->put( rxPower.get_dBm() - interference.get_dBm() );
+        probes_.interferenceContention->put(compound, interference.get_dBm() );
+        probes_.cirContention->put(compound, rxPower.get_dBm() - interference.get_dBm() );
     }
     else if(puCommand->peer.destination_ && !puCommand->magic.contentionAccess_ && !puCommand->magic.frameHead_)
     { // Probe SDMA transmitted
-        probes_.interferenceSDMA->put( interference.get_dBm() );
-        probes_.carrierSDMA->put( rxPower.get_dBm() );
-        probes_.cirSDMA->put( rxPower.get_dBm() - interference.get_dBm() );
-        probes_.pathloss->put( txPower.get_dBm() - rxPower.get_dBm());
+        probes_.interferenceSDMA->put(compound, interference.get_dBm() );
+        probes_.carrierSDMA->put(compound, rxPower.get_dBm() );
+        probes_.cirSDMA->put(compound, rxPower.get_dBm() - interference.get_dBm() );
+        probes_.pathloss->put(compound, txPower.get_dBm() - rxPower.get_dBm());
         LOG_INFO( "pathloss from PhyUser:",txPower.get_dBm() - rxPower.get_dBm());
     
 		// TODO: puCommand->peer.phyModePtr
@@ -368,8 +370,8 @@ PhyUser::onData(wns::osi::PDUPtr pdu,
 			);
 		*/
 		// probe the ratio of actual-to-estimated signal strength in dB
-		probes_.deltaCarrierSDMA->put( rxPower.get_dBm() - puCommand->peer.estimatedCandI_.C.get_dBm() );
-		probes_.deltaInterferenceSDMA->put( interference.get_dBm() - puCommand->peer.estimatedCandI_.I.get_dBm() );
+		probes_.deltaCarrierSDMA->put(compound, rxPower.get_dBm() - puCommand->peer.estimatedCandI_.C.get_dBm() );
+		probes_.deltaInterferenceSDMA->put(compound, interference.get_dBm() - puCommand->peer.estimatedCandI_.I.get_dBm() );
 	}else{
 		assure(0, "PhyUser::onData: Received PDU can't be releated to a probe!");
 	}
@@ -448,9 +450,21 @@ bool PhyUser::filter( const wns::ldk::CompoundPtr& compound)
     {
         ConnectionIdentifier::Ptr rngCI;
         rngCI = friends_.connectionManager->getConnectionWithID(0);
-        assure(rngCI ,
-                "PhyUser::filter: Can't filter Compounds without ConnectionIdentifier with CID=0");
 
+        if(rngCI == NULL)
+        {
+            if(phyCommand->magic.frameHead_)
+            {
+                // Receive frame head from other BSs while not associated
+                return true;
+            }
+            else
+            {
+                // Do not receive other broadcasts like MAPs
+                return false;
+            }
+
+        }
         if ( !phyCommand->peer.destination_       //broadcast
                 && ( phyCommand->magic.sourceComponent_->getID()
                     == rngCI->baseStation_ )                // from our BaseStation

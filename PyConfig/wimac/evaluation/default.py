@@ -46,6 +46,8 @@ def installDebugEvaluation(sim, loggingStationIDs, kind = "PDF"):
     sources = ["wimac.top.window.incoming.bitThroughput", 
                 "wimac.top.window.aggregated.bitThroughput", 
                 "wimac.cirSDMA",
+                "wimac.carrierSDMA",
+                "wimac.interferenceSDMA",
                 "wimac.top.packet.incoming.delay",
                 "wimac.top.packet.incoming.size",
                 "wimac.top.packet.outgoing.size",
@@ -69,27 +71,51 @@ def installDebugEvaluation(sim, loggingStationIDs, kind = "PDF"):
                 "wimac.frameOffsetDelay",
                 "wimac.transmissionDelay"]
 
+    utIDs = []
+    bsIDs = []
+    utNodes = sim.simulationModel.getNodesByProperty("Type", "UE")
+    bsNodes = sim.simulationModel.getNodesByProperty("Type", "BS")
+    for ut in utNodes:
+        utIDs.append(ut.dll.stationID)
+    for bs in bsNodes:
+        bsIDs.append(bs.dll.stationID)
+
     for src in sources:
         node = openwns.evaluation.createSourceNode(sim, src)
+        node = node.appendChildren(openwns.evaluation.generators.Accept(
+                            by = 'MAC.Id', ifIn = loggingStationIDs))
+
+        # Statistics for all BSs
+        node.appendChildren(openwns.evaluation.generators.Accept(
+                            by = 'MAC.StationType', ifIn = [1], suffix = "BS"))
+        # Filter per BS
         nodeBS = node.appendChildren(openwns.evaluation.generators.Accept(
                             by = 'MAC.StationType', ifIn = [1], suffix = "BS"))
-        #nodeRS = node.appendChildren(openwns.evaluation.generators.Accept(
-        #                    by = 'MAC.StationType', ifIn = [2], suffix = "RS"))
+
+        # Statistics for all UTs
+        node.appendChildren(openwns.evaluation.generators.Accept(
+                            by = 'MAC.StationType', ifIn = [3], suffix = "UT"))
+        # Filter per UT
         nodeUT = node.appendChildren(openwns.evaluation.generators.Accept(
                             by = 'MAC.StationType', ifIn = [3], suffix = "UT"))
+
+        # Statistics for all UTs connected to each BS
         nodeBS.appendChildren(openwns.evaluation.generators.Separate(
-                            by = 'MAC.Id', forAll = [1], format = "Id%d"))
+                            by = 'MAC.Id', forAll = bsIDs, format = "Id%d"))
+        # Statistics for per BS per UT
+        nodeBS = nodeBS.appendChildren(openwns.evaluation.generators.Separate(
+                            by = 'MAC.Id', forAll = bsIDs, format = "Id%d"))
 
         if src not in probedAtTx:
             nodeBS.appendChildren(openwns.evaluation.generators.Separate(
-                            by = 'MAC.SourceId', forAll = loggingStationIDs, format = "FromId%d"))
+                            by = 'MAC.SourceId', forAll = utIDs, format = "FromId%d"))
         # Measurements collected at the transmitter are probed per target station
         else:
             nodeBS.appendChildren(openwns.evaluation.generators.Separate(
-                            by = 'MAC.TargetId', forAll = loggingStationIDs, format = "ToId%d"))
+                            by = 'MAC.TargetId', forAll = utIDs, format = "ToId%d"))
 
         nodeUT.appendChildren(openwns.evaluation.generators.Separate(
-                            by = 'MAC.Id', forAll = loggingStationIDs, format = "Id%d"))
+                            by = 'MAC.Id', forAll = utIDs, format = "Id%d"))
 
         if kind == "Moments":                            
             node.getLeafs().appendChildren(openwns.evaluation.generators.Moments())

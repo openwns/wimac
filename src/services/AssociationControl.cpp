@@ -23,47 +23,133 @@
  *
  ******************************************************************************/
 
-#include <WIMAC/services/ConnectionControl.hpp>
+#include <WIMAC/services/AssociationControl.hpp>
 
 #include <WIMAC/services/ConnectionManager.hpp>
 #include <WNS/service/dll/StationTypes.hpp>
 #include <WIMAC/relay/RelayMapper.hpp>
 #include <WIMAC/StationManager.hpp>
 
-STATIC_FACTORY_REGISTER_WITH_CREATOR(
-    wimac::service::ConnectionControl,
-    wns::ldk::ControlServiceInterface,
-    "wimac.services.ConnectionControl",
-    wns::ldk::CSRConfigCreator);
-
+using namespace wimac::service::associationcontrol;
 using namespace wimac::service;
 using namespace wimac;
 
-ConnectionControl::ConnectionControl( wns::ldk::ControlServiceRegistry* csr,
-                                      wns::pyconfig::View& config ) :
-    wns::ldk::ControlService(csr),
-    associatedWithID_(0)
+STATIC_FACTORY_REGISTER_WITH_CREATOR(
+    wimac::service::associationcontrol::Fixed,
+    wns::ldk::ControlServiceInterface,
+    "wimac.services.AssociationControl.Fixed",
+    wns::ldk::CSRConfigCreator);
+
+STATIC_FACTORY_REGISTER_WITH_CREATOR(
+    wimac::service::associationcontrol::BestAtGivenTime,
+    wns::ldk::ControlServiceInterface,
+    "wimac.services.AssociationControl.BestAtGivenTime",
+    wns::ldk::CSRConfigCreator);
+
+STATIC_FACTORY_REGISTER(BestPathloss, IDecideBest, "wimac.services.AssociationControl.Best.BestPathloss");
+STATIC_FACTORY_REGISTER(BestRxPower, IDecideBest, "wimac.services.AssociationControl.Best.BestRxPower");
+STATIC_FACTORY_REGISTER(BestSINR, IDecideBest, "wimac.services.AssociationControl.Best.BestSINR");
+
+BestAtGivenTime::BestAtGivenTime(wns::ldk::ControlServiceRegistry* csr,
+                                      wns::pyconfig::View& config) :
+    AssociationControl(csr, config),
+    deciderStrategy_(NULL),
+    decisionTime_(config.get<wns::simulator::Time>("decisionTime"))
 {
-    if ( !config.isNone("associatedWith") )
-    {
-        associatedWithID_ = config.get<wimac::StationID>("associatedWith");
-    }
+    std::string pluginName = config.get<std::string>("decisionStrategy.__plugin__");
+    deciderStrategy_ = IDecideBest::Factory::creator(pluginName)->create();
+}
+
+BestAtGivenTime::~BestAtGivenTime()
+{
+    assure(deciderStrategy_, "Decider strategy is NULL");
+
+    delete deciderStrategy_;
 }
 
 void
-ConnectionControl::onCSRCreated()
+BestAtGivenTime::doOnCSRCreated()
+{
+    wns::simulator::getEventScheduler()->scheduleDelay(
+        boost::bind(&BestAtGivenTime::associateNow, this),
+        decisionTime_);
+}
+
+void
+BestAtGivenTime::doStoreMeasurement(StationID source,
+    const wns::service::phy::power::PowerMeasurementPtr& pm)
+{
+    assure(deciderStrategy_, "Decider strategy is NULL");
+
+    deciderStrategy_->put(source, pm);
+}
+
+void
+BestAtGivenTime::associateNow()
+{
+    assure(deciderStrategy_, "Decider strategy is NULL");
+    assure(deciderStrategy_->isInitialized(), 
+        "Decision strategy did not receive any measurements yet.");
+
+    associateTo(deciderStrategy_->getBest(), ConnectionIdentifier::BE);
+}
+
+
+Fixed::Fixed(wns::ldk::ControlServiceRegistry* csr,
+                                      wns::pyconfig::View& config) :
+    AssociationControl(csr, config),
+    associatedWithID_(0)
+{
+    assure(!config.isNone("associatedWith"), "Missing association target ID in PyConfig");
+
+    associatedWithID_ = config.get<wimac::StationID>("associatedWith");
+}
+
+Fixed::~Fixed()
+{
+}
+
+void
+Fixed::doOnCSRCreated()
+{
+    associateTo(associatedWithID_, ConnectionIdentifier::BE);
+}
+
+void
+Fixed::doStoreMeasurement(StationID, 
+    const wns::service::phy::power::PowerMeasurementPtr&)
+{
+}
+
+AssociationControl::AssociationControl( wns::ldk::ControlServiceRegistry* csr,
+                                      wns::pyconfig::View& config ) :
+    wns::ldk::ControlService(csr)
+{
+}
+
+
+
+void
+AssociationControl::onCSRCreated()
 {
     friends_.connectionManager = getCSR()->getLayer()
         ->getManagementService<wimac::service::ConnectionManager>("connectionManager");
     assure(friends_.connectionManager,
            "ConnectionManager must be of type wimac::service::ConnectionManager");
 
-    if (associatedWithID_)
-        associateTo(associatedWithID_, ConnectionIdentifier::BE);
+    doOnCSRCreated();        
 }
 
 void
-ConnectionControl::associateTo(StationID associateTo,
+AssociationControl::storeMeasurement(StationID source, 
+    const wns::service::phy::power::PowerMeasurementPtr& pm)
+{
+    doStoreMeasurement(source, pm);
+}
+
+
+void
+AssociationControl::associateTo(StationID associateTo,
                                ConnectionIdentifier::QoSCategory qosCategory)
 {
 
@@ -128,7 +214,6 @@ ConnectionControl::associateTo(StationID associateTo,
 
     // get master ConnectionManager from destination access point
     wimac::service::ConnectionManager* destinationConnectionManager
-        //	  = this->getConnectionManagerMaster();
         = destination->getManagementService<service::ConnectionManager>("connectionManager");
 
     // append ConnectionIdentifier to access point and get CID
@@ -147,7 +232,7 @@ ConnectionControl::associateTo(StationID associateTo,
     if( destination->getStationType() == wns::service::dll::StationTypes::FRS() )
     {
         destination
-            ->getControlService<service::ConnectionControl>("connectionControl")
+            ->getControlService<service::AssociationControl>("associationControl")
             ->createRecursiveConnection(bCI.cid_,
                                         pmCI.cid_,
                                         dlCI.cid_,
@@ -158,11 +243,11 @@ ConnectionControl::associateTo(StationID associateTo,
 
     Component* layer2 =
         dynamic_cast<Component*>(getCSR()->getLayer());
-    assure(layer2, "ConnectionControl only works in a dll::Layer2.");
+    assure(layer2, "AssociationControl only works in a dll::Layer2.");
 }
 
 void
-ConnectionControl::createRecursiveConnection(ConnectionIdentifier::CID basicCID,
+AssociationControl::createRecursiveConnection(ConnectionIdentifier::CID basicCID,
                                              ConnectionIdentifier::CID primaryCID,
                                              ConnectionIdentifier::CID downlinkTransportCID,
                                              ConnectionIdentifier::CID uplinkTransportCID,
@@ -217,8 +302,8 @@ ConnectionControl::createRecursiveConnection(ConnectionIdentifier::CID basicCID,
                                qosCategory );
 
     // get master ConnectionManager from destination access point
-    wimac::service::ConnectionManager* associatedWithConnectionManager
-        = layer->getConnectionManagerMaster();
+    wimac::service::ConnectionManager* associatedWithConnectionManager = 
+        associatedWith->getManagementService<service::ConnectionManager>("connectionManager");
 
     // append ConnectionIdentifier to access point and get CID
     bCI = associatedWithConnectionManager->appendConnection( bCI );
@@ -244,7 +329,7 @@ ConnectionControl::createRecursiveConnection(ConnectionIdentifier::CID basicCID,
     if ( associatedWith->getStationType() == wns::service::dll::StationTypes::FRS() )
     {
         associatedWith
-            ->getControlService<ConnectionControl>("connectionControl")
+            ->getControlService<AssociationControl>("associationControl")
             ->createRecursiveConnection(bCI.cid_,
                                         pmCI.cid_,
                                         dlCI.cid_,
@@ -255,6 +340,6 @@ ConnectionControl::createRecursiveConnection(ConnectionIdentifier::CID basicCID,
 
     Component* layer2 =
         dynamic_cast<Component*>(getCSR()->getLayer());
-    assure(layer2, "ConnectionControl only works in a wimac component.");
+    assure(layer2, "AssociationControl only works in a wimac component.");
 }
 

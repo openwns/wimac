@@ -47,16 +47,41 @@ class ConnectionManager():
     def __init__(self, serviceName):
         self.serviceName = serviceName
 
-class ConnectionControl():
-    __plugin__ = 'wimac.services.ConnectionControl'
+
+class AssociationControl(object):
+    serviceName = "associationControl"
+                
+class Fixed(AssociationControl):
+    __plugin__ = 'wimac.services.AssociationControl.Fixed'
 
     associatedWith = None
-    def __init__(self, serviceName):
-        self.serviceName = serviceName
+    def __init__(self, associatedWith = None):
+        self.associatedWith = associatedWith
 
     def associateTo(self, destination):
-        self.associatedWith = destination
+        self.associatedWith = destination                
                 
+class BestAtGivenTime(AssociationControl):
+    __plugin__ = 'wimac.services.AssociationControl.BestAtGivenTime'
+    decisionStrategy = None
+    decisionTime = None
+    
+    class BestPathloss:
+        __plugin__ = "wimac.services.AssociationControl.Best.BestPathloss"
+    
+    class BestRxPower:
+        __plugin__ = "wimac.services.AssociationControl.Best.BestRxPower"
+    
+    class BestSINR:
+        __plugin__ = "wimac.services.AssociationControl.Best.BestSINR"
+
+    # RxPower, SINR, Pathloss
+    criterion = None
+    def __init__(self, decisionStrategy, decisionTime):        
+        self.decisionStrategy = decisionStrategy
+        self.decisionTime = decisionTime
+
+
 class ConstantValue(object):
     __plugin__ = 'wimac.services.InterferenceCache.ConstantValue'
     

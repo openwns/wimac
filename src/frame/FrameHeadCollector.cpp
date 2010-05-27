@@ -64,6 +64,12 @@ void FrameHeadCollector::onFUNCreated()
         layer_->getManagementService<service::ConnectionManager>
         ("connectionManager");
 
+    if(layer_->getStationType() != wns::service::dll::StationTypes::AP())
+    {
+        channelQualityObserver_ = layer_->getControlService<service::IChannelQualityObserver>
+            ("associationControl");
+    }
+
     wns::ldk::fcf::CompoundCollector::onFUNCreated();
 }
 
@@ -95,7 +101,8 @@ void FrameHeadCollector::doStart(int mode)
         phyCommand->local.pAFunc_.reset
             ( new BroadcastPhyAccessFunc);
         phyCommand->local.pAFunc_->transmissionStart_ = now;
-        phyCommand->local.pAFunc_->transmissionStop_ = now + command->local.duration - 1e-13;
+        phyCommand->local.pAFunc_->transmissionStop_ = now + command->local.duration
+             - Utilities::getComputationalAccuracyFactor();
         phyCommand->local.pAFunc_->phyMode_ = phyMode_;
 
         assure( command->local.duration <= this->getMaximumDuration(),
@@ -128,14 +135,14 @@ void FrameHeadCollector::doOnData( const wns::ldk::CompoundPtr& compound )
     FrameHeadCommand* command =
         getCommand( compound->getCommandPool() );
 
-    if(command->peer.baseStationID !=
-       connectionManager_->getConnectionWithID( 0 )->baseStation_ )
-    {
-        throw wns::Exception(
-            "FrameHeadRetriever::doOnData: compound is not from associated BaseStation");
-    }
-
     LOG_INFO( getFUN()->getLayer()->getName(), ": received FCH from station:",command->peer.baseStationID);
+
+    if(channelQualityObserver_)
+    {
+        PhyUserCommand* phyCommand = phyUser_->getCommand(compound->getCommandPool());
+        channelQualityObserver_->storeMeasurement(command->peer.baseStationID, 
+            phyCommand->magic.rxMeasurement);
+    }
 
     getFrameBuilder()->getTimingControl()->finishedPhase( this );
 }

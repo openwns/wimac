@@ -138,7 +138,8 @@ void ULMapCollector::doStart(int mode)
         phyCommand->local.pAFunc_.reset
             ( new BroadcastPhyAccessFunc );
         phyCommand->local.pAFunc_->transmissionStart_ = now;
-        phyCommand->local.pAFunc_->transmissionStop_ = now + getCurrentDuration() - Utilities::getComputationalAccuracyFactor() * 20;
+        phyCommand->local.pAFunc_->transmissionStop_ = now + getCurrentDuration()
+             - Utilities::getComputationalAccuracyFactor();
         phyCommand->local.pAFunc_->phyMode_ = phyMode;
 
         setTimeout( getCurrentDuration() - Utilities::getComputationalAccuracyFactor() );

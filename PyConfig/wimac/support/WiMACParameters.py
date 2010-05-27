@@ -416,8 +416,16 @@ class ParametersMAC(Frozen):
     #  sub frame ratio of the uplink frame phase
     #  Reminder: Sub frame is located in the uplink frame phase.
     #####
-
-
+    
+    
+    import wimac.Services
+    associationService = wimac.Services.BestAtGivenTime(
+        wimac.Services.BestAtGivenTime.BestPathloss(), 0.00005)
+    # Associate after first FCH is received. Choose BS 
+    # with lowest pathloss on link.
+    # ToDo: Automatically set decision time to shortly after first 
+    # FCH is received.
+    ########
 
 
 ###############################################################################

@@ -124,10 +124,7 @@ namespace wimac {
          *  UT(2)      UT(4)      UT(6)
          *
          */
-        unsigned int getRing() const
-        {
-            return ring_;
-        }
+        unsigned int getRing() const;
 
         /** @brief Access to the DLL Address */
         wns::service::dll::UnicastAddress getDLLAddress() const
@@ -140,9 +137,6 @@ namespace wimac {
          */
         wns::ldk::fun::Main*
         getFUN();
-
-        service::ConnectionManager*
-        getConnectionManagerMaster();
 
         /**
          * @brief Used by class PseudoBWreqGenerator for BWreq shortcut.
@@ -195,19 +189,12 @@ namespace wimac {
         wns::ldk::fun::Main* fun_;
 
         //Values form PyConfig
-        StationID associateTo_;
-        int qosCategory_;
-        wns::simulator::Time randomStartDelayMax_;
         int stationType_;
         unsigned int id_;
         wns::service::dll::UnicastAddress address_;
         unsigned int ring_;
 
         wns::probe::bus::ContextProviderCollection contextProviders_;
-
-        std::string transServiceName_;
-        std::string notifyServiceName_;
-
     };
 }
 

@@ -1,5 +1,6 @@
 from wimac.Layer2 import *
 import wimac.Scheduler
+import wimac.Services
 import wimac.FUs
 import openwns.SAR
 import openwns.Tools
@@ -7,24 +8,19 @@ import math
 from wimac.FrameBuilder import ActivationAction, OperationMode
 import wimac.support.FrameSetup as FrameSetup
 
-class Association:
-    def __init__(self,source, destination, id):
-        self.source = source
-        self.destination = destination
-        self.id = id
-
-
 class BaseStation(Layer2):
 
     subscriberStations = None
     relayStations = None
+    
+    # an integer to denote how far away from the BS we are
+    ring = None
 
     def __init__(self, node, config) : #, registryProxy = wimac.Scheduler.RegistryProxyWiMAC):
         super(BaseStation, self).__init__(node, "BS", config)
         myFrameSetup = FrameSetup.FrameSetup(config)
 
         self.ring = 1
-        self.qosCategory = 'NoQoS'
 
         # BaseStation specific components
         self.upperconvergence = wimac.FUs.UpperConvergence()
@@ -259,10 +255,14 @@ class BaseStation(Layer2):
 
 class SubscriberStation(Layer2):
     forwarder = None
+    associationControl = None
 
     def __init__(self, node, config) : #, registryProxy = wimac.Scheduler.RegistryProxyWiMAC() ):
         super(SubscriberStation, self).__init__(node, "SS", config)       
         self.stationType = "UT"
+
+        self.associationControl = config.parametersMAC.associationService
+        self.controlServices.append(self.associationControl)
 
         # frame elements
         self.framehead = wimac.FrameBuilder.FrameHeadCollector('frameBuilder')
@@ -327,12 +327,12 @@ class SubscriberStation(Layer2):
 
     def associate(self, destination):
         assert isinstance(destination, Layer2)
-        it = Association(self, destination, destination.getAssociationID())
-        self.associations.append(it)
-        self.associateTo = destination.stationID
-        self.qosCategory = 'BE'
-        self.ring = destination.ring + 1
-        self.connectionControl.associateTo(destination.stationID)
+        assert isinstance(self.associationControl, wimac.Services.Fixed), """
+        Do not call 'associate' if dynamic association is used. Change the type of the
+        Association Control Service to Fixed!
+        """
+        
+        self.associationControl.associateTo(destination.stationID)
 
     def connect(self):
         # Connections Dataplane

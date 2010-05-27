@@ -73,6 +73,7 @@ namespace wimac {
             wimac::Component* sourceComponent_;
             bool contentionAccess_;
             bool frameHead_;
+            wns::service::phy::power::PowerMeasurementPtr rxMeasurement;
         } magic;
 
 
