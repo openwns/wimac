@@ -29,7 +29,44 @@ import wimac.Services
 import wimac.FUs
 
 
-class Layer2(wimac.Component.Component):
+class Layer2(openwns.node.Component):
+    # station ID, user must make sure this is set uniquely. Used for Probes Access Control
+    stationID = None
+
+    # String, can be "BS", "FRS" or "UT"
+    stationType = None
+
+    # Configuration of the FUN residing in the Component
+    fun = None
+    
+    # Services to communicate with the PHY
+    phyDataTransmission = None
+    phyNotification = None
+    phyMeasurements = None
+
+    # Services offered to the NL
+    dataTransmission = None
+    notification = None
+
+    # Services offered to the TL
+    flowHandler = None
+    flowEstablishmentAndRelease = None
+
+    # MAC Adress
+    address = None
+
+    # Control Services
+    controlServices = None
+
+    # Management Services
+    managementServices = None
+
+    # Name of the UpperConvergence FU
+    upperConvergenceName = None
+    
+    # Logger
+    logger = None
+  
     frameBuilder = None
     subFUN = None
     group = None
@@ -62,14 +99,21 @@ class Layer2(wimac.Component.Component):
     ulscheduler = None
 
     associateTo = None
-    qosCategory = None
-    randomStartDelayMax = None
 
-    def __init__(self, node, stationName, config):
+    def __init__(self, node, stationName, config, parentLogger = None):
         super(Layer2, self).__init__(node, stationName)
         self.nameInComponentFactory = "wimac.Component"
 
-        self.randomStartDelayMax = 0.0
+        self.dataTransmission = stationName + ".dllDataTransmission"
+        self.notification = stationName + ".dllNotification"
+
+        self.flowHandler = stationName + ".dllFlowHandler"
+        self.flowEstablishmentAndRelease = stationName + ".dllFlowEstablishmentAndRelease"
+
+        self.controlServices = []
+        self.managementServices = []
+        self.logger = openwns.logger.Logger("WIMAC", "WIMAC", True, parentLogger)
+        self.upperConvergenceName = 'wimax.upperConvergence'
         
         self.upperconvergence = wimac.FUs.UpperConvergence()
         
@@ -195,6 +239,20 @@ class Layer2(wimac.Component.Component):
         self.frameBuilder,
         )
 
+    def setPhyDataTransmission(self, serviceName):
+        self.phyDataTransmission = serviceName
+
+    def setPhyNotification(self, serviceName):
+        self.phyNotification = serviceName
+
+    def setStationID(self, number):
+        if self.stationID is not None: raise AssertionError, "Do you really want to re-set the stationID?"
+        self.stationID = number
+        self.address = self.stationID
+
+    def setStationType(self, _stationType):
+        if self.stationType is not None: raise AssertionError, "Do you really want to re-set the stationType?"
+        self.stationType = _stationType
 
 
 

@@ -90,7 +90,6 @@ hppFiles = [
     ]
 
 pyconfigs = [
-    'wimac/Component.py',
     'wimac/PhyMode.py', 
     'wimac/FUs.py',
     'wimac/ErrorModelling.py',
