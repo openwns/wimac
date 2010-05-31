@@ -20,7 +20,6 @@ import openwns.SAR
 import openwns.Tools
 import openwns.FCF
 import openwns.CRC
-import wimac.Component
 import wimac.FrameBuilder
 import wimac.KeyBuilder
 import wimac.ErrorModelling

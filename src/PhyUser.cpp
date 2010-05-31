@@ -232,7 +232,7 @@ PhyUser::doOnData(const wns::ldk::CompoundPtr& compound)
 	PhyUserCommand* puCommand = getCommand( compound->getCommandPool() );
 	LOG_INFO( getFUN()->getName(), ": doOnData source: ", puCommand->peer.source_->getName(),
 			  "  C/I = ", puCommand->local.rxPower_, " / ", puCommand->local.interference_,
-			  " = ", puCommand->local.rxPower_ / puCommand->local.interference_
+			  " = ", getCommand( compound->getCommandPool() )->magic.rxMeasurement->getSINR()
 			  );
 	if(puCommand->peer.estimatedCandI_.I.get_mW() > 0)
 	{

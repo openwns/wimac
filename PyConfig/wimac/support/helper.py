@@ -155,10 +155,14 @@ def setupPhyDetail(simulator, freq, pathloss, bsTxPower, utTxPower, config):
         bs.dll.dlscheduler.config.txScheduler.registry.powerCapabilitiesUT = utPower
         bs.dll.ulscheduler.config.rxScheduler.registry.powerCapabilitiesAP = bsPower
         bs.dll.ulscheduler.config.rxScheduler.registry.powerCapabilitiesUT = utPower
+        
+        # For broadcasts
+        bs.phy.ofdmaStation.txPower = bsTxPower
     
     for ut in utNodes:
         ut.dll.ulscheduler.config.txScheduler.registry.powerCapabilitiesAP = bsPower
         ut.dll.ulscheduler.config.txScheduler.registry.powerCapabilitiesUT = utPower
+        ut.phy.ofdmaStation.txPower = bsTxPower
 
 def setupScheduler(simulator, sched):
     import openwns.Scheduler

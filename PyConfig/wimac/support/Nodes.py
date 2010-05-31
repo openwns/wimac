@@ -193,7 +193,7 @@ class RANG(openwns.node.Node):
         self.setProperty("Type", "RANG")        
         # create dll for Rang
         self.dll = wimac.Rang.RANG(self)
-        self.dll.setStationID((256*255)-id)
+        self.dll.stationID = 256 * 255 - id
         self.ipAddress = "192.168.254." + str(255 - id)
         # create Network Layer and Loadgen
         domainName = "RANG" + str(id) + ".wimax.wns.org"

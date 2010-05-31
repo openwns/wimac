@@ -121,7 +121,7 @@ namespace wimac {
 
 		wns::Ratio getCIR() const
 		{
-			return wns::Ratio::from_dB( local.rxPower_.get_dBm() - local.interference_.get_dBm() );
+			return magic.rxMeasurement->getSINR();
 		}
 
         wns::Power getEstimatedIintra() const { return peer.estimatedCandI_.sdma.iIntra; }

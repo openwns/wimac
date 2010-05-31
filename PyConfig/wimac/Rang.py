@@ -26,11 +26,12 @@
 ###############################################################################
 
 import openwns.node
-import wimac.Component
 
-class RANG( wimac.Component.Component ):
+class RANG( openwns.node.Component ):
     dataTransmission = None
     notification = None
+    
+    stationID = None
 
     dllDataTransmissions = None
     dllNotifications = None
