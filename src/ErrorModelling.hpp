@@ -31,13 +31,10 @@
 #ifndef WIMAC_ERRORMODELLING_HPP
 #define WIMAC_ERRORMODELLING_HPP
 
-#include <WNS/ldk/CommandTypeSpecifier.hpp>
-#include <WNS/ldk/HasConnector.hpp>
-#include <WNS/ldk/HasReceptor.hpp>
-#include <WNS/ldk/HasDeliverer.hpp>
-#include <WNS/Cloneable.hpp>
+#include <WNS/ldk/Forwarding.hpp>
+#include <WNS/ldk/fu/Plain.hpp>
+#include <WNS/ldk/Command.hpp>
 #include <WNS/ldk/ErrorRateProviderInterface.hpp>
-#include <WNS/ldk/RoundRobinConnector.hpp>
 #include <WNS/pyconfig/View.hpp>
 #include <WNS/PowerRatio.hpp>
 
@@ -45,8 +42,6 @@
 #include <WIMAC/Logger.hpp>
 
 namespace wimac {
-
-    class ConnectionClassifier;
 
     /**
      * @brief The Command of the ErrorModelling.
@@ -60,17 +55,7 @@ namespace wimac {
         ErrorModellingCommand()
         {
             local.per = 1;
-            local.destructorCalled = NULL;
-            local.cir.set_dB(0);
-
         }
-
-        ~ErrorModellingCommand()
-        {
-            if(NULL != local.destructorCalled)
-                *local.destructorCalled = true;
-        }
-
 
         virtual double getErrorRate() const
         {
@@ -79,8 +64,6 @@ namespace wimac {
 
         struct {
             double per;
-            long *destructorCalled;
-            wns::Ratio cir;
         } local;
         struct {} peer;
         struct {} magic;
@@ -90,50 +73,28 @@ namespace wimac {
     /**
      * @brief ErrorModelling implementation of the FU.
      *
-     * It maps the Carry Interference Ratio (CIR) for a PhyMode
-     * to the Symbol Error Rate (SER) and calculate the
-     * Packet Error Rate (PER).
+     * It maps the SINR for a PhyMode
+     * to the Packet Error Rate (PER)
      */
     class ErrorModelling :
-        public virtual wns::ldk::FunctionalUnit,
-        public wns::ldk::CommandTypeSpecifier< ErrorModellingCommand >,
-        public wns::ldk::HasReceptor<>,
-        public wns::ldk::HasConnector<wns::ldk::RoundRobinConnector>,
-        public wns::ldk::HasDeliverer<>,
-        public wns::Cloneable< ErrorModelling >
+        public wns::ldk::fu::Plain<ErrorModelling, ErrorModellingCommand>,
+        public wns::ldk::Forwarding<ErrorModelling>
     {
     public:
         ErrorModelling(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config);
 
+        // Forwarding Interface
         virtual void
-        doSendData(const wns::ldk::CompoundPtr& compound);
+        processOutgoing(const wns::ldk::CompoundPtr& componud);
 
         virtual void
-        doOnData(const wns::ldk::CompoundPtr& compound);
+        processIncoming(const wns::ldk::CompoundPtr& componud);
 
         virtual void
         onFUNCreated();
 
-        void
-        printMappings();
-
 
     private:
-        virtual bool
-        doIsAccepting(const wns::ldk::CompoundPtr& compound) const;
-
-        virtual void
-        doWakeup();
-
-        std::map<double, double> cir2ser_BPSK12_;
-        std::map<double, double> cir2ser_QPSK12_;
-        std::map<double, double> cir2ser_QPSK34_;
-        std::map<double, double> cir2ser_QAM16_12_;
-        std::map<double, double> cir2ser_QAM16_34_;
-        std::map<double, double> cir2ser_QAM64_23_;
-        std::map<double, double> cir2ser_QAM64_34_;
-
-
         std::string CIRProviderName_;
         std::string PHYModeProviderName_;
 

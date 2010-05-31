@@ -26,6 +26,7 @@ import wimac.ErrorModelling
 import wimac.PhyUser
 import wimac.Services
 import wimac.FUs
+import wimac.LLMapping
 
 
 class Layer2(openwns.node.Component):
@@ -96,6 +97,9 @@ class Layer2(openwns.node.Component):
     ulmapcollector = None
     dlscheduler = None
     ulscheduler = None
+    
+    # PhyModeMapper knowing all PhyModes
+    mapper = None
 
     associateTo = None
 
@@ -192,6 +196,9 @@ class Layer2(openwns.node.Component):
             parentLogger = self.logger)
         self.schedQueueTick = openwns.Probe.Tick("wimac.schedulerQueue", probeOutgoing = True,
             parentLogger = self.logger)
+
+        self.mapper = wimac.LLMapping.WIMAXMapper(config.parametersPhy.symbolDuration,
+            config.parametersPhy.subcarrierPerSubchannel)
 
 
     def buildFUN(self, config):

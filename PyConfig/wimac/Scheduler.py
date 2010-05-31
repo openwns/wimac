@@ -34,7 +34,6 @@ import openwns.FCF
 import openwns.Scheduler
 #from support.WiMACParameters import ParametersOFDM, ParametersSystem
 from support.WiMACParameters import ParametersSystem
-from LLMapping import WIMAXMapper
 
 class PhyModeMapper:
     """ put SINR-Bps lookup table here
@@ -123,6 +122,7 @@ class Scheduler(openwns.FCF.CompoundCollector):
                  maxBeams = 4,
                  friendliness_dBm = "-105 dBm",
                  uplink = False,
+                 mapper = None,
                  **kw):
         openwns.FCF.CompoundCollector.__init__(self, frameBuilder)
         self.mapHandlerName = mapHandlerName
@@ -140,8 +140,7 @@ class Scheduler(openwns.FCF.CompoundCollector):
         self.grouper.uplink = self.uplink
         self.registry = RegistryProxyWiMAC(isDL = (not uplink))
         subCarriersPerSubChannel = dataSubCarrier
-        phyModeMapper = WIMAXMapper(symbolDuration,subCarriersPerSubChannel)
-        self.registry.setPhyModeMapper(phyModeMapper)
+        self.registry.setPhyModeMapper(mapper)
         self.maxBeams = maxBeams
         self.numberOfTimeSlots = 1
         self.freqChannels = 1

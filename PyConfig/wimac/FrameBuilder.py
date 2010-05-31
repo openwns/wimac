@@ -27,7 +27,6 @@
 
 from openwns.pyconfig import Sealed, Frozen, attrsetter
 #from support.WiMACParameters import ParametersOFDMA
-from wimac.LLMapping import WIMAXLowestPhyMode
 
 import openwns.FCF
 import openwns.Multiplexer
@@ -36,9 +35,9 @@ class FrameHeadCollector(openwns.FCF.CompoundCollector):
     __plugin__ = "wimac.frame.FrameHeadCollector"
     phyMode = None
 
-    def __init__(self, frameBuilder):
+    def __init__(self, frameBuilder, phyMode):
         openwns.FCF.CompoundCollector.__init__(self, frameBuilder)
-        self.phyMode = WIMAXLowestPhyMode
+        self.phyMode = phyMode
 
 
 class DLMapCollector(openwns.FCF.CompoundCollector):
@@ -46,10 +45,10 @@ class DLMapCollector(openwns.FCF.CompoundCollector):
     dlSchedulerName = None
     phyMode = None
     
-    def __init__(self, frameBuilder, dlSchedulerName):
+    def __init__(self, frameBuilder, dlSchedulerName, phyMode):
         openwns.FCF.CompoundCollector.__init__(self, frameBuilder)
         self.dlSchedulerName = dlSchedulerName
-        self.phyMode = WIMAXLowestPhyMode
+        self.phyMode = phyMode
 
 
 class ULMapCollector(openwns.FCF.CompoundCollector):
@@ -57,10 +56,10 @@ class ULMapCollector(openwns.FCF.CompoundCollector):
     ulSchedulerName = None
     phyMode = None
 
-    def __init__(self, frameBuilder, ulSchedulerName):
+    def __init__(self, frameBuilder, ulSchedulerName, phyMode):
         openwns.FCF.CompoundCollector.__init__(self, frameBuilder)
         self.ulSchedulerName = ulSchedulerName
-        self.phyMode = WIMAXLowestPhyMode
+        self.phyMode = phyMode
 
 class DataCollector(openwns.FCF.CompoundCollector):
     __plugin__ = "wimac.frame.DataCollector"

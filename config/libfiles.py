@@ -4,7 +4,7 @@ srcFiles = [
     'src/ACKSwitch.cpp',
     'src/Classifier.cpp',
     'src/Component.cpp',
-	'src/ConnectionIdentifier.cpp',
+    'src/ConnectionIdentifier.cpp',
     'src/ConnectionKey.cpp',
     'src/ConnectionRule.cpp',
     'src/ErrorModelling.cpp',
@@ -13,7 +13,7 @@ srcFiles = [
     'src/PhyUser.cpp',
     'src/RANG.cpp',
     'src/UpperConvergence.cpp',
-	'src/GuiWriter.cpp',
+    'src/GuiWriter.cpp',
     'src/Utilities.cpp',
 
     'src/frame/DataCollector.cpp',
@@ -90,7 +90,6 @@ hppFiles = [
     ]
 
 pyconfigs = [
-    'wimac/PhyMode.py', 
     'wimac/FUs.py',
     'wimac/ErrorModelling.py',
     'wimac/Services.py',
