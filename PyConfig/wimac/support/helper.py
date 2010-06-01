@@ -71,15 +71,15 @@ def setupPhy(simulator, config, scenario):
     from openwns.interval import Interval
 
     if scenario == "InH":
-        setupPhyDetail(simulator, 3400, rise.scenario.Pathloss.ITUInH(), dBm(24), dBm(24), config)
+        setupPhyDetail(simulator, 3400, rise.scenario.Pathloss.ITUInH(), dBm(24), dBm(24), config, dB(5), dB(7))
     elif scenario == "UMa":
-        setupPhyDetail(simulator, 2000, rise.scenario.Pathloss.ITUUMa(), dBm(46), dBm(24), config)
+        setupPhyDetail(simulator, 2000, rise.scenario.Pathloss.ITUUMa(), dBm(46), dBm(24), config, dB(5), dB(7))
     elif scenario == "UMi":
-        setupPhyDetail(simulator, 2500, rise.scenario.Pathloss.ITUUMi(), dBm(41), dBm(24), config)
+        setupPhyDetail(simulator, 2500, rise.scenario.Pathloss.ITUUMi(), dBm(41), dBm(24), config, dB(5), dB(7))
     elif scenario == "RMa":
-        setupPhyDetail(simulator, 800, rise.scenario.Pathloss.ITURMa(), dBm(46), dBm(24), config)
+        setupPhyDetail(simulator, 800, rise.scenario.Pathloss.ITURMa(), dBm(46), dBm(24), config, dB(5), dB(7))
     elif scenario == "SMa":
-        setupPhyDetail(simulator, 2000, rise.scenario.Pathloss.ITUSMa(), dBm(46), dBm(24), config)
+        setupPhyDetail(simulator, 2000, rise.scenario.Pathloss.ITUSMa(), dBm(46), dBm(24), config, dB(5), dB(7))
     elif scenario == "LoS_Test":
         pl = rise.scenario.Pathloss.SingleSlope(
             validFrequencies = Interval(4000, 6000),
@@ -92,11 +92,11 @@ def setupPhy(simulator, config, scenario):
             outOfMinRange = rise.scenario.Pathloss.Constant("49.06 dB"),
             outOfMaxRange = rise.scenario.Pathloss.Deny()
             )
-        setupPhyDetail(simulator, 5470, pl, dBm(30), dBm(30), config)
+        setupPhyDetail(simulator, 5470, pl, dBm(30), dBm(30), config, dB(5), dB(5))
     else:
         raise "Unknown scenario %s" % scenario
 
-def setupPhyDetail(simulator, freq, pathloss, bsTxPower, utTxPower, config):
+def setupPhyDetail(simulator, freq, pathloss, bsTxPower, utTxPower, config, rxNoiseBS, rxNoiseUT):
 
     from ofdmaphy.OFDMAPhy import OFDMASystem
     import rise.Scenario
@@ -135,10 +135,10 @@ def setupPhyDetail(simulator, freq, pathloss, bsTxPower, utTxPower, config):
 
     # Noise figure 
     for bs in bsNodes:
-        bs.phy.ofdmaStation.receiver[0].receiverNoiseFigure = dB(5)
+        bs.phy.ofdmaStation.receiver[0].receiverNoiseFigure = rxNoiseBS
 
     for ut in utNodes:
-        ut.phy.ofdmaStation.receiver[0].receiverNoiseFigure = dB(7)
+        ut.phy.ofdmaStation.receiver[0].receiverNoiseFigure = rxNoiseUT
 
     # TX Power 
     numSubchannels = config.parametersPhy.subchannels
