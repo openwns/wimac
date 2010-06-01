@@ -178,7 +178,7 @@ class Layer2(openwns.node.Component):
         self.crc = openwns.CRC.CRC("errormodelling",
                                lossRatioProbeName = "wimac.crc.CRCLossRatio",
                                CRCsize = config.parametersMAC.pduOverhead,
-                               isDropping = False)
+                               isDropping = True)
                                
         self.crcTick = openwns.Probe.Tick("wimac.crc", probeOutgoing = False,
             parentLogger = self.logger)
