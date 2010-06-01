@@ -107,6 +107,7 @@ class BaseStation(Layer2):
             minimumSegmentSize = 1,
             fixedHeaderSize = 0,
             extensionHeaderSize = 0,
+            usePadding = True,
             delayProbeName = self.schedQueueTick.commandName)
 
         # Use the QueueProxy in UL Master Scheduler
@@ -319,6 +320,7 @@ class SubscriberStation(Layer2):
             minimumSegmentSize = 1,
             fixedHeaderSize = 0,
             extensionHeaderSize = 0,
+            usePadding = True,
             delayProbeName = self.schedQueueTick.commandName)
 
         
