@@ -129,7 +129,7 @@ class Layer2(openwns.node.Component):
 
         interferenceCache = wimac.Services.InterferenceCache( 
             "interferenceCache", alphaLocal = 0.2, alphaRemote= 0.05 ) 
-        interferenceCache.notFoundStrategy.averageCarrier = "-88.0 dBm"
+        interferenceCache.notFoundStrategy.averageCarrier = "-101.0 dBm"
         interferenceCache.notFoundStrategy.averageInterference = "-96.0 dBm"
         interferenceCache.notFoundStrategy.deviationCarrier = "0.0 mW"
         interferenceCache.notFoundStrategy.deviationInterference = "0.0 mW"
