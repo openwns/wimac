@@ -27,9 +27,9 @@ class BaseStation(Layer2):
         self.stationType = "AP"
 
         # frame elements
-        self.framehead = wimac.FrameBuilder.FrameHeadCollector('frameBuilder')
-        self.dlmapcollector = wimac.FrameBuilder.DLMapCollector('frameBuilder', 'dlscheduler')
-        self.ulmapcollector = wimac.FrameBuilder.ULMapCollector('frameBuilder', 'ulscheduler')
+        self.framehead = wimac.FrameBuilder.FrameHeadCollector('frameBuilder', self.mapper.lowestPhyMode)
+        self.dlmapcollector = wimac.FrameBuilder.DLMapCollector('frameBuilder', 'dlscheduler', self.mapper.lowestPhyMode)
+        self.ulmapcollector = wimac.FrameBuilder.ULMapCollector('frameBuilder', 'ulscheduler', self.mapper.lowestPhyMode)
 
         subStrategies = []
         subStrategies.append(openwns.Scheduler.RoundRobin())
@@ -57,6 +57,7 @@ class BaseStation(Layer2):
             freqChannels = config.parametersPhy.subchannels,
             maxBeams = 1, # Currently no beamforming
             beamforming = False,
+            mapper = self.mapper,
             #friendliness_dBm = config.friendliness_dBm,
             plotFrames = False,
             uplink = False,
@@ -88,6 +89,7 @@ class BaseStation(Layer2):
             freqChannels = config.parametersPhy.subchannels,
             maxBeams = 1, # Cureently no beamforming
             beamforming =  False,
+            mapper = self.mapper,
             #friendliness_dBm = config.friendliness_dBm,
             callback = wimac.Scheduler.ULMasterCallback(slotLength = config.parametersPhy.slotDuration),
             plotFrames = False,
@@ -105,6 +107,7 @@ class BaseStation(Layer2):
             minimumSegmentSize = 1,
             fixedHeaderSize = 0,
             extensionHeaderSize = 0,
+            usePadding = True,
             delayProbeName = self.schedQueueTick.commandName)
 
         # Use the QueueProxy in UL Master Scheduler
@@ -265,9 +268,9 @@ class SubscriberStation(Layer2):
         self.controlServices.append(self.associationControl)
 
         # frame elements
-        self.framehead = wimac.FrameBuilder.FrameHeadCollector('frameBuilder')
-        self.dlmapcollector = wimac.FrameBuilder.DLMapCollector('frameBuilder', None)
-        self.ulmapcollector = wimac.FrameBuilder.ULMapCollector('frameBuilder', None)
+        self.framehead = wimac.FrameBuilder.FrameHeadCollector('frameBuilder', self.mapper.lowestPhyMode)
+        self.dlmapcollector = wimac.FrameBuilder.DLMapCollector('frameBuilder', None, self.mapper.lowestPhyMode)
+        self.ulmapcollector = wimac.FrameBuilder.ULMapCollector('frameBuilder', None, self.mapper.lowestPhyMode)
 
         self.dlscheduler = wimac.FrameBuilder.DataCollector('frameBuilder')
         self.dlscheduler.rxScheduler = None
@@ -299,6 +302,7 @@ class SubscriberStation(Layer2):
             freqChannels = config.parametersPhy.subchannels,
             maxBeams = 1, # Currently no beamforming
             beamforming =  False,
+            mapper = self.mapper,
             #friendliness_dBm = config.friendliness_dBm,
             callback = wimac.Scheduler.ULSlaveCallback(slotLength = config.parametersPhy.slotDuration),
             plotFrames = False,
@@ -316,6 +320,7 @@ class SubscriberStation(Layer2):
             minimumSegmentSize = 1,
             fixedHeaderSize = 0,
             extensionHeaderSize = 0,
+            usePadding = True,
             delayProbeName = self.schedQueueTick.commandName)
 
         

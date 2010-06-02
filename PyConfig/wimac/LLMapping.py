@@ -32,53 +32,34 @@ from openwns.interval import Interval
 
 from rise.PhyMode import PhyMode,PhyModeMapper
 
-
-# Info on MI: http://en.wikipedia.org/wiki/Mutual_information
-
-# WIMAX PHY Modes
-
-#symbolDuration = ParametersOFDMA.symbolDuration
-#subCarriersPerSubChannel = ParametersOFDM.dataSubCarrier
-WIMAXPhyMode1 = PhyMode(modulation = "BPSK",  coding = "WIMAX-1/2")
-WIMAXPhyMode2 = PhyMode(modulation = "QPSK",  coding = "WIMAX-1/2")
-WIMAXPhyMode3 = PhyMode(modulation = "QPSK",  coding = "WIMAX-3/4")
-WIMAXPhyMode4 = PhyMode(modulation = "QAM16", coding = "WIMAX-1/2")
-WIMAXPhyMode5 = PhyMode(modulation = "QAM16", coding = "WIMAX-3/4")
-WIMAXPhyMode6 = PhyMode(modulation = "QAM64", coding = "WIMAX-2/3")
-WIMAXPhyMode7 = PhyMode(modulation = "QAM64", coding = "WIMAX-3/4")
-
-WIMAXLowestPhyMode = WIMAXPhyMode1 # this is the PhyMode for MAP/BCH/RACH etc
-
-
-# mapping from SNR range to suitable modulation&coding scheme (MCS)
+# Mappings for PER = 0.0001
 class WIMAXMapper(PhyModeMapper):
+    lowestPhyMode = None
+  
     def __init__(self, symbolDuration, subCarriersPerSubChannel):
-        super(WIMAXMapper, self).__init__(symbolDuration, subCarriersPerSubChannel)
+        PhyModeMapper.__init__(self, symbolDuration, subCarriersPerSubChannel)
         
-        symbolDuration_ = symbolDuration
-        subCarriersPerSubChannel_ = subCarriersPerSubChannel
-        WIMAXPhyMode1.setSymbolDuration(symbolDuration_)
-        WIMAXPhyMode2.setSymbolDuration(symbolDuration_)
-        WIMAXPhyMode3.setSymbolDuration(symbolDuration_)
-        WIMAXPhyMode4.setSymbolDuration(symbolDuration_)
-        WIMAXPhyMode5.setSymbolDuration(symbolDuration_)
-        WIMAXPhyMode6.setSymbolDuration(symbolDuration_)
-        WIMAXPhyMode7.setSymbolDuration(symbolDuration_)
-        WIMAXPhyMode1.setSubCarriersPerSubChannel(subCarriersPerSubChannel_)
-        WIMAXPhyMode2.setSubCarriersPerSubChannel(subCarriersPerSubChannel_)
-        WIMAXPhyMode3.setSubCarriersPerSubChannel(subCarriersPerSubChannel_)
-        WIMAXPhyMode4.setSubCarriersPerSubChannel(subCarriersPerSubChannel_)
-        WIMAXPhyMode5.setSubCarriersPerSubChannel(subCarriersPerSubChannel_)
-        WIMAXPhyMode6.setSubCarriersPerSubChannel(subCarriersPerSubChannel_)
-        WIMAXPhyMode7.setSubCarriersPerSubChannel(subCarriersPerSubChannel_)
-        self.setMinimumSINR(6.4);
-        self.addPhyMode(Interval(   6.4,   9.4, "(]"), WIMAXPhyMode1)
-        self.addPhyMode(Interval(   9.4,  11.2, "(]"), WIMAXPhyMode2)
-        self.addPhyMode(Interval(  11.2,  16.4, "(]"), WIMAXPhyMode3)
-        self.addPhyMode(Interval(  16.4,  18.2, "(]"), WIMAXPhyMode4)
-        self.addPhyMode(Interval(  18.2,  22.7, "(]"), WIMAXPhyMode5)
-        self.addPhyMode(Interval(  22.7,  24.4, "(]"), WIMAXPhyMode6)
-        self.addPhyMode(Interval(  24.4, 200.0, "(]"), WIMAXPhyMode7)
+        
+        self.lowestPhyMode = PhyMode("QPSK-WiMAX-320")
+        self.setMinimumSINR(-5.331243)
+        
+        self.addPhyMode(Interval(-200.000000,-3.464765,"(]"),self.lowestPhyMode)
+        self.addPhyMode(Interval(-3.464765,-2.952957,"(]"),PhyMode("QPSK-WiMAX-720"))
+        self.addPhyMode(Interval(-2.952957,-0.421870,"(]"),PhyMode("QPSK-WiMAX-1020"))
+        self.addPhyMode(Interval(-0.421870,1.085567,"(]"),PhyMode("QPSK-WiMAX-1320"))
+        self.addPhyMode(Interval(1.085567,2.683285,"(]"),PhyMode("QPSK-WiMAX-1520"))
+        self.addPhyMode(Interval(2.683285,3.925478,"(]"),PhyMode("QPSK-WiMAX-1720"))
+        self.addPhyMode(Interval(3.925478,5.219113,"(]"),PhyMode("QAM16-WiMAX-1920"))
+        self.addPhyMode(Interval(5.219113,8.770903,"(]"),PhyMode("QAM16-WiMAX-2120"))
+        self.addPhyMode(Interval(8.770903,10.678538,"(]"),PhyMode("QAM16-WiMAX-2320"))
+        self.addPhyMode(Interval(10.678538,11.279353,"(]"),PhyMode("QAM64-WiMAX-2420"))
+        self.addPhyMode(Interval(11.279353,13.452776,"(]"),PhyMode("QAM64-WiMAX-2520"))
+        self.addPhyMode(Interval(13.452776,14.450271,"(]"),PhyMode("QAM64-WiMAX-2620"))
+        self.addPhyMode(Interval(14.450271,16.728635,"(]"),PhyMode("QAM64-WiMAX-2720"))
+        self.addPhyMode(Interval(16.728635,17.728189,"(]"),PhyMode("QAM64-WiMAX-2820"))
+        self.addPhyMode(Interval(17.728189,19.580673,"(]"),PhyMode("QAM64-WiMAX-2920"))
+        self.addPhyMode(Interval(19.580673,200.000000,"(]"),PhyMode("QAM64-WiMAX-3020"))
+
 
 
 
