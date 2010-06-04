@@ -158,7 +158,7 @@ DLCallback::processPacket(const wns::scheduler::SchedulingCompound & compound)
     << "        Time Slot: " << timeSlot <<" slotLength: "<<slotLength_<<"\n"
     << "        StartTime:      " << startTime<< "\n"
     << "        EndTime:        " << endTime<< "\n"
-    //<< "        Beamforming:    " << beamforming << "\n"
+    << "        Beamforming:    " << beamforming << "\n"
     << "        Beam:           " << beam << "\n"
     << "        Tx Power:       " << txPower;
     LOG_INFO(fun_->getLayer()->getName(), m.str());
@@ -168,10 +168,10 @@ DLCallback::processPacket(const wns::scheduler::SchedulingCompound & compound)
 
     if(beamforming && (pattern != wns::service::phy::ofdma::PatternPtr()))
     {
+        LOG_INFO(fun_->getLayer()->getName(), " DLCallback::processPacket() create BeamformingPhyAccessFunc");
         BeamformingPhyAccessFunc* sdmaFunc = new BeamformingPhyAccessFunc;
         sdmaFunc->destination_ = user;
         sdmaFunc->transmissionStart_ = startTime;
-        // TODO: (bmw) check if here 'endTime' to be used
         sdmaFunc->transmissionStop_ =
         startTime + pduDuration - Utilities::getComputationalAccuracyFactor();
         sdmaFunc->subBand_ = fSlot;
@@ -181,10 +181,10 @@ DLCallback::processPacket(const wns::scheduler::SchedulingCompound & compound)
     }
     else if(user != NULL)
     {
+        LOG_INFO(fun_->getLayer()->getName(), " DLCallback::processPacket() create OmniUnicastPhyAccessFunc");
         OmniUnicastPhyAccessFunc* omniUnicastFunc = new OmniUnicastPhyAccessFunc;
         omniUnicastFunc->destination_ = user;
         omniUnicastFunc->transmissionStart_ = startTime;
-        // TODO: (bmw) check if here 'endTime' to be used
         omniUnicastFunc->transmissionStop_ =
         startTime + pduDuration - Utilities::getComputationalAccuracyFactor();
         omniUnicastFunc->subBand_ = fSlot;
@@ -193,9 +193,9 @@ DLCallback::processPacket(const wns::scheduler::SchedulingCompound & compound)
     }
     else
     {
+        LOG_INFO(fun_->getLayer()->getName(), " ULMasterCallback::deliverNow() create BroadcastPhyAccessFunc");
         BroadcastPhyAccessFunc* broadcastFunc = new BroadcastPhyAccessFunc;
         broadcastFunc->transmissionStart_ = startTime;
-        // TODO: (bmw) check if here 'endTime' to be used
         broadcastFunc->transmissionStop_ =
         startTime + pduDuration - Utilities::getComputationalAccuracyFactor();
         broadcastFunc->subBand_ = fSlot;

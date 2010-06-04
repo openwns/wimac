@@ -16,9 +16,12 @@ import scenarios.interfaces
 
 def getOFDMAComponent(node, typeString, _config):
     transceiver = Transceiver(_config)
-    phyStation = ofdmaphy.Station.OFDMAStation([transceiver.receiver[typeString]],
+    if(_config.parametersPhy.beamforming):
+        phyStation = ofdmaphy.Station.OFDMABFStation([transceiver.receiver[typeString]],
                                 [transceiver.transmitter[typeString]])
-                                
+    else:
+        phyStation = ofdmaphy.Station.OFDMAStation([transceiver.receiver[typeString]],
+                                [transceiver.transmitter[typeString]])
     # The following three are default values changed in a later step
     # by the scenario module
     phyStation.txFrequency = 5470 # MHz

@@ -118,8 +118,8 @@ class Scheduler(openwns.FCF.CompoundCollector):
                  dataSubCarrier,
                  mapHandlerName,
                  strategy,
-                 beamforming = True,
-                 maxBeams = 4,
+                 beamforming = False,
+                 maxBeams = 1,
                  friendliness_dBm = "-105 dBm",
                  uplink = False,
                  mapper = None,
@@ -181,6 +181,7 @@ class ULCallback(Callback):
 class ULMasterCallback(ULCallback):
     __plugin__ = 'wimac.scheduler.ULMasterCallback'
 
+    beamforming = None
     def __init__(self, **kw):
         ULCallback.__init__(self, **kw)
 

@@ -266,6 +266,8 @@ class ParametersOFDM(Frozen):
     # additional size for each
     # Information Element
     #################
+    maximalBeams = 1
+    beamforming = False
 
 
 ###############################################################################
@@ -383,6 +385,8 @@ class ParametersOFDMA(Frozen):
     # additional size for each
     # Information Element
     #################
+    maximalBeams = 1
+    beamforming = False
 
 
 ###############################################################

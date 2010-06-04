@@ -184,7 +184,7 @@ Scheduler::deliverSchedule(wns::ldk::Connector* connector)
                 maxBeams,
                 NULL);
 
-            strategyInput.beamforming = maxBeams > 1?true:false;
+            strategyInput.beamforming = beamforming;
             strategyInput.setInputSchedulingMap(mapHandler_->getMasterMapForSlaveScheduling());
 
             strategyResult_ = wns::scheduler::strategy::StrategyResultPtr(
@@ -284,10 +284,23 @@ Scheduler::startScheduling()
         NULL);
         //colleagues.callback);
 
-    strategyInput.beamforming = maxBeams > 1?true:false;
+    strategyInput.beamforming = beamforming;
 
     strategyResult_ = wns::scheduler::strategy::StrategyResultPtr(
         new wns::scheduler::strategy::StrategyResult(colleagues.strategy->startScheduling(strategyInput))); 
+
+    // TODO: move to Scheduler::finishCollection() 
+    LOG_INFO(parent_->getFUN()->getName(), " Scheduler::finishCollection() in Scheduler::startScheduling(). numberOfTimeSlots_: ", numberOfTimeSlots_, " slotDuration: ", slotDuration);
+    if (strategyResult_ == wns::scheduler::strategy::StrategyResultPtr())
+    {
+           return;//empty map do nothing
+    }
+
+    //ULMaster requires CallBack only with beamforming
+    if(schedulerSpot_ != wns::scheduler::SchedulerSpot::ULMaster() || beamforming)
+    { 
+        colleagues.callback->callBack(strategyResult_->schedulingMap);
+    }
 
     if (schedulerSpot_ == wns::scheduler::SchedulerSpot::ULMaster())
     {
@@ -297,13 +310,6 @@ Scheduler::startScheduling()
         strategyResult_->schedulingMap->grantFullResources(); // full time length on used subchannels (only for resourceUsage probe and plot)
         //strategyResult_->schedulingMap->processMasterMap(); // must be done in slave,peer,UT
     }
-    // TODO:(bmw) move to Scheduler::finishCollection() 
-    LOG_INFO(parent_->getFUN()->getName(), " Scheduler::finishCollection() in Scheduler::startScheduling(). numberOfTimeSlots_: ", numberOfTimeSlots_, " slotDuration: ", slotDuration);
-    if (strategyResult_ == wns::scheduler::strategy::StrategyResultPtr())
-    {
-           return;//empty map do nothing
-    }
-    colleagues.callback->callBack(strategyResult_->schedulingMap);
 }
 
 void

@@ -1,4 +1,3 @@
-# -*- coding: iso-8859-1 -*-
 """ Module WiMAX Parameters - 802.16m
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -232,6 +231,8 @@ class ParametersOFDMA(object):
         # additional size for each
         # Information Element
         #################
+        self.maximalBeams = 1
+        self.beamforming = False
 
 #TODO
 ###############################################################

@@ -49,7 +49,8 @@ STATIC_FACTORY_REGISTER_WITH_CREATOR(
 
 using namespace wimac::scheduler;
 ULMasterCallback::ULMasterCallback(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config):
-ULCallback(fun, config)
+    ULCallback(fun, config),
+    beamforming(config.get<bool>("beamforming"))
 {}
 
 ULSlaveCallback::ULSlaveCallback(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config):
@@ -142,7 +143,7 @@ ULMasterCallback::processPacket(const wns::scheduler::SchedulingCompound & compo
     << "        Time Slot: " << timeSlot << " slotLength: "<<slotLength_<< "\n"
     << "        StartTime:      " << startTime << "\n"
     << "        EndTime:        " << endTime << "\n"
-//  << "        Beamforming:    " << beamforming << "\n"
+    << "        Beamforming:    " << beamforming << "\n"
     << "        Beam:           " << beam << "\n"
     << "        Tx Power:       " << txPower;
     LOG_INFO(fun_->getLayer()->getName(), m.str());
@@ -151,6 +152,7 @@ ULMasterCallback::processPacket(const wns::scheduler::SchedulingCompound & compo
 
 
     //only in beamforming case receive pattern need to be set
+    LOG_INFO(fun_->getLayer()->getName(), " DLCallback::processPacket() create PatternSetterPhyAccessFuncFunc");
     PatternSetterPhyAccessFunc* patternFunc =
         new PatternSetterPhyAccessFunc;
     patternFunc->destination_ = user;
@@ -175,8 +177,6 @@ ULMasterCallback::processPacket(const wns::scheduler::SchedulingCompound & compo
     phyCommand->peer.measureInterference_ = true; //measureInterference;
     phyCommand->peer.estimatedCandI_ = estimatedCandI;
     phyCommand->magic.sourceComponent_ = wimacComponent;
-
-    scheduledPDUs.push(pdu);
 }
 
 //ULSlave processPacket, setting omnidirectional transmit phy access functor
@@ -270,35 +270,7 @@ ULSlaveCallback::processPacket(const wns::scheduler::SchedulingCompound & compou
 
 void ULMasterCallback::deliverNow(wns::ldk::Connector* connector)
 {
-    LOG_INFO(fun_->getLayer()->getName(), " ULMasterCallback::deliverNow() ");
-    wns::simulator::Time now = wns::simulator::getEventScheduler()->getTime();
-
-    /*if(beamforming)
-    {
-        while( !scheduledPDUs.empty())
-        {
-            wns::ldk::CompoundPtr compound =
-                scheduledPDUs.front();
-            PhyUserCommand* phyUserCommand =
-            friends_.phyUser->getCommand( compound->getCommandPool() );
-
-            PatternSetterPhyAccessFunc* func =
-                dynamic_cast<PatternSetterPhyAccessFunc*>(phyUserCommand->local.pAFunc_.get());
-
-            func->patternStart_ += now;
-            func->patternEnd_ += now;
-
-            if ( connector->hasAcceptor(scheduledPDUs.front() ) )
-            {
-                connector->getAcceptor(scheduledPDUs.front())->sendData(scheduledPDUs.front());
-                scheduledPDUs.pop();
-            }
-            else
-            {
-                throw wns::Exception( "Lower FU is not accepting scheduled PDU but is supposed to do so" );
-            }
-        }
-    }*/
+    assure(false, "ULMaster must not deliver packets");
 }
 
 void ULSlaveCallback::deliverNow(wns::ldk::Connector* connector)

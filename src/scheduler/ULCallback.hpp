@@ -61,6 +61,8 @@ namespace wimac { namespace scheduler {
 
         virtual void
         deliverNow(wns::ldk::Connector* connector);
+    private:
+        bool beamforming;
     };
 
     class ULSlaveCallback :
