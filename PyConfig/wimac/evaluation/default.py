@@ -80,6 +80,10 @@ def installDebugEvaluation(sim, loggingStationIDs, kind = "PDF"):
     for bs in bsNodes:
         bsIDs.append(bs.dll.stationID)
 
+    # Only the ones included in loggingStationIDs:
+    utIDs = filter(lambda x:x in utIDs, loggingStationIDs)
+    bsIDs = filter(lambda x:x in bsIDs, loggingStationIDs)
+
     for src in sources:
         node = openwns.evaluation.createSourceNode(sim, src)
         node = node.appendChildren(openwns.evaluation.generators.Accept(
