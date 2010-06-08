@@ -266,8 +266,11 @@ class ParametersMAC(Frozen):
     #####
     
     import wimac.Services
-    associationService = wimac.Services.BestAtGivenTime(
-        wimac.Services.BestAtGivenTime.BestPathloss(), 0.00011)
+    associationService = "BestAtGivenTime" # "Fixed"
+    
+    # Only used with "BestAtGivenTime"
+    bestAssociationCriterion = wimac.Services.BestAtGivenTime.BestPathloss()
+    associationDecisionTime = 0.00011
     # Associate after first FCH is received. Choose BS 
     # with lowest pathloss on link.
     # ToDo: Automatically set decision time to shortly after first 

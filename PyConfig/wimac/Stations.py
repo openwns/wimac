@@ -266,7 +266,15 @@ class SubscriberStation(Layer2):
         super(SubscriberStation, self).__init__(node, "SS", config)       
         self.stationType = "UT"
 
-        self.associationControl = config.parametersMAC.associationService
+        if config.parametersMAC.associationService == "BestAtGivenTime":
+            self.associationControl = wimac.Services.BestAtGivenTime(
+                config.parametersMAC.bestAssociationCriterion, 
+                config.parametersMAC.associationDecisionTime)
+        elif config.parametersMAC.associationService == "Fixed":
+            self.associationControl = wimac.Services.Fixed()    
+        else:
+            assert False, "Unknown association service"
+ 
         self.controlServices.append(self.associationControl)
 
         # frame elements
