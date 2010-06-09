@@ -69,6 +69,15 @@ namespace wimac { namespace scheduler {
         wns::simulator::Time lastScheduling_;
         wns::probe::bus::ContextCollectorPtr frameOffsetDelayProbe_;
         wns::probe::bus::ContextCollectorPtr transmissionDelayProbe_;
+        wns::probe::bus::ContextCollectorPtr scheduleStartProbe_;
+        wns::probe::bus::ContextCollectorPtr scheduleStopProbe_;
+
+    public:
+        void
+        probeScheduleStart(int timeSlot, int subChannel, int beam, int userID);
+
+        void
+        probeScheduleStop(int timeSlot, int subChannel, int beam, int userID);
 
     };
 

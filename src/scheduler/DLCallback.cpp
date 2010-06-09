@@ -40,6 +40,8 @@
 #include <WIMAC/PhyUser.hpp>
 #include <WIMAC/PhyUserCommand.hpp>
 
+#include <boost/bind.hpp>
+
 STATIC_FACTORY_REGISTER_WITH_CREATOR(
 				     wimac::scheduler::DLCallback,
 				     wimac::scheduler::Callback,
@@ -135,6 +137,18 @@ DLCallback::processPacket(const wns::scheduler::SchedulingCompound & compound)
     simTimeType timeSlotOffset = timeSlot * slotLength_;
     startTime += timeSlotOffset;
     endTime += timeSlotOffset;
+
+    if(scheduleStartProbe_->hasObservers())
+    {
+        // Probe userID for start and stop to get nice sample and hold curve
+        wns::simulator::getEventScheduler()->schedule(
+        boost::bind(&Callback::probeScheduleStart, this, timeSlot, fSlot, beam, userID), startTime);
+    }
+    if(scheduleStopProbe_->hasObservers())
+    {
+        wns::simulator::getEventScheduler()->schedule(
+        boost::bind(&Callback::probeScheduleStop, this, timeSlot, fSlot, beam, userID), endTime);
+    }
 
     //TODO:bmw
     //wns::CandI estimatedCandI = compound.estimatedCandI;

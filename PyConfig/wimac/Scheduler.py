@@ -168,8 +168,9 @@ class PseudoBWRequestGenerator(Sealed):
 class Callback(Sealed):
     frameOffsetDelayProbeName = "wimac.frameOffsetDelay"
     transmissionDelayProbeName = "wimac.transmissionDelay"
+    scheduleStartProbeName = "wimac.scheduleStart"
+    scheduleStopProbeName = "wimac.scheduleStop"
     
-
 class ULCallback(Callback):
     #__plugin__ = 'wimac.scheduler.ULCallback'
     slotLength = None
