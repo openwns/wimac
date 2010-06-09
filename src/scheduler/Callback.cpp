@@ -28,6 +28,7 @@
 #include <WIMAC/PhyUserCommand.hpp>
 #include <WNS/probe/bus/ContextProviderCollection.hpp> 
 #include <WNS/ldk/Layer.hpp> 
+#include <boost/tuple/tuple.hpp>
 
 
 using namespace wimac::scheduler;
@@ -51,6 +52,13 @@ Callback::Callback(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config)
         new wns::probe::bus::ContextCollector(cpc, config.get<std::string>(
             "transmissionDelayProbeName")));
 
+    scheduleStartProbe_ = wns::probe::bus::ContextCollectorPtr(
+        new wns::probe::bus::ContextCollector(cpc, config.get<std::string>(
+            "scheduleStartProbeName")));
+
+    scheduleStopProbe_ = wns::probe::bus::ContextCollectorPtr(
+        new wns::probe::bus::ContextCollector(cpc, config.get<std::string>(
+            "scheduleStopProbeName")));
 }
 
 
@@ -59,4 +67,17 @@ void Callback::setColleagues(wns::scheduler::RegistryProxyInterface* registry)
     colleagues.registry = registry;
 }
 
+void Callback::probeScheduleStart(int timeSlot, int subChannel, int beam, int userID)
+{
+    scheduleStartProbe_->put(
+        userID, 
+        boost::make_tuple("TimeSlot", timeSlot, "SubChannel", subChannel, "Beam", beam));
+}
+
+void Callback::probeScheduleStop(int timeSlot, int subChannel, int beam, int userID)
+{
+    scheduleStopProbe_->put(
+        userID, 
+        boost::make_tuple("TimeSlot", timeSlot, "SubChannel", subChannel, "Beam", beam));
+}
 

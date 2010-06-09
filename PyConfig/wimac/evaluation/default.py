@@ -220,3 +220,21 @@ def installOverFrameOffsetEvaluation(sim, symbolsInFrame, _accessPointIDs, _user
                                             resolution = symbolsInFrame - 1,
                                             statEvals = ['deviation','trials','mean']))
 
+def installScheduleEvaluation(sim, loggingStationIDs):
+    bsIDs = []
+    bsNodes = sim.simulationModel.getNodesByProperty("Type", "BS")
+    for bs in bsNodes:
+        bsIDs.append(bs.dll.stationID)
+  
+    for source in ["wimac.scheduleStart", "wimac.scheduleStop"]:
+        node = openwns.evaluation.createSourceNode(sim, source)
+        
+        # Only the BSs schedule and probe
+        node = node.appendChildren(openwns.evaluation.generators.Accept(
+                                by = 'MAC.StationType', ifIn = [1], suffix = "BS"))
+        
+        # Get results per BS
+        node = node.appendChildren(openwns.evaluation.generators.Separate(
+                                by = 'MAC.Id', forAll = bsIDs, format = "Id%d"))
+                                
+        node.appendChildren(openwns.evaluation.generators.TimeSeries())
