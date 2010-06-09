@@ -55,14 +55,14 @@ class BaseStation(Layer2):
             mapHandlerName = "dlmapcollector",
             strategy = strategyDL,
             freqChannels = config.parametersPhy.subchannels,
-            maxBeams = 1, # Currently no beamforming
-            beamforming = False,
+            maxBeams = config.parametersPhy.maximalBeams,
+            beamforming = config.parametersPhy.beamforming,
             mapper = self.mapper,
             #friendliness_dBm = config.friendliness_dBm,
             plotFrames = False,
             uplink = False,
             callback = wimac.Scheduler.DLCallback(
-                    beamforming = False, 
+                    beamforming = config.parametersPhy.beamforming, 
                     slotLength = config.parametersPhy.slotDuration),
                     numberOfTimeSlots = config.numberOfTimeSlots)
 
@@ -87,11 +87,13 @@ class BaseStation(Layer2):
             mapHandlerName = "ulmapcollector",
             strategy = strategyUL,
             freqChannels = config.parametersPhy.subchannels,
-            maxBeams = 1, # Cureently no beamforming
-            beamforming =  False,
+            maxBeams = config.parametersPhy.maximalBeams,
+            beamforming =  config.parametersPhy.beamforming,
             mapper = self.mapper,
             #friendliness_dBm = config.friendliness_dBm,
-            callback = wimac.Scheduler.ULMasterCallback(slotLength = config.parametersPhy.slotDuration),
+            callback = wimac.Scheduler.ULMasterCallback(
+                    beamforming = config.parametersPhy.beamforming,
+                    slotLength = config.parametersPhy.slotDuration),
             plotFrames = False,
             uplink = True,
             numberOfTimeSlots = config.numberOfTimeSlots
@@ -264,7 +266,15 @@ class SubscriberStation(Layer2):
         super(SubscriberStation, self).__init__(node, "SS", config)       
         self.stationType = "UT"
 
-        self.associationControl = config.parametersMAC.associationService
+        if config.parametersMAC.associationService == "BestAtGivenTime":
+            self.associationControl = wimac.Services.BestAtGivenTime(
+                config.parametersMAC.bestAssociationCriterion, 
+                config.parametersMAC.associationDecisionTime)
+        elif config.parametersMAC.associationService == "Fixed":
+            self.associationControl = wimac.Services.Fixed()    
+        else:
+            assert False, "Unknown association service"
+ 
         self.controlServices.append(self.associationControl)
 
         # frame elements
