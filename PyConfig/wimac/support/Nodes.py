@@ -13,6 +13,7 @@ import wimac.Rang
 from wimac.support.Transceiver import Transceiver
 
 import scenarios.interfaces
+import scenarios.channelmodel
 
 def getOFDMAComponent(node, typeString, _config):
     transceiver = Transceiver(_config)
@@ -81,6 +82,20 @@ class SubscriberStation(openwns.node.Node, scenarios.interfaces.INode):
 
     def addTraffic(self, binding, load):
         self.load.addTraffic(binding, load) 
+
+    def setChannelModel(self, channelmodel):
+        # reconfiguring propagation model according to the selected scenario environment
+        propagationConfigPairs = [("AP","AP"),("AP","FRS"),("AP","UT"),
+                                    ("UT","UT"),("UT","FRS"),("UT","AP"),
+                                    ("FRS","FRS"),("FRS","AP"),("FRS","UT")]
+        for pair in propagationConfigPairs:
+            self.phy.ofdmaStation.receiver[0].propagation.setPair(pair[0],pair[1]).pathloss = channelmodel.pathloss
+            self.phy.ofdmaStation.receiver[0].propagation.setPair(pair[0],pair[1]).shadowing = channelmodel.shadowing
+            self.phy.ofdmaStation.receiver[0].propagation.setPair(pair[0],pair[1]).fastFading = channelmodel. fastFading
+
+            self.phy.ofdmaStation.transmitter[0].propagation.setPair(pair[0],pair[1]).pathloss = channelmodel.pathloss
+            self.phy.ofdmaStation.transmitter[0].propagation.setPair(pair[0],pair[1]).shadowing = channelmodel.shadowing
+            self.phy.ofdmaStation.transmitter[0].propagation.setPair(pair[0],pair[1]).fastFading = channelmodel. fastFading
 
 
 class RemoteStation(openwns.node.Node):
@@ -181,8 +196,19 @@ class BaseStation(openwns.node.Node, scenarios.interfaces.INode):
     def addTraffic(self, binding, load):
         assert false, "Don't deploy traffic to base stations"
 
+    def setChannelModel(self, channelmodel):
+        # reconfiguring propagation model according to the selected scenario environment
+        propagationConfigPairs = [("AP","AP"),("AP","FRS"),("AP","UT"),
+                                    ("UT","UT"),("UT","FRS"),("UT","AP"),
+                                    ("FRS","FRS"),("FRS","AP"),("FRS","UT")]
+        for pair in propagationConfigPairs:
+            self.phy.ofdmaStation.receiver[0].propagation.setPair(pair[0],pair[1]).pathloss = channelmodel.pathloss
+            self.phy.ofdmaStation.receiver[0].propagation.setPair(pair[0],pair[1]).shadowing = channelmodel.shadowing
+            self.phy.ofdmaStation.receiver[0].propagation.setPair(pair[0],pair[1]).fastFading = channelmodel. fastFading
 
-
+            self.phy.ofdmaStation.transmitter[0].propagation.setPair(pair[0],pair[1]).pathloss = channelmodel.pathloss
+            self.phy.ofdmaStation.transmitter[0].propagation.setPair(pair[0],pair[1]).shadowing = channelmodel.shadowing
+            self.phy.ofdmaStation.transmitter[0].propagation.setPair(pair[0],pair[1]).fastFading = channelmodel. fastFading
 
 
 class RANG(openwns.node.Node):

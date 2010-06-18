@@ -28,6 +28,7 @@
 import constanze.traffic
 from constanze.node import IPBinding, IPListenerBinding, Listener
 from openwns import dBm, dB, fromdB, fromdBm
+import scenarios.channelmodel
 
 def createDLPoissonTraffic(simulator, rate, packetSize):
     rangs = simulator.simulationModel.getNodesByProperty("Type", "RANG")
@@ -96,6 +97,29 @@ def setupPhy(simulator, config, scenario):
     else:
         raise "Unknown scenario %s" % scenario
 
+class TestChannelModelCreator(scenarios.channelmodel.ChannelModelCreator):
+    
+    def __init__(self):
+        
+        import rise.Scenario
+        from rise.scenario import Shadowing
+        from rise.scenario import FastFading
+        import rise.scenario.Pathloss
+        from openwns.interval import Interval
+        
+        pl = rise.scenario.Pathloss.SingleSlope(
+            validFrequencies = Interval(4000, 6000),
+            validDistances = Interval(2, 20000),
+            offset = "41.9 dB",
+            freqFactor = 0,
+            distFactor = "23.8 dB",
+            distanceUnit = "m", 
+            minPathloss = "49.06 dB",
+            outOfMinRange = rise.scenario.Pathloss.Constant("49.06 dB"),
+            outOfMaxRange = rise.scenario.Pathloss.Deny()
+            )
+        scenarios.channelmodel.ChannelModelCreator.__init__(self, pl, Shadowing.No(), FastFading.No())
+
 def setupPhyDetail(simulator, freq, pathloss, bsTxPower, utTxPower, config, rxNoiseBS, rxNoiseUT):
 
     from ofdmaphy.OFDMAPhy import OFDMASystem
@@ -104,6 +128,7 @@ def setupPhyDetail(simulator, freq, pathloss, bsTxPower, utTxPower, config, rxNo
     from rise.scenario import FastFading
     import openwns.Scheduler
     import math
+    import scenarios.channelmodel
 
     bsNodes = simulator.simulationModel.getNodesByProperty("Type", "BS")
     utNodes = simulator.simulationModel.getNodesByProperty("Type", "UE")
@@ -113,20 +138,20 @@ def setupPhyDetail(simulator, freq, pathloss, bsTxPower, utTxPower, config, rxNo
     simulator.modules.ofdmaPhy.systems.append(ofdmaPhySystem)
 
     # reconfiguring propagation model according to the selected scenario environment
-    propagationConfigPairs = [("AP","AP"),("AP","FRS"),("AP","UT"),
-                              ("UT","UT"),("UT","FRS"),("UT","AP"),
-                              ("FRS","FRS"),("FRS","AP"),("FRS","UT")]
+#    propagationConfigPairs = [("AP","AP"),("AP","FRS"),("AP","UT"),
+#                              ("UT","UT"),("UT","FRS"),("UT","AP"),
+#                              ("FRS","FRS"),("FRS","AP"),("FRS","UT")]
 
     # Large Scale fading model
     for node in bsNodes + utNodes:
-        for pair in propagationConfigPairs:
-            node.phy.ofdmaStation.receiver[0].propagation.setPair(pair[0],pair[1]).pathloss = pathloss
-            node.phy.ofdmaStation.receiver[0].propagation.setPair(pair[0],pair[1]).shadowing = Shadowing.No()
-            node.phy.ofdmaStation.receiver[0].propagation.setPair(pair[0],pair[1]).fastFading = FastFading.No()
+#        for pair in propagationConfigPairs:
+#            node.phy.ofdmaStation.receiver[0].propagation.setPair(pair[0],pair[1]).pathloss = pathloss
+#            node.phy.ofdmaStation.receiver[0].propagation.setPair(pair[0],pair[1]).shadowing = Shadowing.No()
+#            node.phy.ofdmaStation.receiver[0].propagation.setPair(pair[0],pair[1]).fastFading = FastFading.No()
             
-            node.phy.ofdmaStation.transmitter[0].propagation.setPair(pair[0],pair[1]).pathloss = pathloss
-            node.phy.ofdmaStation.transmitter[0].propagation.setPair(pair[0],pair[1]).shadowing = Shadowing.No()
-            node.phy.ofdmaStation.transmitter[0].propagation.setPair(pair[0],pair[1]).fastFading = FastFading.No()
+#            node.phy.ofdmaStation.transmitter[0].propagation.setPair(pair[0],pair[1]).pathloss = pathloss
+#            node.phy.ofdmaStation.transmitter[0].propagation.setPair(pair[0],pair[1]).shadowing = Shadowing.No()
+#            node.phy.ofdmaStation.transmitter[0].propagation.setPair(pair[0],pair[1]).fastFading = FastFading.No()
             
             
     # TX frequency
