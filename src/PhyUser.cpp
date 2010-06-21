@@ -25,8 +25,6 @@
 
 
 #include <WIMAC/PhyUser.hpp>
-#include <WIMAC/GuiWriter.hpp>
-
 #include <cmath>
 
 #include <WNS/service/phy/ofdma/DataTransmission.hpp>
@@ -111,10 +109,9 @@ PhyUser::PhyUser(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config) :
     probes_.pathloss = 
         wns::probe::bus::collector(cpc, config, "pathlossProbeName");
 
-    guiProbe_ = wns::probe::bus::ContextCollectorPtr(
-        new wns::probe::bus::ContextCollector(cpc, "wimac.guiProbe"));
+    probes_.jsonTracing = 
+        wns::probe::bus::collector(cpc, config, "phyTraceProbeName");
 
-    GuiWriter_ = new GuiWriter(guiProbe_, this);
 }
 
 
@@ -182,10 +179,12 @@ PhyUser::PhyUser( const PhyUser& rhs ):
     probes_.pathloss = wns::probe::bus::ContextCollectorPtr(
         new wns::probe::bus::ContextCollector(
             *rhs.probes_.pathloss ));
+    probes_.jsonTracing = wns::probe::bus::ContextCollectorPtr(
+        new wns::probe::bus::ContextCollector(
+            *rhs.probes_.jsonTracing ));
 }
 PhyUser::PhyUser::~PhyUser()
 {
-    delete GuiWriter_;
 }
 
 
@@ -203,7 +202,6 @@ PhyUser::doSendData(const wns::ldk::CompoundPtr& compound)
 	(*command->local.pAFunc_.get())( this, compound );
 
     int macaddr = address.getInteger();
-    GuiWriter_->writeToProbe(compound,macaddr);
 }
 
 
@@ -376,6 +374,10 @@ PhyUser::onData(wns::osi::PDUPtr pdu,
 		assure(0, "PhyUser::onData: Received PDU can't be releated to a probe!");
 	}
 
+#ifndef NDEBUG
+    traceIncoming(compound, rxPowerMeasurement);
+#endif
+
 	//Deliver compound
 	doOnData(compound);
 }
@@ -501,4 +503,53 @@ bool PhyUser::filter( const wns::ldk::CompoundPtr& compound)
 
     return false;
 }
+
+void
+PhyUser::traceIncoming(wns::ldk::CompoundPtr compound, wns::service::phy::power::PowerMeasurementPtr rxPowerMeasurement)
+{
+    wns::probe::bus::json::Object objdoc;
+
+    PhyUserCommand* myCommand = getCommand(compound->getCommandPool());
+
+    objdoc["Transmission"]["ReceiverID"] = 
+        wns::probe::bus::json::String(getFUN()->getLayer()->getNodeName());
+    objdoc["Transmission"]["SenderID"] = 
+        wns::probe::bus::json::String(myCommand->peer.source_->getName());
+    objdoc["Transmission"]["SourceID"] = 
+        wns::probe::bus::json::String(myCommand->peer.source_->getName());
+    if(myCommand->peer.destination_ == NULL)
+    {
+        objdoc["Transmission"]["DestinationID"] = 
+            wns::probe::bus::json::String("Broadcast");
+    }
+    else
+    {
+        objdoc["Transmission"]["DestinationID"] = 
+            wns::probe::bus::json::String(myCommand->peer.destination_->getName());
+    }
+
+    objdoc["Transmission"]["Start"] = 
+        wns::probe::bus::json::Number(myCommand->local.pAFunc_->transmissionStart_);
+    objdoc["Transmission"]["Stop"] = 
+        wns::probe::bus::json::Number(myCommand->local.pAFunc_->transmissionStop_);
+    objdoc["Transmission"]["Subchannel"] = 
+        wns::probe::bus::json::Number(myCommand->local.pAFunc_->subBand_);
+    objdoc["Transmission"]["TxPower"] = 
+        wns::probe::bus::json::Number(rxPowerMeasurement->getTxPower().get_dBm());
+    objdoc["Transmission"]["RxPower"] = 
+        wns::probe::bus::json::Number(rxPowerMeasurement->getRxPower().get_dBm());
+    objdoc["Transmission"]["InterferencePower"] = 
+        wns::probe::bus::json::Number(rxPowerMeasurement->getInterferencePower().get_dBm());
+
+    if (myCommand->peer.estimatedCandI_.C != wns::Power() &&
+        myCommand->peer.estimatedCandI_.I != wns::Power())
+    {
+        objdoc["SINREst"]["C"] = 
+            wns::probe::bus::json::Number(myCommand->peer.estimatedCandI_.C.get_dBm());
+        objdoc["SINREst"]["I"] = 
+            wns::probe::bus::json::Number(myCommand->peer.estimatedCandI_.I.get_dBm());
+    }
+    wns::probe::bus::json::probeJSON(probes_.jsonTracing, objdoc);
+}
+
 

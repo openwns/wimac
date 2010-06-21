@@ -106,7 +106,7 @@ def installDebugEvaluation(sim, loggingStationIDs, kind = "PDF"):
         # Statistics for all UTs connected to each BS
         nodeBS.appendChildren(openwns.evaluation.generators.Separate(
                             by = 'MAC.Id', forAll = bsIDs, format = "Id%d"))
-        # Statistics for per BS per UT
+        # Statistics per BS per UT
         nodeBS = nodeBS.appendChildren(openwns.evaluation.generators.Separate(
                             by = 'MAC.Id', forAll = bsIDs, format = "Id%d"))
 
@@ -220,12 +220,27 @@ def installOverFrameOffsetEvaluation(sim, symbolsInFrame, _accessPointIDs, _user
                                             resolution = symbolsInFrame - 1,
                                             statEvals = ['deviation','trials','mean']))
 
+# New evaluation using CouchDB with Wrowser available from Ubuntu Linux 10.04 on
+def installJSONScheduleEvaluation(sim, loggingStationIDs):
+    node = openwns.evaluation.createSourceNode(sim, "wimac.phyTrace") 
+
+    node = node.appendChildren(openwns.evaluation.generators.Accept(
+                        by = 'MAC.Id', ifIn = loggingStationIDs))
+
+    # Downlink and Uplink
+    node.getLeafs().appendChildren(
+        openwns.evaluation.JSONTrace(key="__json__", description="JSON testing in PhyUser"))
+
+# Old evaluation writing a start time and a end time TimeSeries probe
 def installScheduleEvaluation(sim, loggingStationIDs):
     bsIDs = []
     bsNodes = sim.simulationModel.getNodesByProperty("Type", "BS")
     for bs in bsNodes:
         bsIDs.append(bs.dll.stationID)
-  
+
+    # Only the ones included in loggingStationIDs:
+    bsIDs = filter(lambda x:x in bsIDs, loggingStationIDs)
+
     for source in ["wimac.scheduleStart", "wimac.scheduleStop"]:
         node = openwns.evaluation.createSourceNode(sim, source)
         

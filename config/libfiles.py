@@ -13,7 +13,6 @@ srcFiles = [
     'src/PhyUser.cpp',
     'src/RANG.cpp',
     'src/UpperConvergence.cpp',
-    'src/GuiWriter.cpp',
     'src/Utilities.cpp',
 
     'src/frame/DataCollector.cpp',
@@ -58,7 +57,6 @@ hppFiles = [
     'src/frame/MapCommand.hpp',
     'src/frame/TimingControl.hpp',
     'src/frame/ULMapCollector.hpp',
-    'src/GuiWriter.hpp',
     'src/FUConfigCreator.hpp',
     'src/Logger.hpp',
     'src/parameter/PHY.hpp',

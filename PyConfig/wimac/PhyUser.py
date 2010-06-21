@@ -42,6 +42,7 @@ class PhyUser(Sealed):
     iContentionProbeName = None
     cirContentionProbeName = None
     pathlossProbeName = None
+    phyTraceProbeName = None
 
     def __init__(self, **kw):
         self.iProbeName = "wimac.interferenceSDMA"
@@ -56,5 +57,6 @@ class PhyUser(Sealed):
         self.iContentionProbeName = "wimac.interferenceContention"
         self.cirContentionProbeName = "wimac.cirContention"      
         self.pathlossProbeName = "wimac.pathloss"      
+        self.phyTraceProbeName = "wimac.phyTrace"      
         attrsetter(self, kw)
 

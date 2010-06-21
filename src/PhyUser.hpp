@@ -31,7 +31,7 @@
 
 #include <WNS/node/Node.hpp>
 #include <WNS/probe/bus/ContextCollector.hpp>
-#include <WIMAC/GuiWriter.hpp>
+#include <WNS/probe/bus/json/probebus.hpp>
 
 #include <WNS/ldk/FunctionalUnit.hpp>
 #include <WNS/ldk/Compound.hpp>
@@ -133,8 +133,11 @@ namespace wimac {
         void onFUNCreated();
 
     private:
+        void
+        traceIncoming(wns::ldk::CompoundPtr compound, wns::service::phy::power::PowerMeasurementPtr rxPowerMeasurement);
 
-        bool filter( const wns::ldk::CompoundPtr& compound);
+        bool 
+        filter(const wns::ldk::CompoundPtr& compound);
 
         // point in time when last C/I measurement was written to
         // interference cache
@@ -159,6 +162,7 @@ namespace wimac {
             wns::probe::bus::ContextCollectorPtr interferenceContention;
             wns::probe::bus::ContextCollectorPtr cirContention;
             wns::probe::bus::ContextCollectorPtr pathloss;
+            wns::probe::bus::ContextCollectorPtr jsonTracing;
         } probes_;
 
         wns::simulator::Time safetyFraction;
@@ -178,12 +182,6 @@ namespace wimac {
             service::ConnectionManager* connectionManager;
             ConnectionClassifier* connectionClassifier;
         } friends_;
-
-
-        wns::probe::bus::ContextCollectorPtr guiProbe_;
-
-        GuiWriter* GuiWriter_;
-
     };
 }
 
