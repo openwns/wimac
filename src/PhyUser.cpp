@@ -288,6 +288,13 @@ PhyUser::onData(wns::osi::PDUPtr pdu,
                             rxPower,
                             service::InterferenceCache::Remote );
 
+        puCommand->magic.sourceComponent_
+            ->getManagementService<service::InterferenceCache>
+            ("interferenceCache")
+            ->storePathloss( friends_.layer->getNode(),
+                            rxPowerMeasurement->getPathLoss(),
+                            service::InterferenceCache::Remote );
+
         wns::Power iInterPlusNoise;
         if(interference > puCommand->getEstimatedIintra()){
             iInterPlusNoise = interference - puCommand->getEstimatedIintra();
@@ -323,6 +330,13 @@ PhyUser::onData(wns::osi::PDUPtr pdu,
                 ("interferenceCache")
                 ->storeCarrier( friends_.layer->getNode(),
                                 rxPower,
+                                service::InterferenceCache::Remote );
+
+            puCommand->magic.sourceComponent_
+                ->getManagementService<service::InterferenceCache>
+                ("interferenceCache")
+                ->storePathloss( friends_.layer->getNode(),
+                                rxPowerMeasurement->getPathLoss(),
                                 service::InterferenceCache::Remote );
 
 

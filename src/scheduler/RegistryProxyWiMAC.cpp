@@ -259,19 +259,24 @@ RegistryProxyWiMAC::getOverhead(int /* numBursts */) {
 	return retVal;
 }
 
-wns::CandI RegistryProxyWiMAC::estimateTxSINRAt(const wns::scheduler::UserID user){
+wns::scheduler::ChannelQualityOnOneSubChannel
+RegistryProxyWiMAC::estimateTxSINRAt(const wns::scheduler::UserID user){
 
 	// lookup the results reported by the receiving subscriber station in the
 	// local cache
 	wns::Power interference =
 		layer2->getManagementService<service::InterferenceCache>("interferenceCache")->getAveragedInterference(user);
-	wns::Power carrier =
-		layer2->getManagementService<service::InterferenceCache>("interferenceCache")->getAveragedCarrier(user);
+	wns::Ratio pathloss =
+		layer2->getManagementService<service::InterferenceCache>("interferenceCache")->getAveragedPathloss(user);
+    wns::Power carrier =
+        layer2->getManagementService<service::InterferenceCache>("interferenceCache")->getAveragedCarrier(user);
 
-	return wns::CandI(carrier, interference);
+
+    return wns::scheduler::ChannelQualityOnOneSubChannel(pathloss, interference, carrier);
 }
 
-wns::CandI RegistryProxyWiMAC::estimateRxSINROf(const wns::scheduler::UserID user){
+wns::scheduler::ChannelQualityOnOneSubChannel
+RegistryProxyWiMAC::estimateRxSINROf(const wns::scheduler::UserID user){
 
 	// lookup the results previously reported by us to the remote side
 	service::InterferenceCache* remoteCache =
@@ -279,10 +284,11 @@ wns::CandI RegistryProxyWiMAC::estimateRxSINROf(const wns::scheduler::UserID use
 		getStationByNode(user)->
 		getManagementService<service::InterferenceCache>("interferenceCache");
 
-	wns::Power carrier = remoteCache->getAveragedCarrier(getMyUserID());
-	wns::Power interference = remoteCache->getAveragedInterference(getMyUserID());
+	wns::Ratio pathloss = remoteCache->getAveragedPathloss(getMyUserID());
+    wns::Power interference = remoteCache->getAveragedInterference(getMyUserID());
+    wns::Power carrier = remoteCache->getAveragedCarrier(getMyUserID());
 
-	return wns::CandI(carrier, interference);
+    return wns::scheduler::ChannelQualityOnOneSubChannel(pathloss, interference, carrier);
 }
 
 wns::Power

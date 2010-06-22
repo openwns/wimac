@@ -133,7 +133,7 @@ class Layer2(openwns.node.Component):
         interferenceCache.notFoundStrategy.averageInterference = "-96.0 dBm"
         interferenceCache.notFoundStrategy.deviationCarrier = "0.0 mW"
         interferenceCache.notFoundStrategy.deviationInterference = "0.0 mW"
-        interferenceCache.notFoundStrategy.averagePathloss = "0.0 dB"
+        interferenceCache.notFoundStrategy.averagePathloss = "131.0 dB"
         self.managementServices.append( interferenceCache )
         
         self.classifier = wimac.FUs.Classifier()
