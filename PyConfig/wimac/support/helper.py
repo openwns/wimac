@@ -137,22 +137,8 @@ def setupPhyDetail(simulator, freq, pathloss, bsTxPower, utTxPower, config, rxNo
     ofdmaPhySystem.Scenario = rise.Scenario.Scenario()
     simulator.modules.ofdmaPhy.systems.append(ofdmaPhySystem)
 
-    # reconfiguring propagation model according to the selected scenario environment
-#    propagationConfigPairs = [("AP","AP"),("AP","FRS"),("AP","UT"),
-#                              ("UT","UT"),("UT","FRS"),("UT","AP"),
-#                              ("FRS","FRS"),("FRS","AP"),("FRS","UT")]
-
     # Large Scale fading model
     for node in bsNodes + utNodes:
-#        for pair in propagationConfigPairs:
-#            node.phy.ofdmaStation.receiver[0].propagation.setPair(pair[0],pair[1]).pathloss = pathloss
-#            node.phy.ofdmaStation.receiver[0].propagation.setPair(pair[0],pair[1]).shadowing = Shadowing.No()
-#            node.phy.ofdmaStation.receiver[0].propagation.setPair(pair[0],pair[1]).fastFading = FastFading.No()
-            
-#            node.phy.ofdmaStation.transmitter[0].propagation.setPair(pair[0],pair[1]).pathloss = pathloss
-#            node.phy.ofdmaStation.transmitter[0].propagation.setPair(pair[0],pair[1]).shadowing = Shadowing.No()
-#            node.phy.ofdmaStation.transmitter[0].propagation.setPair(pair[0],pair[1]).fastFading = FastFading.No()
-            
             
     # TX frequency
         node.phy.ofdmaStation.txFrequency = freq
