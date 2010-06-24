@@ -72,28 +72,17 @@ def setupPhy(simulator, config, scenario):
     from openwns.interval import Interval
 
     if scenario == "InH":
-        setupPhyDetail(simulator, 3400, rise.scenario.Pathloss.ITUInH(), dBm(24), dBm(24), config, dB(5), dB(7))
+        setupPhyDetail(simulator, 3400, dBm(24), dBm(24), config, dB(5), dB(7))
     elif scenario == "UMa":
-        setupPhyDetail(simulator, 2000, rise.scenario.Pathloss.ITUUMa(), dBm(46), dBm(24), config, dB(5), dB(7))
+        setupPhyDetail(simulator, 2000, dBm(46), dBm(24), config, dB(5), dB(7))
     elif scenario == "UMi":
-        setupPhyDetail(simulator, 2500, rise.scenario.Pathloss.ITUUMi(), dBm(41), dBm(24), config, dB(5), dB(7))
+        setupPhyDetail(simulator, 2500, dBm(41), dBm(24), config, dB(5), dB(7))
     elif scenario == "RMa":
-        setupPhyDetail(simulator, 800, rise.scenario.Pathloss.ITURMa(), dBm(46), dBm(24), config, dB(5), dB(7))
+        setupPhyDetail(simulator, 800, dBm(46), dBm(24), config, dB(5), dB(7))
     elif scenario == "SMa":
-        setupPhyDetail(simulator, 2000, rise.scenario.Pathloss.ITUSMa(), dBm(46), dBm(24), config, dB(5), dB(7))
+        setupPhyDetail(simulator, 2000, dBm(46), dBm(24), config, dB(5), dB(7))
     elif scenario == "LoS_Test":
-        pl = rise.scenario.Pathloss.SingleSlope(
-            validFrequencies = Interval(4000, 6000),
-            validDistances = Interval(2, 20000),
-            offset = "41.9 dB",
-            freqFactor = 0,
-            distFactor = "23.8 dB",
-            distanceUnit = "m", 
-            minPathloss = "49.06 dB",
-            outOfMinRange = rise.scenario.Pathloss.Constant("49.06 dB"),
-            outOfMaxRange = rise.scenario.Pathloss.Deny()
-            )
-        setupPhyDetail(simulator, 5470, pl, dBm(30), dBm(30), config, dB(5), dB(5))
+        setupPhyDetail(simulator, 5470, dBm(30), dBm(30), config, dB(5), dB(5))
     else:
         raise "Unknown scenario %s" % scenario
 
@@ -107,7 +96,7 @@ class TestChannelModelCreator(scenarios.channelmodel.ChannelModelCreator):
         import rise.scenario.Pathloss
         from openwns.interval import Interval
         
-        pl = rise.scenario.Pathloss.SingleSlope(
+        self.pathloss = rise.scenario.Pathloss.SingleSlope(
             validFrequencies = Interval(4000, 6000),
             validDistances = Interval(2, 20000),
             offset = "41.9 dB",
@@ -118,9 +107,16 @@ class TestChannelModelCreator(scenarios.channelmodel.ChannelModelCreator):
             outOfMinRange = rise.scenario.Pathloss.Constant("49.06 dB"),
             outOfMaxRange = rise.scenario.Pathloss.Deny()
             )
-        scenarios.channelmodel.ChannelModelCreator.__init__(self, pl, Shadowing.No(), FastFading.No())
+        self.shadowing = Shadowing.No()
+        self.fastFading = FastFading.No()
 
-def setupPhyDetail(simulator, freq, pathloss, bsTxPower, utTxPower, config, rxNoiseBS, rxNoiseUT):
+    def create(self):
+        import rise.Scenario
+
+        channelmodel = rise.scenario.Propagation.Configuration(self.pathloss, self.shadowing, self.fastFading)
+        return channelmodel
+
+def setupPhyDetail(simulator, freq, bsTxPower, utTxPower, config, rxNoiseBS, rxNoiseUT):
 
     from ofdmaphy.OFDMAPhy import OFDMASystem
     import rise.Scenario
@@ -132,14 +128,7 @@ def setupPhyDetail(simulator, freq, pathloss, bsTxPower, utTxPower, config, rxNo
 
     bsNodes = simulator.simulationModel.getNodesByProperty("Type", "BS")
     utNodes = simulator.simulationModel.getNodesByProperty("Type", "UE")
-
-    ofdmaPhySystem = OFDMASystem('ofdma')
-    ofdmaPhySystem.Scenario = rise.Scenario.Scenario()
-    simulator.modules.ofdmaPhy.systems.append(ofdmaPhySystem)
-
-    # Large Scale fading model
     for node in bsNodes + utNodes:
-            
     # TX frequency
         node.phy.ofdmaStation.txFrequency = freq
         node.phy.ofdmaStation.rxFrequency = freq
