@@ -223,6 +223,7 @@ Component::onNodeCreated()
         // register UpperConvergence as the DLL DataTransmissionService
         addService(getConfig().get<std::string>("dataTransmission"), upperConvergence);
         addService(getConfig().get<std::string>("notification"), upperConvergence);
+        addService(getConfig().get<std::string>("flowEstablishmentAndRelease"), upperConvergence);
         upperConvergence->setMACAddress(address_);
     }
 
