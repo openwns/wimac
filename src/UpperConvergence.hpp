@@ -40,9 +40,11 @@
 
 #include <WNS/service/dll/DataTransmission.hpp>
 #include <WNS/service/dll/Handler.hpp>
+#include <WNS/service/dll/FlowEstablishmentAndRelease.hpp>
 #include <WNS/pyconfig/View.hpp>
 
 #include <WIMAC/RANG.hpp>
+#include <WIMAC/ConnectionIdentifier.hpp>
 
 namespace wimac {
 
@@ -58,10 +60,12 @@ namespace wimac {
         {
             peer.sourceMACAddress = wns::service::dll::UnicastAddress();
             peer.targetMACAddress = wns::service::dll::UnicastAddress();
+            local.qosClass = ConnectionIdentifier::BE;
         }
 
         struct {
-			wns::service::dll::FlowID dllFlowID;
+            wns::service::dll::FlowID dllFlowID;
+            ConnectionIdentifier::QoSCategory qosClass;
         } local;
         struct {
             wns::service::dll::UnicastAddress sourceMACAddress;
@@ -83,6 +87,7 @@ namespace wimac {
         public virtual wns::ldk::FunctionalUnit,
         public virtual wns::service::dll::UnicastDataTransmission,
         public virtual wns::service::dll::Notification,
+        public virtual wns::service::dll::FlowEstablishmentAndRelease,
         public wns::ldk::CommandTypeSpecifier<UpperCommand>,
         public wns::ldk::HasReceptor<>,
         public wns::ldk::HasConnector<wns::ldk::FirstServeConnector>,
@@ -129,71 +134,29 @@ namespace wimac {
 
         void doWakeup();
 
-	virtual void 
-	registerFlowHandler(wns::service::dll::FlowHandler*){};
-	
-	virtual void 
-	registerIRuleControl(wns::service::dll::IRuleControl*){};
+        virtual void 
+        registerFlowHandler(wns::service::dll::FlowHandler*);
+
+        virtual void 
+        registerIRuleControl(wns::service::dll::IRuleControl*){};
+
+        virtual void
+        establishFlow(wns::service::tl::FlowID flowID, wns::service::qos::QoSClass qosClass);
+
+        virtual void
+        releaseFlow(wns::service::tl::FlowID flowID){};
 
     protected:
         wns::service::dll::UnicastAddress sourceMACAddress_;
 
         wns::service::dll::Handler* dataHandler_;
+        wns::service::dll::FlowHandler* tlFlowHandler;
+
+        std::map<long int, ConnectionIdentifier::QoSCategory> flowID2QosClass;
+        long int dllFlowID;
+
         wimac::RANG* rang_;
     };
-
-
-    /**
-     * @brief UT implementation of UpperConvergence, collaborates
-     * directly with the Network Layer
-     */
-//     class UTUpperConvergence :
-//         public UpperConvergence,
-//         public wns::ldk::Forwarding<UTUpperConvergence>,
-//         public wns::Cloneable<UTUpperConvergence>
-//     {
-//     public:
-//         UTUpperConvergence(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config);
-//         virtual ~UTUpperConvergence(){};
-//         virtual void processIncoming(const wns::ldk::CompoundPtr& compound);
-//         // Notification Service
-//         virtual void
-//         registerHandler(wns::service::dll::protocolNumber protocol,
-//                         wns::service::dll::Handler* _dh);
-//     private:
-//         /**
-//          * @brief Needed for demultiplexing of upper layer protocols.
-//          */
-//         typedef wns::container::Registry<wns::service::dll::protocolNumber,
-//                                          wns::service::dll::Handler*> DataHandlerRegistry;
-
-//         /**
-//          * @brief Registry for datahandlers. Each datahandler is select
-//          * by the protocol number.
-//          */
-//         DataHandlerRegistry dataHandlerRegistry;
-//     };
-
-    /** @brief AP implementation of UpperConvergence, collaborates with the RANG */
-//     class APUpperConvergence :
-//         public UpperConvergence,
-//         public wns::ldk::Forwarding<APUpperConvergence>,
-//         public wns::Cloneable<APUpperConvergence>
-//     {
-//     public:
-//         APUpperConvergence(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config);
-//         virtual ~APUpperConvergence(){};
-//         virtual void processIncoming(const wns::ldk::CompoundPtr& compound);
-//         // Notification Service
-//         virtual void
-//         registerHandler(wns::service::dll::protocolNumber protocol,
-//                         wns::service::dll::Handler* _dh);
-
-//         bool hasRANG();
-//         wns::service::dll::Handler* getRANG();
-//     private:
-//         wns::service::dll::Handler* dataHandler;
-//     };
 
     /**
      * @brief Dummy UpperConvergence interface realisation.
@@ -214,11 +177,6 @@ namespace wimac {
         NoUpperConvergence(wns::ldk::fun::FUN* fun, const wns::pyconfig::View&) :
             wns::ldk::CommandTypeSpecifier<UpperCommand>(fun)
         {}
-
-//         virtual void
-//         registerHandler(wns::service::dll::protocolNumber /*protocol*/,
-//                         wns::service::dll::Handler* /*_dh*/)
-//         {}
     };
 }
 

@@ -91,6 +91,7 @@ ConnectionManager::appendConnection( const ConnectionIdentifier& connection )
     if ( connectionPtr->cid_ == -1 )
         connectionPtr->cid_ = getAndIncreaseHighestCellCID();
 
+
     if( layer_->getStationType() == wns::service::dll::StationTypes::AP() )  //set CID in AP
     {
         if(connectionPtr->connectionType_ == ConnectionIdentifier::InitialRanging)

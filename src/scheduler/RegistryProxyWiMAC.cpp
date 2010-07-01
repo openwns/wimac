@@ -529,32 +529,21 @@ RegistryProxyWiMAC::getPowerCapabilities() const
 int
 RegistryProxyWiMAC::getNumberOfQoSClasses()
 {
-    return 1; //wns::service::qos::NUMBEROFQOSCLASSES;
+    return ConnectionIdentifier::MaxQoSCategory + 1;
 }
 
 // This is QoS/priority related
 int
 RegistryProxyWiMAC::getNumberOfPriorities()
 {
-  return numberOfPriorities;
+  return getNumberOfQoSClasses();
 }
 
-//const wns::service::phy::phymode::PhyModeInterfacePtr
-//RegistryProxyWiMAC::getPhyMode(wns::scheduler::ConnectionID /*cid*/)
-//{
-//       return wns::service::phy::phymode::PhyModeInterfacePtr(); // empty
-//}
 
-// This is QoS/priority related
 wns::scheduler::ConnectionList&
 RegistryProxyWiMAC::getCIDListForPriority(int priority)
 {
-        /*if(priority == wns::service::qos::QoSClasses::CONVERSATIONAL)
-        {
-            return connManager->getAllConnections(); 
-        }
-        else
-            return wns::scheduler::ConnectionList();  */   
+    assure(false, "Not implemented");
 }
 
 
@@ -565,32 +554,37 @@ RegistryProxyWiMAC::getConnectionsForPriority(int priority)
 {
     wns::scheduler::ConnectionSet result;
 
-    //MESSAGE_SINGLE(NORMAL, logger, "getConnectionsforPriority("<<priority<<")");
-    assure(priority>=0 && priority<getNumberOfPriorities(),"invalid priority "<<priority);
-    /*
-      for ( wns::scheduler::ConnectionList::iterator iter = connectionsForPriority[priority].begin();
-      iter != connectionsForPriority[priority].end(); ++iter)
-      {
-      ConnectionID cid = *iter;
-      result.insert(cid);
-      MESSAGE_SINGLE(NORMAL, logger, "getConnectionsforPriority(): added cid=" << cid);
-      }
-    */
-    if(priority == 0) // 0 is highest priority and also priority of the one and only default QoSClass UNDEFINED
-    {
-        ConnectionIdentifier::List CIDs = connManager->getAllConnections();
+    assure(priority >= 0 && priority < getNumberOfPriorities(),
+        "invalid priority " << priority);
 
-        for (ConnectionIdentifiers::iterator iter = CIDs.begin();
-             iter != CIDs.end(); ++iter)
-            result.insert(wns::scheduler::ConnectionID((*iter)->getID()));
-    }
-    return result; // TODO: QOS for WiMAX
+    /* The priority is directly mapped to the QoS class number */
+
+    ConnectionIdentifier::List CIDs = 
+        connManager->getAllDataConnections(ConnectionIdentifier::Downlink, 
+            ConnectionIdentifier::QoSCategory(priority));
+
+    for (ConnectionIdentifiers::iterator iter = CIDs.begin();
+            iter != CIDs.end(); ++iter)
+        result.insert(wns::scheduler::ConnectionID((*iter)->getID()));
+
+    CIDs = 
+        connManager->getAllDataConnections(ConnectionIdentifier::Uplink, 
+            ConnectionIdentifier::QoSCategory(priority));
+
+    for (ConnectionIdentifiers::iterator iter = CIDs.begin();
+            iter != CIDs.end(); ++iter)
+        result.insert(wns::scheduler::ConnectionID((*iter)->getID()));
+
+    return result; 
 }
 
 int
-RegistryProxyWiMAC::getPriorityForConnection(wns::scheduler::ConnectionID /*cid*/)
+RegistryProxyWiMAC::getPriorityForConnection(wns::scheduler::ConnectionID cid)
 {
-       return 0;
+    ConnectionIdentifierPtr ci = connManager->getConnectionWithID(cid);
+    assure(ci != NULL, "Unknown CID");
+
+    return int(ci->qos_);
 }
 
 bool

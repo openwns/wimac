@@ -177,8 +177,9 @@ def setupScheduler(simulator, sched):
     bsNodes = simulator.simulationModel.getNodesByProperty("Type", "BS")
     
     for bs in bsNodes:
-        bs.dll.dlscheduler.config.txScheduler.strategy.subStrategies[0] = scheduler
-        bs.dll.ulscheduler.config.rxScheduler.strategy.subStrategies[0] = scheduler
+        for i in xrange(len(bs.dll.dlscheduler.config.txScheduler.strategy.subStrategies)):
+            bs.dll.dlscheduler.config.txScheduler.strategy.subStrategies[i] = scheduler
+            bs.dll.ulscheduler.config.rxScheduler.strategy.subStrategies[i] = scheduler
     
 
 def disableIPHeader(simulator):

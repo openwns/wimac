@@ -55,6 +55,7 @@ UpperConvergence::UpperConvergence(wns::ldk::fun::FUN* fun, const wns::pyconfig:
     wns::ldk::HasDeliverer<>(),
     sourceMACAddress_(),
     dataHandler_(NULL),
+    dllFlowID(0),
     rang_(NULL)
 {}
 
@@ -62,19 +63,6 @@ void
 UpperConvergence::onFUNCreated()
 {
 }
-
-
-//*************
-/*
-void 
-wns::service::dll::DataTransmission<Address>::sendData(
-	const Address&,
-	const wns::osi::PDUPtr&,
-	wns::service::dll::protocolNumber,
-	wns::service::dll::FlowID)
-
-	 [with Address = wns::service::dll::UnicastAddress]
-*/
 
 
 void
@@ -98,7 +86,12 @@ UpperConvergence::sendData(
 
     sgc->peer.targetMACAddress = peer;
     sgc->peer.sourceMACAddress = sourceMACAddress_;
-	sgc->local.dllFlowID = _dllFlowID;
+    sgc->local.dllFlowID = _dllFlowID;
+
+    if(flowID2QosClass.find(_dllFlowID) != flowID2QosClass.end())
+    {
+        sgc->local.qosClass = flowID2QosClass[_dllFlowID];
+    }
 
     if(this->getConnector()->hasAcceptor(compound))
     {
@@ -159,7 +152,6 @@ UpperConvergence::createReply(const wns::ldk::CommandPool* original) const
     return reply;
 }
 
-
 bool
 UpperConvergence::doIsAccepting(const wns::ldk::CompoundPtr& compound) const
 {
@@ -178,40 +170,6 @@ UpperConvergence::doWakeup()
     getReceptor()->wakeup();
 }
 
-// UTUpperConvergence::UTUpperConvergence(wns::ldk::fun::FUN* fun,const wns::pyconfig::View& config) :
-//     UpperConvergence(fun,config),
-//     wns::ldk::Forwarding<UTUpperConvergence>(),
-//     wns::Cloneable<UTUpperConvergence>()
-// {}
-
-// void
-// UTUpperConvergence::processIncoming(const wns::ldk::CompoundPtr& compound)
-// {
-//     MESSAGE_BEGIN(NORMAL, logger, m, getFUN()->getName());
-//     m << ": doOnData(), forwarding to upper Component (IP) ";
-//     MESSAGE_END();
-
-//     dataHandlerRegistry.find(wns::service::dll::protocolNumberOf(compound->getData()))->onData(compound->getData());
-
-//     MESSAGE_BEGIN(VERBOSE, logger, m, getFUN()->getName());
-//     m << ": Compound backtrace"
-//       << compound->dumpJourney(); // JOURNEY
-//     MESSAGE_END();
-
-// }
-
-// void
-// UTUpperConvergence::registerHandler(wns::service::dll::protocolNumber protocol,
-//                                     wns::service::dll::Handler* dh)
-// {
-//     assureNotNull(dh);
-//     dataHandlerRegistry.insert(protocol, dh);
-
-//     MESSAGE_BEGIN(NORMAL, logger, m, getFUN()->getName());
-//     m << ": UTUpperConv registered dataHandler for protocol number " << protocol;
-//     MESSAGE_END();
-// }
-
 void UpperConvergence::registerHandler(wns::service::dll::protocolNumber,
                                        wns::service::dll::Handler* handler)
 {
@@ -225,61 +183,26 @@ void UpperConvergence::registerHandler(wns::service::dll::protocolNumber,
     LOG_INFO("Registering data handler");
 }
 
-// APUpperConvergence::APUpperConvergence(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config) :
-//     UpperConvergence(fun,config),
-//     wns::ldk::Forwarding<APUpperConvergence>(),
-//     wns::Cloneable<APUpperConvergence>(),
-//     dataHandler(NULL)
-// {}
+void
+UpperConvergence::registerFlowHandler(wns::service::dll::FlowHandler* flowHandler)
+{
+    tlFlowHandler = flowHandler;
+    LOG_INFO("FlowHandler Registered");
+}
 
-// void
-// APUpperConvergence::processIncoming(const wns::ldk::CompoundPtr& compound)
-// {
-//     MESSAGE_BEGIN(NORMAL, logger, m, getFUN()->getName());
-//     m << ": doOnData(), forwarding to RANG";
-//     MESSAGE_END();
-//     assure(dataHandler, "no data handler set");
+void
+UpperConvergence::establishFlow(wns::service::tl::FlowID flowID, wns::service::qos::QoSClass qosClass)
+{
+    assure(tlFlowHandler, "No TL FlowHandler set");
+    
+    LOG_INFO("FlowEstablishment called from TL for: ", 
+        flowID, " QoS class: ", qosClass, " DLLFlowID ", dllFlowID);
 
-//     // as opposed to the UT upper convergence, we have to tell the RANG who we
-//     // are and where the Packet comes from.
-//     UpperCommand* myCommand = getCommand(compound->getCommandPool());
-//     dataHandler->onData(compound->getData(),
-//                         myCommand->peer.sourceMACAddress,
-//                         this);
+    flowID2QosClass[dllFlowID] = ConnectionIdentifier::QoSCategory(qosClass);
+    tlFlowHandler->onFlowEstablished(flowID, dllFlowID);
 
-//     MESSAGE_BEGIN(VERBOSE, logger, m, getFUN()->getName());
-//     m << ": Compound backtrace"
-//       << compound->dumpJourney(); // JOURNEY
-//     MESSAGE_END();
+    dllFlowID++;
 
-// }
+} // establishFlow
 
-// void
-// APUpperConvergence::registerHandler(wns::service::dll::protocolNumber /*protocol*/,
-//                                     wns::service::dll::Handler* dh)
-// {
-//     // Upper layer protocol demultiplexing is done in RANG. Therefore we
-//     // ignore the protocol field.
-//     assure(dh, "APUpperConvergence failed to register wns::service::dll::Handler");
-//     dataHandler = dh;
-
-//     MESSAGE_BEGIN(NORMAL, logger, m, getFUN()->getName());
-//     m << ": APUpperConv registered dataHandler";
-//     MESSAGE_END();
-// }
-
-// bool
-// APUpperConvergence::hasRANG()
-// {
-//     if (dataHandler)
-//         return true;
-//     return false;
-// }
-
-// wimac::RANG*
-// APUpperConvergence::getRANG()
-// {
-//     assure(dataHandler, "RANG hasn't been set");
-//     return dataHandler;
-// }
 

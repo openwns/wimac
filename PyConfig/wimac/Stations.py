@@ -33,6 +33,11 @@ class BaseStation(Layer2):
 
         subStrategies = []
         subStrategies.append(openwns.Scheduler.RoundRobin())
+        subStrategies.append(openwns.Scheduler.RoundRobin())
+        subStrategies.append(openwns.Scheduler.RoundRobin())
+        subStrategies.append(openwns.Scheduler.RoundRobin())
+        subStrategies.append(openwns.Scheduler.RoundRobin())
+        subStrategies.append(openwns.Scheduler.RoundRobin())
 
         dsastrategy  = openwns.scheduler.DSAStrategy.LinearFFirst(oneUserOnOneSubChannel = True)
         dsafbstrategy= openwns.scheduler.DSAStrategy.LinearFFirst(oneUserOnOneSubChannel = True)
@@ -292,6 +297,11 @@ class SubscriberStation(Layer2):
         apcstrategy_  = openwns.scheduler.APCStrategy.UseNominalTxPower()
 
         subStrategiesTXUL_ = []
+        subStrategiesTXUL_.append(openwns.Scheduler.RoundRobin())
+        subStrategiesTXUL_.append(openwns.Scheduler.RoundRobin())
+        subStrategiesTXUL_.append(openwns.Scheduler.RoundRobin())
+        subStrategiesTXUL_.append(openwns.Scheduler.RoundRobin())
+        subStrategiesTXUL_.append(openwns.Scheduler.RoundRobin())
         subStrategiesTXUL_.append(openwns.Scheduler.RoundRobin())
         	
         strategyUL = openwns.Scheduler.StaticPriority(

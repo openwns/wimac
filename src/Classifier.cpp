@@ -150,8 +150,7 @@ ConnectionClassifier::classifyOutgoing( const wns::ldk::CompoundPtr& compound )
     ConnectionIdentifiers cis =
         friends_.connectionManager->getOutgoingDataConnections(
             ucCommand->peer.targetMACAddress.getInteger(),
-            ConnectionIdentifier::BE);
-
+            ucCommand->local.qosClass);
 
     if ( cis.empty() )
     {
@@ -159,7 +158,7 @@ ConnectionClassifier::classifyOutgoing( const wns::ldk::CompoundPtr& compound )
            friends_.component->getStationType() == wns::service::dll::StationTypes::RUT() )
         {
             cis = friends_.connectionManager
-                ->getAllDataConnections(ConnectionIdentifier::Uplink, ConnectionIdentifier::BE);
+                ->getAllDataConnections(ConnectionIdentifier::Uplink, ucCommand->local.qosClass);
         }
 
         assure( !cis.empty(),
@@ -186,7 +185,7 @@ ConnectionClassifier::doIsAccepting(const wns::ldk::CompoundPtr& compound) const
     ConnectionIdentifiers cis =
         friends_.connectionManager->getOutgoingDataConnections(
             ucCommand->peer.targetMACAddress.getInteger() ,
-            ConnectionIdentifier::BE);
+            ucCommand->local.qosClass);
 
     if( cis.empty() )
     {
@@ -195,7 +194,7 @@ ConnectionClassifier::doIsAccepting(const wns::ldk::CompoundPtr& compound) const
         {
             cis = friends_.connectionManager
                 ->getAllDataConnections(ConnectionIdentifier::Uplink,
-                                        ConnectionIdentifier::BE );
+                                        ucCommand->local.qosClass );
         }
     }
 
