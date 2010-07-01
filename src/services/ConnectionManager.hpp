@@ -226,21 +226,23 @@ namespace wimac {
              * data connections from a specified departure
              */
             ConnectionIdentifiers
-            getIncomingDataConnections( ConnectionIdentifier::StationID from );
+            getIncomingDataConnections(ConnectionIdentifier::StationID from, 
+                                       ConnectionIdentifier::QoSCategory);
 
             /**
              * @brief Get a list of ConnectionIdentifiers for outgoing
              * connections to a specified destination
              */
             ConnectionIdentifiers
-            getOutgoingConnections( ConnectionIdentifier::StationID to );
+            getOutgoingConnections( ConnectionIdentifier::StationID to);
 
             /**
              * @brief Get a list of ConnectionIdentifiers for outgoin
              * data connections to a specified destination
              */
             ConnectionIdentifiers
-            getOutgoingDataConnections( ConnectionIdentifier::StationID to );
+            getOutgoingDataConnections(ConnectionIdentifier::StationID to, 
+                                       ConnectionIdentifier::QoSCategory);
 
             /**
              * @brief Get all data connections with the specified direction.
@@ -248,7 +250,11 @@ namespace wimac {
              * @sa ConnectionIdentifier::Direction
              */
             ConnectionIdentifiers
-            getAllDataConnections( int direction );
+            getAllDataConnections(int direction, 
+                                  ConnectionIdentifier::QoSCategory);
+
+            ConnectionIdentifiers
+            getAllDataConnections(int direction);
 
 
             /**

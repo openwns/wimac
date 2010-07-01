@@ -351,7 +351,7 @@ ConnectionManager::getAllCIForBS( ConnectionIdentifier::StationID baseStation )
 
 
 ConnectionIdentifiers
-ConnectionManager::getIncomingDataConnections( ConnectionIdentifier::StationID from )
+ConnectionManager::getIncomingDataConnections( ConnectionIdentifier::StationID from,                                                                                   ConnectionIdentifier::QoSCategory qos)
 {
     ConnectionIdentifiers connections;
     if( layer_->getStationType() == wns::service::dll::StationTypes::AP() )
@@ -365,6 +365,7 @@ ConnectionManager::getIncomingDataConnections( ConnectionIdentifier::StationID f
             if ( ( (*conn)->remoteStation_ == from )
                  && ( (*conn)->direction_ == ConnectionIdentifier::Uplink )
                  && ( (*conn)->connectionType_ == ConnectionIdentifier::Data )
+                 && ( (*conn)->qos_ == qos )
                 )
                 connections.push_back( *conn );
         }
@@ -379,6 +380,7 @@ ConnectionManager::getIncomingDataConnections( ConnectionIdentifier::StationID f
             if ( ( (*conn)->baseStation_ == from )
                  && ( (*conn)->direction_ == ConnectionIdentifier::Downlink )
                  && ( (*conn)->connectionType_ == ConnectionIdentifier::Data )
+                 && ( (*conn)->qos_ == qos )
                 )
                 connections.push_back( *conn );
         }
@@ -392,11 +394,13 @@ ConnectionManager::getIncomingDataConnections( ConnectionIdentifier::StationID f
         {
             if ( ( ( (*conn)->baseStation_ == from )
                    && ( (*conn)->direction_ == ConnectionIdentifier::Downlink )
-                   && ( (*conn)->connectionType_ == ConnectionIdentifier::Data ) )
+                   && ( (*conn)->connectionType_ == ConnectionIdentifier::Data ) 
+                   && ( (*conn)->qos_ == qos ) )
                  ||
                  ( ( (*conn)->subscriberStation_ == from )
                    && ( (*conn)->direction_ == ConnectionIdentifier::Uplink )
-                   && ( (*conn)->connectionType_ == ConnectionIdentifier::Data ) )
+                   && ( (*conn)->connectionType_ == ConnectionIdentifier::Data ) 
+                   && ( (*conn)->qos_ == qos ) )
                 )
                 connections.push_back( *conn );
         }
@@ -410,7 +414,8 @@ ConnectionManager::getIncomingDataConnections( ConnectionIdentifier::StationID f
 
 
 ConnectionIdentifiers
-ConnectionManager::getOutgoingDataConnections( ConnectionIdentifier::StationID to )
+ConnectionManager::getOutgoingDataConnections( ConnectionIdentifier::StationID to,
+                                        ConnectionIdentifier::QoSCategory qos)
 {
     ConnectionIdentifiers connections;
     if( layer_->getStationType() == wns::service::dll::StationTypes::AP() )
@@ -424,6 +429,7 @@ ConnectionManager::getOutgoingDataConnections( ConnectionIdentifier::StationID t
             if ( ( (*conn)->remoteStation_ == to )
                  && ( (*conn)->direction_ == ConnectionIdentifier::Downlink )
                  && ( (*conn)->connectionType_ == ConnectionIdentifier::Data )
+                 && ( (*conn)->qos_ == qos )
                 )
                 connections.push_back( *conn );
         }
@@ -438,6 +444,7 @@ ConnectionManager::getOutgoingDataConnections( ConnectionIdentifier::StationID t
             if ( ( (*conn)->baseStation_ == to )
                  && ( (*conn)->direction_ == ConnectionIdentifier::Uplink )
                  && ( (*conn)->connectionType_ == ConnectionIdentifier::Data )
+                 && ( (*conn)->qos_ == qos )
                 )
                 connections.push_back( *conn );
         }
@@ -450,11 +457,13 @@ ConnectionManager::getOutgoingDataConnections( ConnectionIdentifier::StationID t
         {
             if ( ( ( (*conn)->baseStation_ == to )
                    && ( (*conn)->direction_ == ConnectionIdentifier::Uplink )
-                   && ( (*conn)->connectionType_ == ConnectionIdentifier::Data ) )
+                   && ( (*conn)->connectionType_ == ConnectionIdentifier::Data ) 
+                   && ( (*conn)->qos_ == qos ) )
                  ||
                  ( ( (*conn)->subscriberStation_ == to )
                    && ( (*conn)->direction_ == ConnectionIdentifier::Downlink )
-                   && ( (*conn)->connectionType_ == ConnectionIdentifier::Data ) )
+                   && ( (*conn)->connectionType_ == ConnectionIdentifier::Data ) 
+                   && ( (*conn)->qos_ == qos ) )
                 )
                 connections.push_back( *conn );
         }
@@ -564,7 +573,8 @@ ConnectionManager::getIncomingConnections( ConnectionIdentifier::StationID from 
 }
 
 ConnectionIdentifiers
-ConnectionManager::getAllDataConnections( int direction )
+ConnectionManager::getAllDataConnections(int direction, 
+                                         ConnectionIdentifier::QoSCategory qos)
 {
     ConnectionIdentifiers connections;
     for ( ConnectionIdentifiers::const_iterator it =
@@ -573,7 +583,26 @@ ConnectionManager::getAllDataConnections( int direction )
           ++it )
     {
         if (  (*it)->direction_ == direction
-              &&(*it)->connectionType_ == ConnectionIdentifier::Data )
+              &&(*it)->connectionType_ == ConnectionIdentifier::Data 
+              && ( (*it)->qos_ == qos ) )
+        {
+            connections.push_back(*it);
+        }
+    }
+    return connections;
+}
+
+ConnectionIdentifiers
+ConnectionManager::getAllDataConnections(int direction)
+{
+    ConnectionIdentifiers connections;
+    for ( ConnectionIdentifiers::const_iterator it =
+              connectionIdentifiers_.begin();
+          it != connectionIdentifiers_.end();
+          ++it )
+    {
+        if (  (*it)->direction_ == direction
+              &&(*it)->connectionType_ == ConnectionIdentifier::Data)
         {
             connections.push_back(*it);
         }

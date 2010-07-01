@@ -91,7 +91,7 @@ BestAtGivenTime::associateNow()
     assure(deciderStrategy_->isInitialized(), 
         "Decision strategy did not receive any measurements yet.");
 
-    associateTo(deciderStrategy_->getBest(), ConnectionIdentifier::BE);
+    associateTo(deciderStrategy_->getBest());
 }
 
 
@@ -112,7 +112,7 @@ Fixed::~Fixed()
 void
 Fixed::doOnCSRCreated()
 {
-    associateTo(associatedWithID_, ConnectionIdentifier::BE);
+    associateTo(associatedWithID_);
 }
 
 void
@@ -149,11 +149,10 @@ AssociationControl::storeMeasurement(StationID source,
 
 
 void
-AssociationControl::associateTo(StationID associateTo,
-                               ConnectionIdentifier::QoSCategory qosCategory)
+AssociationControl::associateTo(StationID associateTo)
 {
 
-    LOG_INFO(getCSR()->getLayer()->getName(), ": associate to Station:", associateTo , "     QoSCategory:", qosCategory);
+    LOG_INFO(getCSR()->getLayer()->getName(), ": associate to Station:", associateTo);
 
     wimac::Component* layer( dynamic_cast<wimac::Component*>( getCSR()->getLayer() ) );
     assure(layer, "Layer is not of type wimac::Component");
@@ -195,21 +194,65 @@ AssociationControl::associateTo(StationID associateTo,
                                ConnectionIdentifier::Bidirectional,
                                ConnectionIdentifier::Signaling );
 
-    // create downlink data connection
-    ConnectionIdentifier dlCI( associateTo,
+    // create downlink data connections
+    ConnectionIdentifier dlBECI( associateTo,
                                stationID,
                                stationID,
                                ConnectionIdentifier::Data,
                                ConnectionIdentifier::Downlink,
-                               qosCategory );
+                               ConnectionIdentifier::BE);
 
-    // create uplink data connection
-    ConnectionIdentifier ulCI( associateTo,
+    ConnectionIdentifier dlRtPSCI( associateTo,
+                               stationID,
+                               stationID,
+                               ConnectionIdentifier::Data,
+                               ConnectionIdentifier::Downlink,
+                               ConnectionIdentifier::rtPS);
+
+    ConnectionIdentifier dlNrtPSCI( associateTo,
+                               stationID,
+                               stationID,
+                               ConnectionIdentifier::Data,
+                               ConnectionIdentifier::Downlink,
+                               ConnectionIdentifier::nrtPS);
+
+    ConnectionIdentifier dlUGSCI( associateTo,
+                               stationID,
+                               stationID,
+                               ConnectionIdentifier::Data,
+                               ConnectionIdentifier::Downlink,
+                               ConnectionIdentifier::UGS);
+
+
+    // create uplink data connections
+    ConnectionIdentifier ulBECI( associateTo,
                                stationID,
                                stationID,
                                ConnectionIdentifier::Data,
                                ConnectionIdentifier::Uplink,
-                               qosCategory );
+                               ConnectionIdentifier::BE);
+
+    ConnectionIdentifier ulRtPSCI( associateTo,
+                               stationID,
+                               stationID,
+                               ConnectionIdentifier::Data,
+                               ConnectionIdentifier::Uplink,
+                               ConnectionIdentifier::rtPS);
+
+    ConnectionIdentifier ulNrtPSCI( associateTo,
+                               stationID,
+                               stationID,
+                               ConnectionIdentifier::Data,
+                               ConnectionIdentifier::Uplink,
+                               ConnectionIdentifier::nrtPS);
+
+    ConnectionIdentifier ulUGSCI( associateTo,
+                               stationID,
+                               stationID,
+                               ConnectionIdentifier::Data,
+                               ConnectionIdentifier::Uplink,
+                               ConnectionIdentifier::UGS);
+
 
 
     // get master ConnectionManager from destination access point
@@ -219,14 +262,30 @@ AssociationControl::associateTo(StationID associateTo,
     // append ConnectionIdentifier to access point and get CID
     bCI =  destinationConnectionManager->appendConnection( bCI );
     pmCI = destinationConnectionManager->appendConnection( pmCI );
-    dlCI = destinationConnectionManager->appendConnection( dlCI );
-    ulCI = destinationConnectionManager->appendConnection( ulCI );
+
+    dlBECI = destinationConnectionManager->appendConnection( dlBECI );
+    dlRtPSCI = destinationConnectionManager->appendConnection( dlRtPSCI );
+    dlNrtPSCI = destinationConnectionManager->appendConnection( dlNrtPSCI );
+    dlUGSCI = destinationConnectionManager->appendConnection( dlUGSCI );
+
+    ulBECI = destinationConnectionManager->appendConnection( ulBECI );
+    ulRtPSCI = destinationConnectionManager->appendConnection( ulRtPSCI );
+    ulNrtPSCI = destinationConnectionManager->appendConnection( ulNrtPSCI );
+    ulUGSCI = destinationConnectionManager->appendConnection( ulUGSCI );
 
     //append ConnectionIdentifier myself
     friends_.connectionManager->appendConnection( bCI );
     friends_.connectionManager->appendConnection( pmCI );
-    friends_.connectionManager->appendConnection( dlCI );
-    friends_.connectionManager->appendConnection( ulCI );
+
+    friends_.connectionManager->appendConnection( dlBECI );
+    friends_.connectionManager->appendConnection( dlRtPSCI );
+    friends_.connectionManager->appendConnection( dlNrtPSCI );
+    friends_.connectionManager->appendConnection( dlUGSCI );
+
+    friends_.connectionManager->appendConnection( ulBECI );
+    friends_.connectionManager->appendConnection( ulRtPSCI );
+    friends_.connectionManager->appendConnection( ulNrtPSCI );
+    friends_.connectionManager->appendConnection( ulUGSCI );
 
 
     if( destination->getStationType() == wns::service::dll::StationTypes::FRS() )
@@ -235,10 +294,15 @@ AssociationControl::associateTo(StationID associateTo,
             ->getControlService<service::AssociationControl>("associationControl")
             ->createRecursiveConnection(bCI.cid_,
                                         pmCI.cid_,
-                                        dlCI.cid_,
-                                        ulCI.cid_,
-                                        stationID,
-                                        qosCategory);
+                                        dlBECI.cid_,
+                                        dlRtPSCI.cid_,
+                                        dlNrtPSCI.cid_,
+                                        dlUGSCI.cid_,
+                                        ulBECI.cid_,
+                                        ulRtPSCI.cid_,
+                                        ulNrtPSCI.cid_,
+                                        ulUGSCI.cid_,
+                                        stationID);
     }
 
     Component* layer2 =
@@ -249,10 +313,15 @@ AssociationControl::associateTo(StationID associateTo,
 void
 AssociationControl::createRecursiveConnection(ConnectionIdentifier::CID basicCID,
                                              ConnectionIdentifier::CID primaryCID,
-                                             ConnectionIdentifier::CID downlinkTransportCID,
-                                             ConnectionIdentifier::CID uplinkTransportCID,
-                                             ConnectionIdentifier::StationID remote,
-                                             int qosCategory)
+                                             ConnectionIdentifier::CID downlinkBETransportCID,
+                                             ConnectionIdentifier::CID downlinkRtPSTransportCID,
+                                             ConnectionIdentifier::CID downlinkNrtPSTransportCID,
+                                             ConnectionIdentifier::CID downlinkUGSTransportCID,
+                                             ConnectionIdentifier::CID uplinkBETransportCID,
+                                             ConnectionIdentifier::CID uplinkRtPSTransportCID,
+                                             ConnectionIdentifier::CID uplinkNrtPSTransportCID,
+                                             ConnectionIdentifier::CID uplinkUGSTransportCID,
+                                             ConnectionIdentifier::StationID remote)
 {
     wimac::Component* layer = dynamic_cast<wimac::Component*>(getCSR()->getLayer());
     assure(layer, "Layer must be of type dll::Layer2");
@@ -285,21 +354,65 @@ AssociationControl::createRecursiveConnection(ConnectionIdentifier::CID basicCID
                                ConnectionIdentifier::Bidirectional,
                                ConnectionIdentifier::Signaling );
 
-    // Downlink Data CI
-    ConnectionIdentifier dlCI ( associatedWith->getID(),
+    // create downlink data connections
+    ConnectionIdentifier dlBECI( associatedWith->getID(),
                                 layer->getID(),
                                 remote,
-                                ConnectionIdentifier::Data,
-                                ConnectionIdentifier::Downlink,
-                                qosCategory );
+                               ConnectionIdentifier::Data,
+                               ConnectionIdentifier::Downlink,
+                               ConnectionIdentifier::BE);
 
-    // Uplink Data CI
-    ConnectionIdentifier ulCI( associatedWith->getID(),
-                               layer->getID(),
-                               remote,
+    ConnectionIdentifier dlRtPSCI( associatedWith->getID(),
+                                layer->getID(),
+                                remote,
+                               ConnectionIdentifier::Data,
+                               ConnectionIdentifier::Downlink,
+                               ConnectionIdentifier::rtPS);
+
+    ConnectionIdentifier dlNrtPSCI( associatedWith->getID(),
+                                layer->getID(),
+                                remote,
+                               ConnectionIdentifier::Data,
+                               ConnectionIdentifier::Downlink,
+                               ConnectionIdentifier::nrtPS);
+
+    ConnectionIdentifier dlUGSCI( associatedWith->getID(),
+                                layer->getID(),
+                                remote,
+                               ConnectionIdentifier::Data,
+                               ConnectionIdentifier::Downlink,
+                               ConnectionIdentifier::UGS);
+
+
+    // create uplink data connections
+    ConnectionIdentifier ulBECI( associatedWith->getID(),
+                                layer->getID(),
+                                remote,
                                ConnectionIdentifier::Data,
                                ConnectionIdentifier::Uplink,
-                               qosCategory );
+                               ConnectionIdentifier::BE);
+
+    ConnectionIdentifier ulRtPSCI( associatedWith->getID(),
+                                layer->getID(),
+                                remote,
+                               ConnectionIdentifier::Data,
+                               ConnectionIdentifier::Uplink,
+                               ConnectionIdentifier::rtPS);
+
+    ConnectionIdentifier ulNrtPSCI( associatedWith->getID(),
+                                layer->getID(),
+                                remote,
+                               ConnectionIdentifier::Data,
+                               ConnectionIdentifier::Uplink,
+                               ConnectionIdentifier::nrtPS);
+
+    ConnectionIdentifier ulUGSCI( associatedWith->getID(),
+                                layer->getID(),
+                                remote,
+                               ConnectionIdentifier::Data,
+                               ConnectionIdentifier::Uplink,
+                               ConnectionIdentifier::UGS);
+
 
     // get master ConnectionManager from destination access point
     wimac::service::ConnectionManager* associatedWithConnectionManager = 
@@ -308,14 +421,30 @@ AssociationControl::createRecursiveConnection(ConnectionIdentifier::CID basicCID
     // append ConnectionIdentifier to access point and get CID
     bCI = associatedWithConnectionManager->appendConnection( bCI );
     pmCI = associatedWithConnectionManager->appendConnection( pmCI );
-    dlCI = associatedWithConnectionManager->appendConnection( dlCI );
-    ulCI = associatedWithConnectionManager->appendConnection( ulCI );
+
+    dlBECI = associatedWithConnectionManager->appendConnection( dlBECI );
+    dlRtPSCI = associatedWithConnectionManager->appendConnection( dlRtPSCI );
+    dlNrtPSCI = associatedWithConnectionManager->appendConnection( dlNrtPSCI );
+    dlUGSCI = associatedWithConnectionManager->appendConnection( dlUGSCI );
+
+    ulBECI = associatedWithConnectionManager->appendConnection( ulBECI );
+    ulRtPSCI = associatedWithConnectionManager->appendConnection( ulRtPSCI );
+    ulNrtPSCI = associatedWithConnectionManager->appendConnection( ulNrtPSCI );
+    ulUGSCI = associatedWithConnectionManager->appendConnection( ulUGSCI );
 
     //append ConnectionIdentifier myself
     friends_.connectionManager->appendConnection( bCI );
     friends_.connectionManager->appendConnection( pmCI );
-    friends_.connectionManager->appendConnection( dlCI );
-    friends_.connectionManager->appendConnection( ulCI );
+
+    friends_.connectionManager->appendConnection( dlBECI );
+    friends_.connectionManager->appendConnection( dlRtPSCI );
+    friends_.connectionManager->appendConnection( dlNrtPSCI );
+    friends_.connectionManager->appendConnection( dlUGSCI );
+
+    friends_.connectionManager->appendConnection( ulBECI );
+    friends_.connectionManager->appendConnection( ulRtPSCI );
+    friends_.connectionManager->appendConnection( ulNrtPSCI );
+    friends_.connectionManager->appendConnection( ulUGSCI );
 
     // append to relayMapper
     relay::RSRelayMapper* relayMapper = layer->getFUN()
@@ -323,8 +452,14 @@ AssociationControl::createRecursiveConnection(ConnectionIdentifier::CID basicCID
 
     relayMapper->addMapping( relay::RSRelayMapper::RelayMapping(bCI.cid_, basicCID) );
     relayMapper->addMapping( relay::RSRelayMapper::RelayMapping(pmCI.cid_, primaryCID) );
-    relayMapper->addMapping( relay::RSRelayMapper::RelayMapping(dlCI.cid_, downlinkTransportCID) );
-    relayMapper->addMapping( relay::RSRelayMapper::RelayMapping(ulCI.cid_, uplinkTransportCID) );
+    relayMapper->addMapping( relay::RSRelayMapper::RelayMapping(dlBECI.cid_, downlinkBETransportCID) );
+    relayMapper->addMapping( relay::RSRelayMapper::RelayMapping(dlRtPSCI.cid_, downlinkRtPSTransportCID) );
+    relayMapper->addMapping( relay::RSRelayMapper::RelayMapping(dlNrtPSCI.cid_, downlinkNrtPSTransportCID) );
+    relayMapper->addMapping( relay::RSRelayMapper::RelayMapping(dlUGSCI.cid_, downlinkUGSTransportCID) );
+    relayMapper->addMapping( relay::RSRelayMapper::RelayMapping(ulBECI.cid_, uplinkBETransportCID) );
+    relayMapper->addMapping( relay::RSRelayMapper::RelayMapping(ulRtPSCI.cid_, uplinkRtPSTransportCID) );
+    relayMapper->addMapping( relay::RSRelayMapper::RelayMapping(ulNrtPSCI.cid_, uplinkNrtPSTransportCID) );
+    relayMapper->addMapping( relay::RSRelayMapper::RelayMapping(ulUGSCI.cid_, uplinkUGSTransportCID) );
 
     if ( associatedWith->getStationType() == wns::service::dll::StationTypes::FRS() )
     {
@@ -332,10 +467,15 @@ AssociationControl::createRecursiveConnection(ConnectionIdentifier::CID basicCID
             ->getControlService<AssociationControl>("associationControl")
             ->createRecursiveConnection(bCI.cid_,
                                         pmCI.cid_,
-                                        dlCI.cid_,
-                                        ulCI.cid_,
-                                        remote,
-                                        qosCategory);
+                                        dlBECI.cid_,
+                                        dlRtPSCI.cid_,
+                                        dlNrtPSCI.cid_,
+                                        dlUGSCI.cid_,
+                                        ulBECI.cid_,
+                                        ulRtPSCI.cid_,
+                                        ulNrtPSCI.cid_,
+                                        ulUGSCI.cid_,
+                                        remote);
     }
 
     Component* layer2 =

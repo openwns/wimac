@@ -52,15 +52,19 @@ namespace wimac { namespace service {
 
             void
             createRecursiveConnection( ConnectionIdentifier::CID basicCID,
-                                       ConnectionIdentifier::CID primaryCID,
-                                       ConnectionIdentifier::CID downlinkTransportCID,
-                                       ConnectionIdentifier::CID uplinkTransportCID,
-                                       ConnectionIdentifier::StationID remote,
-                                       int qosCategory);
+                                        ConnectionIdentifier::CID primaryCID,
+                                        ConnectionIdentifier::CID downlinkBETransportCID,
+                                        ConnectionIdentifier::CID downlinkRtPSTransportCID,
+                                        ConnectionIdentifier::CID downlinkNrtPSTransportCID,
+                                        ConnectionIdentifier::CID downlinkUGSTransportCID,
+                                        ConnectionIdentifier::CID uplinkBETransportCID,
+                                        ConnectionIdentifier::CID uplinkRtPSTransportCID,
+                                        ConnectionIdentifier::CID uplinkNrtPSTransportCID,
+                                        ConnectionIdentifier::CID uplinkkUGSTransportCID,
+                                        ConnectionIdentifier::StationID remote);
             void onCSRCreated();
 
-            void associateTo( wimac::StationID destination,
-                              ConnectionIdentifier::QoSCategory category);
+            void associateTo( wimac::StationID destination);
 
             void
             storeMeasurement(StationID source, 
