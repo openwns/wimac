@@ -80,7 +80,7 @@ SpaceTimeSectorizationRegistryProxy::filterReachable( wns::scheduler::UserSet us
 	{
 		wns::scheduler::UserID user = *iter;
 
-		double doa = ofdmaProvider->estimateDoA(user);
+		double doa = ofdmaProvider->estimateDoA(user.getNode());
 		if (doa < 0.0)
 		{
 			doa += 2.0 * M_PI;

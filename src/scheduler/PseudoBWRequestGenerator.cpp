@@ -151,9 +151,9 @@ PseudoBWRequestGenerator::wakeup() {
         int queueSize = peerComponent->getNumberOfQueuedPDUs(cis);
         if(queueSize == 0)
             continue;
-        peerQueuePDUSize[(peerComponent->getNode())] = queueSize;
+        peerQueuePDUSize[wns::scheduler::UserID(peerComponent->getNode())] = queueSize;
 
-        userIDs[(peerComponent->getNode())] = cidPtr->getID();
+        userIDs[wns::scheduler::UserID(peerComponent->getNode())] = cidPtr->getID();
     }
 
     // then create PDUs for every user and hand them down to the lower layer

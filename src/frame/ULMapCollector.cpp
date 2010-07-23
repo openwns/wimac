@@ -48,13 +48,13 @@ STATIC_FACTORY_REGISTER_WITH_CREATOR(
 struct UserFind :
     public std::unary_function<wns::scheduler::MapInfoEntryPtr, bool>
 {
-    explicit UserFind( wns::node::Interface* node ) : node_(node){}
+    explicit UserFind( wns::scheduler::UserID user ) : user_(user){}
     bool operator()(const wns::scheduler::MapInfoEntryPtr& mapInfo)
     {
-        return node_ == mapInfo->user;
+        return user_ == mapInfo->user;
     }
 private:
-    wns::node::Interface* node_;
+    wns::scheduler::UserID user_;
 };
 
 ULMapCollector::ULMapCollector( wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config ) :
@@ -97,6 +97,8 @@ void ULMapCollector::onFUNCreated()
 
     setFrameBuilder( getFUN()->findFriend<wns::ldk::fcf::FrameBuilder*>("frameBuilder") );
 
+    me_ = wns::scheduler::UserID(component_->getNode());
+
     CompoundCollector::onFUNCreated();
 }
 
@@ -116,7 +118,7 @@ void ULMapCollector::doStart(int mode)
             ulScheduler_->getNumBursts();
         //command->peer.mapInfo =
           //  ulScheduler_->getMapInfo();
-	command->peer.schedulingMap =
+        command->peer.schedulingMap =
             ulScheduler_->getSchedulingMap();
         // map duration is a little shorter than the phase duration
         command->local.mapDuration =
@@ -213,7 +215,7 @@ void ULMapCollector::doOnData( const wns::ldk::CompoundPtr& compound )
 	LOG_INFO("ULMAP = ", scheduledULMap_->toString());
         //Clear old MAPlist
 	//scheduledULMap_->clear();
-	if (scheduledULMap_->hasResourcesForUser(component_->getNode()))
+	if (scheduledULMap_->hasResourcesForUser(me_))
 	{
 		ulResourcesAvailable_ = true; // assume always true when a MAP comes
                 LOG_INFO( getFUN()->getLayer()->getName(), " has granted resources" );

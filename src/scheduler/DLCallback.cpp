@@ -108,13 +108,18 @@ DLCallback::callBack(wns::scheduler::SchedulingMapPtr schedulingMap)
                 timeSlotPtr->physicalResources.begin();
                 iterPRB != timeSlotPtr->physicalResources.end(); ++iterPRB)
             {
-                while ( !iterPRB->scheduledCompounds.empty() )
-                { // for every compound in subchannel:
-                    wns::scheduler::SchedulingCompound schedulingCompound = 
-                        iterPRB->scheduledCompounds.front();
-                    iterPRB->scheduledCompounds.pop_front(); // remove from map
-                    processPacket(schedulingCompound);
-                } // while (all scheduledCompounds)
+                if ( iterPRB->hasScheduledCompounds() )
+                {
+                    wns::scheduler::ScheduledCompoundsList::const_iterator it;
+                    
+                    for(it = iterPRB->scheduledCompoundsBegin();
+                        it != iterPRB->scheduledCompoundsEnd();
+                        it++)
+                    { // for every compound in subchannel:
+                        processPacket(*it);
+                    } // for (all scheduledCompounds)
+                    iterPRB->clearScheduledCompounds();
+                } // if there were compounds in this resource
             } // forall beams
         } // end for ( timeSlots )
     } // forall subChannels
@@ -126,7 +131,7 @@ DLCallback::processPacket(const wns::scheduler::SchedulingCompound & compound)
     simTimeType startTime = compound.startTime;
     simTimeType endTime = compound.endTime;
     wns::scheduler::UserID user = compound.userID;
-    int userID = user->getNodeID();
+    int userID = user.getNodeID();
     int fSlot = compound.subChannel;
     int timeSlot = compound.timeSlot;
     int beam = compound.spatialLayer; //beam;
@@ -184,7 +189,7 @@ DLCallback::processPacket(const wns::scheduler::SchedulingCompound & compound)
     {
         LOG_INFO(fun_->getLayer()->getName(), " DLCallback::processPacket() create BeamformingPhyAccessFunc");
         BeamformingPhyAccessFunc* sdmaFunc = new BeamformingPhyAccessFunc;
-        sdmaFunc->destination_ = user;
+        sdmaFunc->destination_ = user.getNode();
         sdmaFunc->transmissionStart_ = startTime;
         sdmaFunc->transmissionStop_ =
         startTime + pduDuration - Utilities::getComputationalAccuracyFactor();
@@ -193,11 +198,11 @@ DLCallback::processPacket(const wns::scheduler::SchedulingCompound & compound)
         sdmaFunc->requestedTxPower_ = txPower;
         func = sdmaFunc;
     }
-    else if(user != NULL)
+    else if(user.isValid())
     {
         LOG_INFO(fun_->getLayer()->getName(), " DLCallback::processPacket() create OmniUnicastPhyAccessFunc");
         OmniUnicastPhyAccessFunc* omniUnicastFunc = new OmniUnicastPhyAccessFunc;
-        omniUnicastFunc->destination_ = user;
+        omniUnicastFunc->destination_ = user.getNode();
         omniUnicastFunc->transmissionStart_ = startTime;
         omniUnicastFunc->transmissionStop_ =
         startTime + pduDuration - Utilities::getComputationalAccuracyFactor();
@@ -226,7 +231,7 @@ DLCallback::processPacket(const wns::scheduler::SchedulingCompound & compound)
     phyCommand->local.pAFunc_->phyMode_ = phyModePtr;
 
 
-    phyCommand->peer.destination_ = user;
+    phyCommand->peer.destination_ = user.getNode();
     wimac::Component* wimacComponent = dynamic_cast<wimac::Component*>(fun_->getLayer());
     phyCommand->peer.cellID_ = wimacComponent->getCellID();
     phyCommand->peer.source_ = wimacComponent->getNode();

@@ -101,8 +101,11 @@ RegistryProxyWiMAC::getUserForCID(wns::scheduler::ConnectionID cid) {
 
 	if (peerStationId == 0) //Broadcast
 	{
-		userId2StationId[NULL] = peerStationId;
-		return NULL;
+        wns::scheduler::UserID bcast;
+        bcast.setBroadcast();
+		userId2StationId[bcast] = peerStationId;
+        
+		return bcast;
 	}
 	else  //Normal Compound
 	{
@@ -111,9 +114,9 @@ RegistryProxyWiMAC::getUserForCID(wns::scheduler::ConnectionID cid) {
 		assure( peerLayer2, "Invalid peer layer pointer");
 		assure( peerLayer2->getNode(), "No valid Node pointer in peer FUN");
 
-		userId2StationId[peerLayer2->getNode()] = peerStationId;
+		userId2StationId[wns::scheduler::UserID(peerLayer2->getNode())] = peerStationId;
 
-		return peerLayer2->getNode();
+		return wns::scheduler::UserID(peerLayer2->getNode());
 	}
 }
 
@@ -122,7 +125,7 @@ RegistryProxyWiMAC::getPeerAddressForCID(wns::scheduler::ConnectionID cid)
 {
     wns::scheduler::UserID user = getUserForCID(cid);
     wns::service::dll::UnicastAddress peerAddress
-      = TheStationManager::getInstance()->getStationByNode(user)->getDLLAddress();
+      = TheStationManager::getInstance()->getStationByNode(user.getNode())->getDLLAddress();
     return peerAddress;
 }
 
@@ -217,7 +220,7 @@ RegistryProxyWiMAC::getNameForUser(const wns::scheduler::UserID user)
 		return fun->getLayer()->getName();
 
 	// I was asked for broadcast id
-	if (user == 0)
+	if (user.isBroadcast())
 		return "Broadcast";
 
 	// same workaround as for getConnectionsForUser
@@ -247,7 +250,7 @@ RegistryProxyWiMAC::getBestPhyMode(const wns::Ratio& sinr)
 wns::scheduler::UserID
 RegistryProxyWiMAC::getMyUserID()
 {
-	return layer2->getNode();
+	return wns::scheduler::UserID(layer2->getNode());
 }
 
 simTimeType
@@ -265,11 +268,14 @@ RegistryProxyWiMAC::estimateTxSINRAt(const wns::scheduler::UserID user){
 	// lookup the results reported by the receiving subscriber station in the
 	// local cache
 	wns::Power interference =
-		layer2->getManagementService<service::InterferenceCache>("interferenceCache")->getAveragedInterference(user);
+		layer2->getManagementService<service::InterferenceCache>("interferenceCache")
+            ->getAveragedInterference(user.getNode());
 	wns::Ratio pathloss =
-		layer2->getManagementService<service::InterferenceCache>("interferenceCache")->getAveragedPathloss(user);
+		layer2->getManagementService<service::InterferenceCache>("interferenceCache")
+            ->getAveragedPathloss(user.getNode());
     wns::Power carrier =
-        layer2->getManagementService<service::InterferenceCache>("interferenceCache")->getAveragedCarrier(user);
+        layer2->getManagementService<service::InterferenceCache>("interferenceCache")
+            ->getAveragedCarrier(user.getNode());
 
 
     return wns::scheduler::ChannelQualityOnOneSubChannel(pathloss, interference, carrier);
@@ -281,19 +287,20 @@ RegistryProxyWiMAC::estimateRxSINROf(const wns::scheduler::UserID user){
 	// lookup the results previously reported by us to the remote side
 	service::InterferenceCache* remoteCache =
 		TheStationManager::getInstance()->
-		getStationByNode(user)->
+		getStationByNode(user.getNode())->
 		getManagementService<service::InterferenceCache>("interferenceCache");
 
-	wns::Ratio pathloss = remoteCache->getAveragedPathloss(getMyUserID());
-    wns::Power interference = remoteCache->getAveragedInterference(getMyUserID());
-    wns::Power carrier = remoteCache->getAveragedCarrier(getMyUserID());
+	wns::Ratio pathloss = remoteCache->getAveragedPathloss(getMyUserID().getNode());
+    wns::Power interference = remoteCache->getAveragedInterference(getMyUserID().getNode());
+    wns::Power carrier = remoteCache->getAveragedCarrier(getMyUserID().getNode());
 
     return wns::scheduler::ChannelQualityOnOneSubChannel(pathloss, interference, carrier);
 }
 
 wns::Power
 RegistryProxyWiMAC::estimateInterferenceStdDeviation(const wns::scheduler::UserID user) {
-	return layer2->getManagementService<service::InterferenceCache>("interferenceCache")->getInterferenceDeviation(user);
+	return layer2->getManagementService<service::InterferenceCache>("interferenceCache")
+        ->getInterferenceDeviation(user.getNode());
 }
 
 wns::scheduler::Bits
@@ -305,7 +312,7 @@ RegistryProxyWiMAC::getQueueSizeLimitPerConnection() {
 wns::service::dll::StationType
 RegistryProxyWiMAC::getStationType(const wns::scheduler::UserID user)
 {
-	wns::service::dll::StationType stationType = TheStationManager::getInstance()->getStationByNode(user)->getStationType();
+	wns::service::dll::StationType stationType = TheStationManager::getInstance()->getStationByNode(user.getNode())->getStationType();
 	return stationType;
 	/*
 	std::map<wns::scheduler::UserID, ConnectionIdentifier::StationID>::const_iterator station =
@@ -349,7 +356,7 @@ RegistryProxyWiMAC::filterListening( wns::scheduler::UserSet users )
 		 it != users.end(); ++it)
 	{
 		wimac::ConnectionIdentifier::StationID uID;
-		uID = TheStationManager::getInstance()->getStationByNode(*it)->getID();
+		uID = TheStationManager::getInstance()->getStationByNode(it->getNode())->getID();
 
 		ConnectionIdentifierPtr ci (
 			connManager->getBasicConnectionFor( uID ) );
@@ -493,8 +500,8 @@ wns::scheduler::PowerCapabilities
 RegistryProxyWiMAC::getPowerCapabilities(const wns::scheduler::UserID user) const
 {
 	wns::service::dll::StationType stationType;
-	if (user!=NULL) { // peer known
-	  stationType = TheStationManager::getInstance()->getStationByNode(user)->getStationType();
+	if (user.isValid()) { // peer known
+	  stationType = TheStationManager::getInstance()->getStationByNode(user.getNode())->getStationType();
 	} else { // peer unknown. assume peer=UT
 	  stationType = wns::service::dll::StationTypes::UT();
 	}
@@ -505,7 +512,7 @@ RegistryProxyWiMAC::getPowerCapabilities(const wns::scheduler::UserID user) cons
 	else if ( stationType == wns::service::dll::StationTypes::FRS() )
 		return powerFRS;
 	else
-		assure(false, "oops, don't know other station ("<<user->getName()<<") stationType="<<stationType);
+		assure(false, "oops, don't know other station ("<<user.getNode()->getName()<<") stationType="<<stationType);
 	return wns::scheduler::PowerCapabilities();
 }
 

@@ -89,13 +89,18 @@ ULCallback::callBack(wns::scheduler::SchedulingMapPtr schedulingMap)
                 iterPRB != timeSlotPtr->physicalResources.end(); 
                 ++iterPRB)
             {
-                while ( !iterPRB->scheduledCompounds.empty() )
-                { // for every compound in subchannel:
-                    wns::scheduler::SchedulingCompound schedulingCompound = 
-                        iterPRB->scheduledCompounds.front();
-                    iterPRB->scheduledCompounds.pop_front(); // remove from map
-                    processPacket(schedulingCompound);
-                } // while (all scheduledCompounds)
+                if ( iterPRB->hasScheduledCompounds() )
+                {
+                    wns::scheduler::ScheduledCompoundsList::const_iterator it;
+                    
+                    for(it = iterPRB->scheduledCompoundsBegin();
+                        it != iterPRB->scheduledCompoundsEnd();
+                        it++)
+                    { // for every compound in subchannel:
+                        processPacket(*it);
+                    } // for (all scheduledCompounds)
+                    iterPRB->clearScheduledCompounds();
+                } // if there were compounds in this resource
             } // forall beams
         } // end for ( timeSlots )
     } // forall subChannels
@@ -108,7 +113,7 @@ ULMasterCallback::processPacket(const wns::scheduler::SchedulingCompound & compo
     simTimeType startTime = compound.startTime;
     simTimeType endTime = compound.endTime;
     wns::scheduler::UserID user = compound.userID;
-    int userID = user->getNodeID();
+    int userID = user.getNodeID();
     int fSlot = compound.subChannel;
     int timeSlot = compound.timeSlot;
     int beam = compound.spatialLayer; //beam;
@@ -170,7 +175,7 @@ ULMasterCallback::processPacket(const wns::scheduler::SchedulingCompound & compo
     LOG_INFO(fun_->getLayer()->getName(), " DLCallback::processPacket() create PatternSetterPhyAccessFuncFunc");
     PatternSetterPhyAccessFunc* patternFunc =
         new PatternSetterPhyAccessFunc;
-    patternFunc->destination_ = user;
+    patternFunc->destination_ = user.getNode();
     patternFunc->patternStart_ = startTime;
     patternFunc->patternEnd_ = endTime;
     patternFunc->pattern_ = pattern;
@@ -181,7 +186,7 @@ ULMasterCallback::processPacket(const wns::scheduler::SchedulingCompound & compo
 
     phyCommand->local.pAFunc_.reset( patternFunc );
 
-    phyCommand->peer.destination_ = user;
+    phyCommand->peer.destination_ = user.getNode();
     wimac::Component* wimacComponent = dynamic_cast<wimac::Component*>(fun_->getLayer());
     phyCommand->peer.cellID_ = wimacComponent->getCellID();
     phyCommand->peer.source_ = wimacComponent->getNode();
@@ -201,7 +206,7 @@ ULSlaveCallback::processPacket(const wns::scheduler::SchedulingCompound & compou
     simTimeType startTime = compound.startTime;
     simTimeType endTime = compound.endTime;
     wns::scheduler::UserID user = compound.userID;
-    int userID = user->getNodeID();
+    int userID = user.getNodeID();
     int fSlot = compound.subChannel;
     int timeSlot = compound.timeSlot;
     int beam = compound.spatialLayer; //beam;
@@ -244,11 +249,11 @@ ULSlaveCallback::processPacket(const wns::scheduler::SchedulingCompound & compou
 
     PhyAccessFunc* func = 0;
 
-    if(user != NULL)
+    if(user.isValid())
     {
         LOG_INFO(fun_->getLayer()->getName(), " ULCallback::processPacket() create OmniUnicastPhyAccessFunc");
         OmniUnicastPhyAccessFunc* omniUnicastFunc = new OmniUnicastPhyAccessFunc;
-        omniUnicastFunc->destination_ = user;
+        omniUnicastFunc->destination_ = user.getNode();
         omniUnicastFunc->transmissionStart_ = startTime;
         omniUnicastFunc->transmissionStop_ = endTime;
         omniUnicastFunc->subBand_ = fSlot;
@@ -268,7 +273,7 @@ ULSlaveCallback::processPacket(const wns::scheduler::SchedulingCompound & compou
 
     phyCommand->local.pAFunc_->phyMode_ = phyModePtr;
 
-    phyCommand->peer.destination_ = user;
+    phyCommand->peer.destination_ = user.getNode();
     wimac::Component* wimacComponent = dynamic_cast<wimac::Component*>(fun_->getLayer());
     phyCommand->peer.cellID_ = wimacComponent->getCellID();
     phyCommand->peer.source_ = wimacComponent->getNode();

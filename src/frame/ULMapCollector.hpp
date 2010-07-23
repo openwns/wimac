@@ -173,6 +173,8 @@ namespace wimac { namespace frame {
              */
 
             bool ulResourcesAvailable_;
+
+            wns::scheduler::UserID me_;
         };
     }
 }
