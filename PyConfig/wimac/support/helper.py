@@ -28,7 +28,7 @@
 import constanze.traffic
 from constanze.node import IPBinding, IPListenerBinding, Listener
 from openwns import dBm, dB, fromdB, fromdBm
-import scenarios.channelmodel
+from scenarios.channelmodel.channelmodelcreator import *
 
 def createDLPoissonTraffic(simulator, rate, packetSize):
     rangs = simulator.simulationModel.getNodesByProperty("Type", "RANG")
@@ -86,7 +86,7 @@ def setupPhy(simulator, config, scenario):
     else:
         raise "Unknown scenario %s" % scenario
 
-class TestChannelModelCreator(scenarios.channelmodel.ChannelModelCreator):
+class TestChannelModelCreator(scenarios.channelmodel.SingleChannelModelCreator):
     
     def __init__(self):
         
@@ -95,8 +95,9 @@ class TestChannelModelCreator(scenarios.channelmodel.ChannelModelCreator):
         from rise.scenario import FastFading
         import rise.scenario.Pathloss
         from openwns.interval import Interval
-        
-        self.pathloss = rise.scenario.Pathloss.SingleSlope(
+        transceiverPairs = scenarios.channelmodel.defaultPairs
+
+        pathloss = rise.scenario.Pathloss.SingleSlope(
             validFrequencies = Interval(4000, 6000),
             validDistances = Interval(2, 20000),
             offset = "41.9 dB",
@@ -107,14 +108,9 @@ class TestChannelModelCreator(scenarios.channelmodel.ChannelModelCreator):
             outOfMinRange = rise.scenario.Pathloss.Constant("49.06 dB"),
             outOfMaxRange = rise.scenario.Pathloss.Deny()
             )
-        self.shadowing = Shadowing.No()
-        self.fastFading = FastFading.No()
+        scenarios.channelmodel.SingleChannelModelCreator.__init__(
+                self, transceiverPairs, pathloss, Shadowing.No(), FastFading.No())
 
-    def create(self):
-        import rise.Scenario
-
-        channelmodel = rise.scenario.Propagation.Configuration(self.pathloss, self.shadowing, self.fastFading)
-        return channelmodel
 
 def setupPhyDetail(simulator, freq, bsTxPower, utTxPower, config, rxNoiseBS, rxNoiseUT):
 
