@@ -155,9 +155,7 @@ DLCallback::processPacket(const wns::scheduler::SchedulingCompound & compound)
         boost::bind(&Callback::probeScheduleStop, this, timeSlot, fSlot, beam, userID), endTime);
     }
 
-    //TODO:bmw
-    //wns::CandI estimatedCandI = compound.estimatedCandI;
-    wns::CandI estimatedCandI = wns::CandI();
+    wns::scheduler::ChannelQualityOnOneSubChannel estimatedCQI = compound.estimatedCQI;
     
     double rate = phyModePtr->getDataRate();
     wns::ldk::CompoundPtr pdu  = compound.compoundPtr;
@@ -237,7 +235,7 @@ DLCallback::processPacket(const wns::scheduler::SchedulingCompound & compound)
     phyCommand->peer.source_ = wimacComponent->getNode();
     phyCommand->peer.phyModePtr = phyModePtr;
     phyCommand->peer.measureInterference_ = true; // measureInterference;
-    phyCommand->peer.estimatedCandI_ = estimatedCandI;
+    phyCommand->peer.estimatedCQI = estimatedCQI;
     phyCommand->magic.sourceComponent_ = wimacComponent;
 
     scheduledPDUs.push(pdu);

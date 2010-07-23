@@ -148,6 +148,9 @@ namespace wimac { namespace scheduler {
             wns::scheduler::queue::QueueInterface* 
             getQueue() const;
 
+            wimac::scheduler::RegistryProxyWiMAC* 
+            getRegistryProxy(){return colleagues.registry;};
+
         protected:
             void setupPlotting();
             void handleBroadcast();

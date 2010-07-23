@@ -137,9 +137,8 @@ ULMasterCallback::processPacket(const wns::scheduler::SchedulingCompound & compo
         boost::bind(&Callback::probeScheduleStop, this, timeSlot, fSlot, beam, userID), endTime);
     }
 
-    /* @TODO: enable measuring of SINR estimation error*/
-    wns::CandI estimatedCandI = wns::CandI();
-    //wns::CandI estimatedCandI = compound.estimatedCandI;
+    wns::scheduler::ChannelQualityOnOneSubChannel estimatedCQI = compound.estimatedCQI;
+
     double rate = phyModePtr->getDataRate();
 
 //  mapInfoEntry->start += timeSlot * slotLength_;
@@ -195,7 +194,7 @@ ULMasterCallback::processPacket(const wns::scheduler::SchedulingCompound & compo
     //	 (dynamic_cast<const wns::service::phy::phymode::PhyModeInterface*>(phyMode.clone())));
 
     phyCommand->peer.measureInterference_ = true; //measureInterference;
-    phyCommand->peer.estimatedCandI_ = estimatedCandI;
+    phyCommand->peer.estimatedCQI = estimatedCQI;
     phyCommand->magic.sourceComponent_ = wimacComponent;
 }
 
@@ -217,11 +216,8 @@ ULSlaveCallback::processPacket(const wns::scheduler::SchedulingCompound & compou
     simTimeType timeSlotOffset = timeSlot * slotLength_;
     startTime += timeSlotOffset;
     endTime += timeSlotOffset - Utilities::getComputationalAccuracyFactor();
-    //TODO:bmw
-    //wns::CandI estimatedCandI = compound.estimatedCandI;
-    wns::CandI estimatedCandI = wns::CandI();
-    //pdu->startTime += timeSlot * slotLength_;
-    //pdu->endTime += timeSlot * slotLength_;
+
+    wns::scheduler::ChannelQualityOnOneSubChannel estimatedCQI = compound.estimatedCQI;
 
     double rate = phyModePtr->getDataRate();
     wns::ldk::CompoundPtr pdu  = compound.compoundPtr;
@@ -279,7 +275,7 @@ ULSlaveCallback::processPacket(const wns::scheduler::SchedulingCompound & compou
     phyCommand->peer.source_ = wimacComponent->getNode();
     phyCommand->peer.phyModePtr = phyModePtr;
     phyCommand->peer.measureInterference_ = true; // measureInterference;
-    phyCommand->peer.estimatedCandI_ = estimatedCandI;
+    phyCommand->peer.estimatedCQI = estimatedCQI;
     phyCommand->magic.sourceComponent_ = wimacComponent;
 
     /// @todo enable pduWatch again

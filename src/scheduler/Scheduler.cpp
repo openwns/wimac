@@ -108,6 +108,14 @@ Scheduler::Scheduler(wns::ldk::FunctionalUnit* parent, const wns::pyconfig::View
         colleagues.pseudoGenerator =
             new wimac::scheduler::PseudoBWRequestGenerator(config.getView("pseudoGenerator"));
     }
+
+    wns::pyconfig::View registryView =
+        pyConfig.get<wns::pyconfig::View>("registry");
+    wns::scheduler::RegistryCreator* registryCreator =
+        wns::scheduler::RegistryFactory::creator(registryName);
+    colleagues.registry = dynamic_cast<wimac::scheduler::RegistryProxyWiMAC*>
+        (registryCreator->create(parent_->getFUN(), registryView));
+    assure(colleagues.registry, "Registry creation failed");
 }
 
 Scheduler::~Scheduler()
@@ -345,13 +353,6 @@ void Scheduler::setFUN(wns::ldk::fun::FUN* fun)
 	// the first thing to do is to set up the registry because other colleagues
 	// may depend on it for their initialization
 
-	wns::pyconfig::View registryView =
-		pyConfig.get<wns::pyconfig::View>("registry");
-	wns::scheduler::RegistryCreator* registryCreator =
-		wns::scheduler::RegistryFactory::creator(registryName);
-	colleagues.registry = dynamic_cast<wimac::scheduler::RegistryProxyWiMAC*>
-		(registryCreator->create(fun, registryView));
-	assure(colleagues.registry, "Registry creation failed");
 	colleagues.registry->setFUN(fun);
 
 	if (!ofdmaProvider) {

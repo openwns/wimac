@@ -31,6 +31,7 @@
 #include <WNS/StaticFactory.hpp>
 #include <WNS/scheduler/queue/QueueInterface.hpp>
 #include <WIMAC/FUConfigCreator.hpp>
+#include <WIMAC/scheduler/RegistryProxyWiMAC.hpp>
 
 namespace wns {
 namespace ldk {
@@ -108,6 +109,9 @@ namespace wimac {
             */
             virtual wns::scheduler::queue::QueueInterface* 
             getQueue() const = 0;
+
+            virtual wimac::scheduler::RegistryProxyWiMAC* 
+            getRegistryProxy() = 0;
 
         private:
 

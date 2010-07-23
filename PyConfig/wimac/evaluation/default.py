@@ -42,12 +42,15 @@ class SeparateByRingAndType(openwns.evaluation.ITreeNodeGenerator):
                                            format = "MAC.StationType%s"))
             yield node
         
-def installDebugEvaluation(sim, loggingStationIDs, kind = "PDF"):
+def installDebugEvaluation(sim, loggingStationIDs, settlingTime, kind = "PDF"):
     sources = ["wimac.top.window.incoming.bitThroughput", 
                 "wimac.top.window.aggregated.bitThroughput", 
                 "wimac.cirSDMA",
                 "wimac.carrierSDMA",
                 "wimac.interferenceSDMA",
+                "wimac.deltaPHYModeSDMA",
+                "wimac.deltaCarrierSDMA",
+                "wimac.deltaInterferenceSDMA",
                 "wimac.top.packet.incoming.delay",
                 "wimac.top.packet.incoming.size",
                 "wimac.top.packet.outgoing.size",
@@ -86,6 +89,7 @@ def installDebugEvaluation(sim, loggingStationIDs, kind = "PDF"):
 
     for src in sources:
         node = openwns.evaluation.createSourceNode(sim, src)
+        node = node.appendChildren(openwns.evaluation.generators.SettlingTimeGuard(settlingTime))
         node = node.appendChildren(openwns.evaluation.generators.Accept(
                             by = 'MAC.Id', ifIn = loggingStationIDs))
 
