@@ -97,6 +97,8 @@ ULCallback::callBack(wns::scheduler::SchedulingMapPtr schedulingMap)
                         it != iterPRB->scheduledCompoundsEnd();
                         it++)
                     { // for every compound in subchannel:
+                        /* Put estimated CQI in*/
+                        it->estimatedCQI = iterPRB->getEstimatedCQI();
                         processPacket(*it);
                     } // for (all scheduledCompounds)
                     iterPRB->clearScheduledCompounds();

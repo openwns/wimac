@@ -128,7 +128,7 @@ def installDebugEvaluation(sim, loggingStationIDs, settlingTime, kind = "PDF"):
         if kind == "Moments":                            
             node.getLeafs().appendChildren(openwns.evaluation.generators.Moments())
         else:
-            if src == "wimac.cirSDMA":
+            if src in ["wimac.cirSDMA", "wimac.deltaCarrierSDMA", "wimac.deltaInterferenceSDMA"]:
                 node.getLeafs().appendChildren(openwns.evaluation.generators.PDF(
                                                             minXValue = -100,
                                                             maxXValue = 100,
@@ -156,6 +156,12 @@ def installDebugEvaluation(sim, loggingStationIDs, settlingTime, kind = "PDF"):
                                                             minXValue = 0.0,
                                                             maxXValue = 15000.0,
                                                             resolution =  1500))
+                                                
+            elif src == "wimac.deltaPHYModeSDMA":                          
+                node.getLeafs().appendChildren(openwns.evaluation.generators.PDF(
+                                                            minXValue = -15.0,
+                                                            maxXValue = 15.0,
+                                                            resolution =  30))
         
         
 def installEvaluation(sim, _accessPointIDs, _userTerminalIDs):
