@@ -48,6 +48,7 @@
 #include <WIMAC/scheduler/RegistryProxyWiMAC.hpp>
 #include <WIMAC/FUConfigCreator.hpp>
 #include <WIMAC/frame/ULMapCollector.hpp>
+#include <WIMAC/frame/DataCollector.hpp>
 
 STATIC_FACTORY_REGISTER_WITH_CREATOR(
 	wimac::scheduler::Scheduler,
@@ -102,6 +103,8 @@ Scheduler::Scheduler(wns::ldk::FunctionalUnit* parent, const wns::pyconfig::View
     colleagues.registry = 0;
     colleagues.pseudoGenerator = 0;
     colleagues.callback = 0;
+    colleagues.harq = 0;
+
 
     if (!config.isNone("pseudoGenerator"))
     {
@@ -134,6 +137,10 @@ Scheduler::~Scheduler()
 
     if ( colleagues.callback )
         delete colleagues.callback;
+
+    if ( colleagues.harq )
+        delete colleagues.harq;
+
     if ( colleagues.pseudoGenerator )
         delete colleagues.pseudoGenerator;
     strategyResult_= wns::scheduler::strategy::StrategyResultPtr();
@@ -402,12 +409,32 @@ void Scheduler::setFUN(wns::ldk::fun::FUN* fun)
 	colleagues.callback = callbackCreator->create(fun, pyConfig.getView("callback"));
 	assure(colleagues.callback, "Callback creation failed");
 
+    colleagues.harq = STATIC_FACTORY_NEW_INSTANCE(
+        wns::scheduler::harq::HARQInterface, 
+        wns::PyConfigViewCreator, 
+        pyConfig.get("harq"), 
+        pyConfig.get("harq"));
+    assure(colleagues.harq, "HARQ creation failed");
+
+    /* UL Master HARQ needs to know about DownlinkHARQ */
+    if(schedulerSpot_ == wns::scheduler::SchedulerSpot::ULMaster())
+    {
+        wimac::scheduler::Scheduler* sched = dynamic_cast<wimac::scheduler::Scheduler*>(
+            fun->findFriend<frame::DataCollector*>("dlscheduler")->getTxScheduler());
+        assure(sched, "Cannot find downlink scheduler in ULMaster");
+
+        wns::scheduler::harq::HARQInterface* dlHARQ = sched->colleagues.harq;
+        assure(dlHARQ, "Cannot find downlink HARQ in ULMaster");
+
+        colleagues.harq->setDownlinkHARQ(dlHARQ);
+    }
+
 	// tell the modules who friends and colleagues are
 	colleagues.grouper->setColleagues(colleagues.registry);
 	colleagues.strategy->setColleagues(colleagues.queue,
 					   colleagues.grouper,
 					   colleagues.registry,
-					   NULL
+					   colleagues.harq
 					   );
 
 	colleagues.callback->setColleagues(colleagues.registry);

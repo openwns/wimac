@@ -30,6 +30,7 @@
 #include <WNS/ldk/FUNConfigCreator.hpp>
 #include <WNS/StaticFactory.hpp>
 #include <WNS/scheduler/queue/QueueInterface.hpp>
+#include <WNS/scheduler/harq/HARQInterface.hpp>
 #include <WIMAC/FUConfigCreator.hpp>
 #include <WIMAC/scheduler/RegistryProxyWiMAC.hpp>
 
@@ -112,6 +113,9 @@ namespace wimac {
 
             virtual wimac::scheduler::RegistryProxyWiMAC* 
             getRegistryProxy() = 0;
+
+            virtual wns::scheduler::harq::HARQInterface*
+            getHARQ() = 0;
 
         private:
 

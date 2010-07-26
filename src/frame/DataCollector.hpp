@@ -27,6 +27,7 @@
 #define WIMAC_FRAME_DATACOLLECTOR_HPP
 
 #include <WNS/ldk/fcf/CompoundCollector.hpp>
+#include <WIMAC/PhyUser.hpp>
 
 namespace wimac {
     namespace scheduler {
@@ -79,13 +80,20 @@ namespace wimac {
                 return rxScheduler.get();
             }
 
+            void
+            deliverReceived();
+
         private:
 
             wimac::scheduler::Interface*
             getCurrentScheduler() const;
 
+            wns::events::scheduler::IEventPtr deliverReceivedEvent;
+
             std::auto_ptr<wimac::scheduler::Interface> txScheduler;
             std::auto_ptr<wimac::scheduler::Interface> rxScheduler;
+
+            wimac::PhyUser* phyUser_;
         };
     }
 }

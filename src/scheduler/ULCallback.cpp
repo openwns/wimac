@@ -99,7 +99,7 @@ ULCallback::callBack(wns::scheduler::SchedulingMapPtr schedulingMap)
                     { // for every compound in subchannel:
                         /* Put estimated CQI in*/
                         it->estimatedCQI = iterPRB->getEstimatedCQI();
-                        processPacket(*it);
+                        processPacket(*it, timeSlotPtr);
                     } // for (all scheduledCompounds)
                     iterPRB->clearScheduledCompounds();
                 } // if there were compounds in this resource
@@ -110,7 +110,8 @@ ULCallback::callBack(wns::scheduler::SchedulingMapPtr schedulingMap)
 
 // ULMaster processPacket, seting receive beamforming pattern
 void
-ULMasterCallback::processPacket(const wns::scheduler::SchedulingCompound & compound)
+ULMasterCallback::processPacket(const wns::scheduler::SchedulingCompound & compound,
+    const wns::scheduler::SchedulingTimeSlotPtr& timeSlotPtr)
 {
     simTimeType startTime = compound.startTime;
     simTimeType endTime = compound.endTime;
@@ -202,7 +203,8 @@ ULMasterCallback::processPacket(const wns::scheduler::SchedulingCompound & compo
 
 //ULSlave processPacket, setting omnidirectional transmit phy access functor
 void
-ULSlaveCallback::processPacket(const wns::scheduler::SchedulingCompound & compound)
+ULSlaveCallback::processPacket(const wns::scheduler::SchedulingCompound & compound,
+    const wns::scheduler::SchedulingTimeSlotPtr& timeSlotPtr)
 {
     simTimeType startTime = compound.startTime;
     simTimeType endTime = compound.endTime;

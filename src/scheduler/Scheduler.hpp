@@ -151,6 +151,9 @@ namespace wimac { namespace scheduler {
             wimac::scheduler::RegistryProxyWiMAC* 
             getRegistryProxy(){return colleagues.registry;};
 
+            wns::scheduler::harq::HARQInterface*
+            getHARQ(){return colleagues.harq;};
+
         protected:
             void setupPlotting();
             void handleBroadcast();
@@ -161,6 +164,7 @@ namespace wimac { namespace scheduler {
                 wns::scheduler::grouper::GroupingProviderInterface* grouper;
                 wns::scheduler::queue::QueueInterface* queue;
                 wns::scheduler::strategy::StrategyInterface* strategy;
+                wns::scheduler::harq::HARQInterface* harq;
                 // we have special WiMAC extensions to the registry proxy so don't
                 // use the wns::scheduler::RegistryProxyInterface* version here
                 wimac::scheduler::RegistryProxyWiMAC* registry;

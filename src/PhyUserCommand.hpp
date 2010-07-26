@@ -38,6 +38,7 @@
 #include <WIMAC/PhyModeProviderCommand.hpp>
 #include <WNS/service/phy/phymode/PhyModeInterface.hpp>
 #include <WNS/scheduler/SchedulerTypes.hpp>
+#include <WNS/scheduler/SchedulingMap.hpp>
 
 namespace wimac {
     class PhyUser;
@@ -75,6 +76,7 @@ namespace wimac {
             bool contentionAccess_;
             bool frameHead_;
             wns::service::phy::power::PowerMeasurementPtr rxMeasurement;
+            wns::scheduler::SchedulingTimeSlotPtr schedulingTimeSlot;
         } magic;
 
 

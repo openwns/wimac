@@ -116,7 +116,7 @@ DLCallback::callBack(wns::scheduler::SchedulingMapPtr schedulingMap)
                         it != iterPRB->scheduledCompoundsEnd();
                         it++)
                     { // for every compound in subchannel:
-                        processPacket(*it);
+                        processPacket(*it, timeSlotPtr);
                     } // for (all scheduledCompounds)
                     iterPRB->clearScheduledCompounds();
                 } // if there were compounds in this resource
@@ -126,7 +126,8 @@ DLCallback::callBack(wns::scheduler::SchedulingMapPtr schedulingMap)
 }
 
 void
-DLCallback::processPacket(const wns::scheduler::SchedulingCompound & compound)
+DLCallback::processPacket(const wns::scheduler::SchedulingCompound & compound,
+    const wns::scheduler::SchedulingTimeSlotPtr& timeSlotPtr)
 {
     simTimeType startTime = compound.startTime;
     simTimeType endTime = compound.endTime;
