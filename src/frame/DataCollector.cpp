@@ -28,6 +28,9 @@
 #include <WNS/pyconfig/View.hpp>
 
 #include <WIMAC/scheduler/Scheduler.hpp>
+#include <WIMAC/Utilities.hpp>
+
+#include <boost/bind.hpp>
 
 STATIC_FACTORY_REGISTER_WITH_CREATOR(
     wimac::frame::DataCollector,
@@ -104,12 +107,73 @@ DataCollector::onFUNCreated()
         rxScheduler->setFUN(getFUN());
         rxScheduler->setReceptor(getReceptor());
     }
+
+    phyUser_ = getFUN()->findFriend<wimac::PhyUser*>("phyUser");
+    assure( phyUser_, "PhyUser is not of type wimac::PhyUser");
 }
 
 void
 DataCollector::doOnData(const wns::ldk::CompoundPtr& compound)
 {
-    getDeliverer()->getAcceptor(compound)->onData(compound);
+    assure(phyUser_, "PhyUser unknown");
+    wimac::PhyUserCommand* phyCommand = 
+        phyUser_->getCommand(compound->getCommandPool());
+
+    assure(phyCommand, "Cannot extract phyCommand");
+
+    if(phyCommand->magic.schedulingTimeSlot != NULL)
+    {    
+        rxScheduler->getHARQ()->onTimeSlotReceived(phyCommand->magic.schedulingTimeSlot,
+            wns::scheduler::harq::HARQInterface::TimeSlotInfo(
+            phyCommand->magic.rxMeasurement,
+            0.0,
+            phyCommand->local.pAFunc_->subBand_));
+    
+        if(deliverReceivedEvent != wns::events::scheduler::IEventPtr())
+        {
+            deliverReceivedEvent = wns::simulator::getEventScheduler()->scheduleDelay(
+                boost::bind(&DataCollector::deliverReceived, this), 
+                    Utilities::getComputationalAccuracyFactor());
+        }
+    }
+    else
+    {
+        getDeliverer()->getAcceptor(compound)->onData(compound);
+    }
+}
+
+void
+DataCollector::deliverReceived()
+{
+    deliverReceivedEvent = wns::events::scheduler::IEventPtr();
+
+    wns::scheduler::harq::HARQInterface::DecodeStatusContainer compounds;
+    compounds = rxScheduler->getHARQ()->decode();
+
+    wns::scheduler::harq::HARQInterface::DecodeStatusContainer::iterator it;
+
+    for (it = compounds.begin(); it!=compounds.end();++it)
+    {
+        if(it->first->harq.successfullyDecoded)
+        {
+            wns::scheduler::PhysicalResourceBlockVector::iterator itPRB;
+            for(itPRB = it->first->physicalResources.begin();
+                itPRB != it->first->physicalResources.end();
+                ++it)
+            {
+                wns::scheduler::ScheduledCompoundsList::const_iterator compoundIt;
+                // Iterate over all contained compounds
+                for (compoundIt = itPRB->scheduledCompoundsBegin();
+                    compoundIt != itPRB->scheduledCompoundsEnd();
+                    ++compoundIt)
+                {
+                    getDeliverer()->getAcceptor(compoundIt->compoundPtr)
+                        ->onData(compoundIt->compoundPtr);
+                }
+            }
+        }
+        it->first->physicalResources.clear();
+    }
 }
 
 void

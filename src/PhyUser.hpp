@@ -50,6 +50,7 @@
 #include <WNS/pyconfig/View.hpp>
 
 #include <WIMAC/PhyUserCommand.hpp>
+#include <WIMAC/scheduler/RegistryProxyWiMAC.hpp>
 
 
 #include <WNS/service/phy/phymode/PhyModeMapperInterface.hpp>
@@ -176,11 +177,13 @@ namespace wimac {
             std::string interferenceCacheName;
             std::string connectionManagerName;
             std::string connectionClassifierName;
+            std::string dataCollectorName;
 
             wimac::Component* layer;
             service::InterferenceCache* interferenceCache;
             service::ConnectionManager* connectionManager;
             ConnectionClassifier* connectionClassifier;
+            wimac::scheduler::RegistryProxyWiMAC* registry;
         } friends_;
     };
 }

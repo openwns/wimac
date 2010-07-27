@@ -32,6 +32,7 @@ from openwns.logger import Logger
 import openwns.qos
 import openwns.FCF
 import openwns.Scheduler
+import openwns.scheduler
 #from support.WiMACParameters import ParametersOFDM, ParametersSystem
 from support.WiMACParameters import ParametersSystem
 
@@ -96,6 +97,7 @@ class Scheduler(openwns.FCF.CompoundCollector):
     queue = None
     grouper = None
     registry = None
+    harq = None
     callback = None
     maxBeams = None
     freqChannels = None
@@ -135,6 +137,7 @@ class Scheduler(openwns.FCF.CompoundCollector):
         self.queue = openwns.Scheduler.SimpleQueue()
         self.grouper = openwns.Scheduler.SINRHeuristic(beamforming = beamforming)
         self.grouper.friendliness_dBm = friendliness_dBm
+        self.harq = openwns.scheduler.NoHARQ()
         self.uplink = uplink
         self.alwaysAcceptIfQueueAccepts = False
         self.grouper.uplink = self.uplink

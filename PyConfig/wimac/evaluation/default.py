@@ -42,12 +42,15 @@ class SeparateByRingAndType(openwns.evaluation.ITreeNodeGenerator):
                                            format = "MAC.StationType%s"))
             yield node
         
-def installDebugEvaluation(sim, loggingStationIDs, kind = "PDF"):
+def installDebugEvaluation(sim, loggingStationIDs, settlingTime, kind = "PDF"):
     sources = ["wimac.top.window.incoming.bitThroughput", 
                 "wimac.top.window.aggregated.bitThroughput", 
                 "wimac.cirSDMA",
                 "wimac.carrierSDMA",
                 "wimac.interferenceSDMA",
+                "wimac.deltaPHYModeSDMA",
+                "wimac.deltaCarrierSDMA",
+                "wimac.deltaInterferenceSDMA",
                 "wimac.top.packet.incoming.delay",
                 "wimac.top.packet.incoming.size",
                 "wimac.top.packet.outgoing.size",
@@ -86,6 +89,7 @@ def installDebugEvaluation(sim, loggingStationIDs, kind = "PDF"):
 
     for src in sources:
         node = openwns.evaluation.createSourceNode(sim, src)
+        node = node.appendChildren(openwns.evaluation.generators.SettlingTimeGuard(settlingTime))
         node = node.appendChildren(openwns.evaluation.generators.Accept(
                             by = 'MAC.Id', ifIn = loggingStationIDs))
 
@@ -124,7 +128,7 @@ def installDebugEvaluation(sim, loggingStationIDs, kind = "PDF"):
         if kind == "Moments":                            
             node.getLeafs().appendChildren(openwns.evaluation.generators.Moments())
         else:
-            if src == "wimac.cirSDMA":
+            if src in ["wimac.cirSDMA", "wimac.deltaCarrierSDMA", "wimac.deltaInterferenceSDMA"]:
                 node.getLeafs().appendChildren(openwns.evaluation.generators.PDF(
                                                             minXValue = -100,
                                                             maxXValue = 100,
@@ -152,6 +156,12 @@ def installDebugEvaluation(sim, loggingStationIDs, kind = "PDF"):
                                                             minXValue = 0.0,
                                                             maxXValue = 15000.0,
                                                             resolution =  1500))
+                                                
+            elif src == "wimac.deltaPHYModeSDMA":                          
+                node.getLeafs().appendChildren(openwns.evaluation.generators.PDF(
+                                                            minXValue = -15.0,
+                                                            maxXValue = 15.0,
+                                                            resolution =  30))
         
         
 def installEvaluation(sim, _accessPointIDs, _userTerminalIDs):

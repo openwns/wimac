@@ -37,6 +37,8 @@
 #include <WIMAC/PhyAccessFunc.hpp>
 #include <WIMAC/PhyModeProviderCommand.hpp>
 #include <WNS/service/phy/phymode/PhyModeInterface.hpp>
+#include <WNS/scheduler/SchedulerTypes.hpp>
+#include <WNS/scheduler/SchedulingMap.hpp>
 
 namespace wimac {
     class PhyUser;
@@ -66,7 +68,7 @@ namespace wimac {
             int cellID_;
             wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface> phyModePtr;
             bool measureInterference_;
-            wns::CandI estimatedCandI_;
+            wns::scheduler::ChannelQualityOnOneSubChannel estimatedCQI;
         } peer;
 
         struct {
@@ -74,6 +76,7 @@ namespace wimac {
             bool contentionAccess_;
             bool frameHead_;
             wns::service::phy::power::PowerMeasurementPtr rxMeasurement;
+            wns::scheduler::SchedulingTimeSlotPtr schedulingTimeSlot;
         } magic;
 
 
@@ -83,7 +86,7 @@ namespace wimac {
             peer.source_ = 0;
             peer.destination_ = 0;
             peer.cellID_ = 0;
-            peer.estimatedCandI_ = wns::CandI();
+            peer.estimatedCQI = wns::scheduler::ChannelQualityOnOneSubChannel();
             magic.sourceComponent_ = 0;
             magic.contentionAccess_ = false;
             magic.frameHead_ = false;
@@ -103,7 +106,7 @@ namespace wimac {
             peer.destination_         = other.peer.destination_;
             peer.cellID_              = other.peer.cellID_;
             peer.phyModePtr           = other.peer.phyModePtr;
-            peer.estimatedCandI_      = other.peer.estimatedCandI_;
+            peer.estimatedCQI      = other.peer.estimatedCQI;
 
             magic.sourceComponent_       = other.magic.sourceComponent_;
             magic.contentionAccess_   = other.magic.contentionAccess_;
@@ -124,7 +127,8 @@ namespace wimac {
 			return magic.rxMeasurement->getSINR();
 		}
 
-        wns::Power getEstimatedIintra() const { return peer.estimatedCandI_.sdma.iIntra; }
+        // MUE: ToDo: Add sdma.iIntra to ChannelQualityOnOneSubChannel structure
+        //wns::Power getEstimatedIintra() const { return peer.estimatedCandI_.sdma.iIntra; }
 
     };
 }

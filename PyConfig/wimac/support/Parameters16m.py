@@ -233,7 +233,14 @@ class ParametersOFDMA(object):
         #################
         self.maximalBeams = 1
         self.beamforming = False
-
+        
+        self.adaptUTTxPower = False
+        # If True: then per subchannel nominal power equals the max power divided by the number 
+        # of subchannel and multiplied by the number of user terminals 
+        # since we assume all UTs being served in parallel
+        # If False: per subchannel nominal power equals the max power since we assume UTs only use few subchannels
+        #################
+        
 #TODO
 ###############################################################
 # MAC Parameters Frame Setup                                  #

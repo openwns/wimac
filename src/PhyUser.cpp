@@ -44,6 +44,8 @@
 #include <WIMAC/services/InterferenceCache.hpp>
 #include <WIMAC/StationManager.hpp>
 #include <WIMAC/services/ConnectionManager.hpp>
+#include <WIMAC/frame/DataCollector.hpp>
+#include <WIMAC/scheduler/Scheduler.hpp>
 
 using namespace wimac;
 
@@ -62,6 +64,7 @@ PhyUser::PhyUser(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config) :
     friends_.interferenceCacheName = "interferenceCache";
     friends_.connectionManagerName = "connectionManager";
     friends_.connectionClassifierName = "classifier";
+    friends_.dataCollectorName = "ulscheduler";
 
     friends_.layer = NULL;
     friends_.interferenceCache = NULL;
@@ -137,6 +140,8 @@ PhyUser::PhyUser( const PhyUser& rhs ):
 {
 	friends_.interferenceCacheName = rhs.friends_.interferenceCacheName;
 	friends_.connectionManagerName = rhs.friends_.connectionManagerName;
+    friends_.connectionClassifierName = rhs.friends_.connectionClassifierName;
+    friends_.dataCollectorName = rhs.friends_.dataCollectorName;
 
 	friends_.layer = NULL;
 	friends_.interferenceCache = NULL;
@@ -217,6 +222,22 @@ void PhyUser::onFUNCreated()
 	friends_.connectionClassifier = getFUN()
 		->findFriend<ConnectionClassifier*>(friends_.connectionClassifierName);
 
+    // Get the Registry Proxy either from the TX (UT) or RX (BS) scheduler 
+    if(getFUN()->findFriend<frame::DataCollector*>(friends_.dataCollectorName)
+            ->getTxScheduler() != NULL)
+    {
+        friends_.registry = getFUN()
+            ->findFriend<frame::DataCollector*>(friends_.dataCollectorName)
+                ->getTxScheduler()->getRegistryProxy();
+    }
+    else
+    {
+        friends_.registry = getFUN()
+            ->findFriend<frame::DataCollector*>(friends_.dataCollectorName)
+                ->getRxScheduler()->getRegistryProxy();
+    }
+    assure(friends_.registry != NULL, "Unable to get RegistryProxy");
+
 	cacheEntryTimeStamp = -maxAgeCacheEntry;
 }
 
@@ -232,19 +253,19 @@ PhyUser::doOnData(const wns::ldk::CompoundPtr& compound)
 			  "  C/I = ", puCommand->local.rxPower_, " / ", puCommand->local.interference_,
 			  " = ", getCommand( compound->getCommandPool() )->magic.rxMeasurement->getSINR()
 			  );
-	if(puCommand->peer.estimatedCandI_.I.get_mW() > 0)
+	if(puCommand->peer.estimatedCQI.interference.get_mW() > 0)
 	{
 		LOG_INFO( "estimated C/I = ",
-				  puCommand->peer.estimatedCandI_.C, " / ", puCommand->peer.estimatedCandI_.I,
-				  " = " , puCommand->peer.estimatedCandI_.C / puCommand->peer.estimatedCandI_.I,
+				  puCommand->peer.estimatedCQI.carrier, " / ", puCommand->peer.estimatedCQI.interference,
+				  " = " , puCommand->peer.estimatedCQI.carrier / puCommand->peer.estimatedCQI.interference);/*,
 				  "\n estimated intra-cell interference: ", puCommand->getEstimatedIintra()
-			);
+			);*/
 	}
 	else{
 		LOG_INFO( "estimated C/I = ",
-				  puCommand->peer.estimatedCandI_.C, " / ", puCommand->peer.estimatedCandI_.I,
+				  puCommand->peer.estimatedCQI.carrier, " / ", puCommand->peer.estimatedCQI.interference);/*,
 				  "\n estimated intra-cell interference: ", puCommand->getEstimatedIintra()
-			);
+			);*/
 	}
 
 	getDeliverer()->getAcceptor(compound)->onData(compound);
@@ -296,8 +317,8 @@ PhyUser::onData(wns::osi::PDUPtr pdu,
                             service::InterferenceCache::Remote );
 
         wns::Power iInterPlusNoise;
-        if(interference > puCommand->getEstimatedIintra()){
-            iInterPlusNoise = interference - puCommand->getEstimatedIintra();
+        if(interference > wns::Power::from_mW(0.0)) { /*puCommand->getEstimatedIintra()){*/
+            iInterPlusNoise = interference;/* - puCommand->getEstimatedIintra();*/
         }else{
             iInterPlusNoise = wns::Power::from_mW(0.0);
             LOG_INFO(getFUN()->getName(), " PhyUser: write iInterPlusNoise = null to interferenceCache");
@@ -371,19 +392,21 @@ PhyUser::onData(wns::osi::PDUPtr pdu,
         probes_.pathloss->put(compound, txPower.get_dBm() - rxPower.get_dBm());
         LOG_INFO( "pathloss from PhyUser:",txPower.get_dBm() - rxPower.get_dBm());
     
-		// TODO: puCommand->peer.phyModePtr
-		/*
-		unsigned int phyModeIndex =
-			phyModeMapper->getIndexForPhyMode(*puCommand->peer.phyModePtr);
-			// scheduler has phyUser as friend...
-		probes_.deltaPHYModeSDMA->put(
-			(puCommand->peer.phyMode_)
-			- PHYTools::getPHYModeBySNR( rxPower.get_dBm() - interference.get_dBm() )
-			);
-		*/
+        /* Probe deviation between possible and chosen PHY mode*/
+		int phyModeIndex =
+			friends_.registry->getPhyModeMapper()->
+                getIndexForPhyMode(*puCommand->peer.phyModePtr);
+        int possiblePhyModeIndex = 
+            friends_.registry->getPhyModeMapper()->getIndexForPhyMode(
+                *friends_.registry->getPhyModeMapper()->getBestPhyMode(rxPower / interference));
+
+		probes_.deltaPHYModeSDMA->put(compound, possiblePhyModeIndex - phyModeIndex);
+
 		// probe the ratio of actual-to-estimated signal strength in dB
-		probes_.deltaCarrierSDMA->put(compound, rxPower.get_dBm() - puCommand->peer.estimatedCandI_.C.get_dBm() );
-		probes_.deltaInterferenceSDMA->put(compound, interference.get_dBm() - puCommand->peer.estimatedCandI_.I.get_dBm() );
+		probes_.deltaCarrierSDMA->put(compound, 
+            rxPower.get_dBm() - puCommand->peer.estimatedCQI.carrier.get_dBm());
+		probes_.deltaInterferenceSDMA->put(compound, 
+            interference.get_dBm() - puCommand->peer.estimatedCQI.interference.get_dBm());
 	}else{
 		assure(0, "PhyUser::onData: Received PDU can't be releated to a probe!");
 	}
@@ -555,13 +578,13 @@ PhyUser::traceIncoming(wns::ldk::CompoundPtr compound, wns::service::phy::power:
     objdoc["Transmission"]["InterferencePower"] = 
         wns::probe::bus::json::Number(rxPowerMeasurement->getInterferencePower().get_dBm());
 
-    if (myCommand->peer.estimatedCandI_.C != wns::Power() &&
-        myCommand->peer.estimatedCandI_.I != wns::Power())
+    if (myCommand->peer.estimatedCQI.carrier != wns::Power() &&
+        myCommand->peer.estimatedCQI.interference != wns::Power())
     {
         objdoc["SINREst"]["C"] = 
-            wns::probe::bus::json::Number(myCommand->peer.estimatedCandI_.C.get_dBm());
+            wns::probe::bus::json::Number(myCommand->peer.estimatedCQI.carrier.get_dBm());
         objdoc["SINREst"]["I"] = 
-            wns::probe::bus::json::Number(myCommand->peer.estimatedCandI_.I.get_dBm());
+            wns::probe::bus::json::Number(myCommand->peer.estimatedCQI.interference.get_dBm());
     }
     wns::probe::bus::json::probeJSON(probes_.jsonTracing, objdoc);
 }

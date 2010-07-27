@@ -143,8 +143,15 @@ def setupPhyDetail(simulator, freq, bsTxPower, utTxPower, config, rxNoiseBS, rxN
     
     bsPower = openwns.Scheduler.PowerCapabilities(bsTxPower, bsNominalTxPower, bsNominalTxPower)
     
-    # Per subchannel nominal power equals the max power since we assume UTs only use few subchannels
-    utPower = openwns.Scheduler.PowerCapabilities(utTxPower, utTxPower, utTxPower)
+    if config.parametersPhy.adaptUTTxPower == True:
+        # Per subchannel nominal power equals the max power divided by the number of subchannel and multiplied by the number of user terminal  since we assume all UTs being served in parallel
+        power = fromdBm(utTxPower)
+        numberOfUts = len(simulator.simulationModel.getNodesByProperty("isCenter", True)) - 1
+        utNominalTxPower = dBm(power - 10 * math.log10(numSubchannels) + 10 * math.log10(numberOfUts))
+        utPower = openwns.Scheduler.PowerCapabilities(utTxPower, utNominalTxPower, utNominalTxPower)
+    else:
+        # Per subchannel nominal power equals the max power since we assume UTs only use few subchannels
+        utPower = openwns.Scheduler.PowerCapabilities(utTxPower, utTxPower, utTxPower)
     
     for bs in bsNodes:
         bs.dll.dlscheduler.config.txScheduler.registry.powerCapabilitiesAP = bsPower

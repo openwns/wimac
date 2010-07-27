@@ -97,7 +97,9 @@ ULCallback::callBack(wns::scheduler::SchedulingMapPtr schedulingMap)
                         it != iterPRB->scheduledCompoundsEnd();
                         it++)
                     { // for every compound in subchannel:
-                        processPacket(*it);
+                        /* Put estimated CQI in*/
+                        it->estimatedCQI = iterPRB->getEstimatedCQI();
+                        processPacket(*it, timeSlotPtr);
                     } // for (all scheduledCompounds)
                     iterPRB->clearScheduledCompounds();
                 } // if there were compounds in this resource
@@ -108,7 +110,8 @@ ULCallback::callBack(wns::scheduler::SchedulingMapPtr schedulingMap)
 
 // ULMaster processPacket, seting receive beamforming pattern
 void
-ULMasterCallback::processPacket(const wns::scheduler::SchedulingCompound & compound)
+ULMasterCallback::processPacket(const wns::scheduler::SchedulingCompound & compound,
+    const wns::scheduler::SchedulingTimeSlotPtr& timeSlotPtr)
 {
     simTimeType startTime = compound.startTime;
     simTimeType endTime = compound.endTime;
@@ -137,9 +140,8 @@ ULMasterCallback::processPacket(const wns::scheduler::SchedulingCompound & compo
         boost::bind(&Callback::probeScheduleStop, this, timeSlot, fSlot, beam, userID), endTime);
     }
 
-    /* @TODO: enable measuring of SINR estimation error*/
-    wns::CandI estimatedCandI = wns::CandI();
-    //wns::CandI estimatedCandI = compound.estimatedCandI;
+    wns::scheduler::ChannelQualityOnOneSubChannel estimatedCQI = compound.estimatedCQI;
+
     double rate = phyModePtr->getDataRate();
 
 //  mapInfoEntry->start += timeSlot * slotLength_;
@@ -195,13 +197,14 @@ ULMasterCallback::processPacket(const wns::scheduler::SchedulingCompound & compo
     //	 (dynamic_cast<const wns::service::phy::phymode::PhyModeInterface*>(phyMode.clone())));
 
     phyCommand->peer.measureInterference_ = true; //measureInterference;
-    phyCommand->peer.estimatedCandI_ = estimatedCandI;
+    phyCommand->peer.estimatedCQI = estimatedCQI;
     phyCommand->magic.sourceComponent_ = wimacComponent;
 }
 
 //ULSlave processPacket, setting omnidirectional transmit phy access functor
 void
-ULSlaveCallback::processPacket(const wns::scheduler::SchedulingCompound & compound)
+ULSlaveCallback::processPacket(const wns::scheduler::SchedulingCompound & compound,
+    const wns::scheduler::SchedulingTimeSlotPtr& timeSlotPtr)
 {
     simTimeType startTime = compound.startTime;
     simTimeType endTime = compound.endTime;
@@ -217,11 +220,8 @@ ULSlaveCallback::processPacket(const wns::scheduler::SchedulingCompound & compou
     simTimeType timeSlotOffset = timeSlot * slotLength_;
     startTime += timeSlotOffset;
     endTime += timeSlotOffset - Utilities::getComputationalAccuracyFactor();
-    //TODO:bmw
-    //wns::CandI estimatedCandI = compound.estimatedCandI;
-    wns::CandI estimatedCandI = wns::CandI();
-    //pdu->startTime += timeSlot * slotLength_;
-    //pdu->endTime += timeSlot * slotLength_;
+
+    wns::scheduler::ChannelQualityOnOneSubChannel estimatedCQI = compound.estimatedCQI;
 
     double rate = phyModePtr->getDataRate();
     wns::ldk::CompoundPtr pdu  = compound.compoundPtr;
@@ -279,7 +279,7 @@ ULSlaveCallback::processPacket(const wns::scheduler::SchedulingCompound & compou
     phyCommand->peer.source_ = wimacComponent->getNode();
     phyCommand->peer.phyModePtr = phyModePtr;
     phyCommand->peer.measureInterference_ = true; // measureInterference;
-    phyCommand->peer.estimatedCandI_ = estimatedCandI;
+    phyCommand->peer.estimatedCQI = estimatedCQI;
     phyCommand->magic.sourceComponent_ = wimacComponent;
 
     /// @todo enable pduWatch again
