@@ -85,19 +85,21 @@ class SubscriberStation(openwns.node.Node, scenarios.interfaces.INode):
 
     def setChannelModel(self, channelmodelConfigurations):
         for entry in channelmodelConfigurations: 
+            p1 = entry.transceiverPair[0]
+            p2 = entry.transceiverPair[1]
             self.phy.ofdmaStation.receiver[0].propagation.setPair(
-                    entry.transceiverPair[0],entry.transceiverPair[1]).pathloss = entry.channelmodel.pathloss
+                    p1, p2).pathloss = entry.channelmodel.pathloss
             self.phy.ofdmaStation.receiver[0].propagation.setPair(
-                    entry.transceiverPair[0],entry.transceiverPair[1]).shadowing = entry.channelmodel.shadowing
+                    p1, p2).shadowing = entry.channelmodel.shadowing
             self.phy.ofdmaStation.receiver[0].propagation.setPair(
-                    entry.transceiverPair[0],entry.transceiverPair[1]).fastFading = entry.channelmodel. fastFading
+                    p1, p2).fastFading = entry.channelmodel.fastFading
 
             self.phy.ofdmaStation.transmitter[0].propagation.setPair(
-                    entry.transceiverPair[0],entry.transceiverPair[1]).pathloss = entry.channelmodel.pathloss
+                    p1, p2).pathloss = entry.channelmodel.pathloss
             self.phy.ofdmaStation.transmitter[0].propagation.setPair(
-                    entry.transceiverPair[0],entry.transceiverPair[1]).shadowing =  entry.channelmodel.shadowing
+                    p1, p2).shadowing =  entry.channelmodel.shadowing
             self.phy.ofdmaStation.transmitter[0].propagation.setPair(
-                    entry.transceiverPair[0],entry.transceiverPair[1]).fastFading = entry.channelmodel. fastFading
+                    p1, p2).fastFading = entry.channelmodel.fastFading
 
 
 class RemoteStation(openwns.node.Node):
@@ -200,19 +202,21 @@ class BaseStation(openwns.node.Node, scenarios.interfaces.INode):
 
     def setChannelModel(self, channelmodelConfigurations):
         for entry in channelmodelConfigurations: 
+            p1 = entry.transceiverPair[0]
+            p2 = entry.transceiverPair[1]
             self.phy.ofdmaStation.receiver[0].propagation.setPair(
-                    entry.transceiverPair[0],entry.transceiverPair[1]).pathloss = entry.channelmodel.pathloss
+                    p1, p2).pathloss = entry.channelmodel.pathloss
             self.phy.ofdmaStation.receiver[0].propagation.setPair(
-                    entry.transceiverPair[0],entry.transceiverPair[1]).shadowing = entry.channelmodel.shadowing
+                    p1, p2).shadowing = entry.channelmodel.shadowing
             self.phy.ofdmaStation.receiver[0].propagation.setPair(
-                    entry.transceiverPair[0],entry.transceiverPair[1]).fastFading = entry.channelmodel. fastFading
+                    p1, p2).fastFading = entry.channelmodel.fastFading
 
             self.phy.ofdmaStation.transmitter[0].propagation.setPair(
-                    entry.transceiverPair[0],entry.transceiverPair[1]).pathloss = entry.channelmodel.pathloss
+                    p1, p2).pathloss = entry.channelmodel.pathloss
             self.phy.ofdmaStation.transmitter[0].propagation.setPair(
-                    entry.transceiverPair[0],entry.transceiverPair[1]).shadowing =  entry.channelmodel.shadowing
+                    p1, p2).shadowing =  entry.channelmodel.shadowing
             self.phy.ofdmaStation.transmitter[0].propagation.setPair(
-                    entry.transceiverPair[0],entry.transceiverPair[1]).fastFading = entry.channelmodel. fastFading
+                    p1, p2).fastFading = entry.channelmodel.fastFading
 
 class RANG(openwns.node.Node):
     dll = None
