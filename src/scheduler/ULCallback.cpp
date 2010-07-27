@@ -111,7 +111,7 @@ ULCallback::callBack(wns::scheduler::SchedulingMapPtr schedulingMap)
 // ULMaster processPacket, seting receive beamforming pattern
 void
 ULMasterCallback::processPacket(const wns::scheduler::SchedulingCompound & compound,
-    const wns::scheduler::SchedulingTimeSlotPtr& timeSlotPtr)
+    wns::scheduler::SchedulingTimeSlotPtr& timeSlotPtr)
 {
     simTimeType startTime = compound.startTime;
     simTimeType endTime = compound.endTime;
@@ -199,12 +199,14 @@ ULMasterCallback::processPacket(const wns::scheduler::SchedulingCompound & compo
     phyCommand->peer.measureInterference_ = true; //measureInterference;
     phyCommand->peer.estimatedCQI = estimatedCQI;
     phyCommand->magic.sourceComponent_ = wimacComponent;
+    phyCommand->magic.schedulingTimeSlot = wns::scheduler::SchedulingTimeSlotPtr(
+        new wns::scheduler::SchedulingTimeSlot(*timeSlotPtr));
 }
 
 //ULSlave processPacket, setting omnidirectional transmit phy access functor
 void
 ULSlaveCallback::processPacket(const wns::scheduler::SchedulingCompound & compound,
-    const wns::scheduler::SchedulingTimeSlotPtr& timeSlotPtr)
+    wns::scheduler::SchedulingTimeSlotPtr& timeSlotPtr)
 {
     simTimeType startTime = compound.startTime;
     simTimeType endTime = compound.endTime;
@@ -257,6 +259,7 @@ ULSlaveCallback::processPacket(const wns::scheduler::SchedulingCompound & compou
         omniUnicastFunc->transmissionStart_ = startTime;
         omniUnicastFunc->transmissionStop_ = endTime;
         omniUnicastFunc->subBand_ = fSlot;
+        omniUnicastFunc->beam_ = beam;
         omniUnicastFunc->requestedTxPower_ = txPower;
         func = omniUnicastFunc;
     }else
@@ -282,8 +285,10 @@ ULSlaveCallback::processPacket(const wns::scheduler::SchedulingCompound & compou
     phyCommand->peer.estimatedCQI = estimatedCQI;
     phyCommand->magic.sourceComponent_ = wimacComponent;
 
-    /// @todo enable pduWatch again
-    //this->pduWatch(pdu);  // Watch for special compounds to inform its observer
+    colleagues.harq->storeSchedulingTimeSlot(timeSlotPtr);
+
+    phyCommand->magic.schedulingTimeSlot = wns::scheduler::SchedulingTimeSlotPtr(
+        new wns::scheduler::SchedulingTimeSlot(*timeSlotPtr));
 
     scheduledPDUs.push(pdu);
 }

@@ -62,9 +62,11 @@ Callback::Callback(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config)
 }
 
 
-void Callback::setColleagues(wns::scheduler::RegistryProxyInterface* registry)
+void Callback::setColleagues(wns::scheduler::RegistryProxyInterface* registry,
+    wns::scheduler::harq::HARQInterface* harq)
 {
     colleagues.registry = registry;
+    colleagues.harq = harq;
 }
 
 void Callback::probeScheduleStart(int timeSlot, int subChannel, int beam, int userID)

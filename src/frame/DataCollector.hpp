@@ -94,6 +94,9 @@ namespace wimac {
             std::auto_ptr<wimac::scheduler::Interface> rxScheduler;
 
             wimac::PhyUser* phyUser_;
+
+            /* For HARQ */
+            wimac::scheduler::Interface* otherTXScheduler;
         };
     }
 }

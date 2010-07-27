@@ -41,7 +41,7 @@ namespace wimac { namespace scheduler {
 
         virtual void
         processPacket(const wns::scheduler::SchedulingCompound & compound,
-            const wns::scheduler::SchedulingTimeSlotPtr& timeSlotPtr) = 0;
+            wns::scheduler::SchedulingTimeSlotPtr& timeSlotPtr) = 0;
 
         virtual void 
         deliverNow(wns::ldk::Connector*) = 0;
@@ -59,7 +59,7 @@ namespace wimac { namespace scheduler {
 
         virtual void
         processPacket(const wns::scheduler::SchedulingCompound & compound,
-            const wns::scheduler::SchedulingTimeSlotPtr& timeSlotPtr);
+            wns::scheduler::SchedulingTimeSlotPtr& timeSlotPtr);
 
         virtual void
         deliverNow(wns::ldk::Connector* connector);
@@ -75,7 +75,7 @@ namespace wimac { namespace scheduler {
 
         virtual void
         processPacket(const wns::scheduler::SchedulingCompound & compound,
-            const wns::scheduler::SchedulingTimeSlotPtr& timeSlotPtr);
+            wns::scheduler::SchedulingTimeSlotPtr& timeSlotPtr);
 
         virtual void
         deliverNow(wns::ldk::Connector* connector);

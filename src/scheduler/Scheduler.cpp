@@ -437,7 +437,7 @@ void Scheduler::setFUN(wns::ldk::fun::FUN* fun)
 					   colleagues.harq
 					   );
 
-	colleagues.callback->setColleagues(colleagues.registry);
+	colleagues.callback->setColleagues(colleagues.registry, colleagues.harq);
 	colleagues.grouper->setFriends(ofdmaProvider);
 	colleagues.strategy->setFriends(ofdmaProvider);
 

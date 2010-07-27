@@ -127,7 +127,7 @@ DLCallback::callBack(wns::scheduler::SchedulingMapPtr schedulingMap)
 
 void
 DLCallback::processPacket(const wns::scheduler::SchedulingCompound & compound,
-    const wns::scheduler::SchedulingTimeSlotPtr& timeSlotPtr)
+    wns::scheduler::SchedulingTimeSlotPtr& timeSlotPtr)
 {
     simTimeType startTime = compound.startTime;
     simTimeType endTime = compound.endTime;
@@ -193,6 +193,7 @@ DLCallback::processPacket(const wns::scheduler::SchedulingCompound & compound,
         sdmaFunc->transmissionStop_ =
         startTime + pduDuration - Utilities::getComputationalAccuracyFactor();
         sdmaFunc->subBand_ = fSlot;
+        sdmaFunc->beam_ = beam;
         sdmaFunc->pattern_ = pattern;
         sdmaFunc->requestedTxPower_ = txPower;
         func = sdmaFunc;
@@ -206,6 +207,7 @@ DLCallback::processPacket(const wns::scheduler::SchedulingCompound & compound,
         omniUnicastFunc->transmissionStop_ =
         startTime + pduDuration - Utilities::getComputationalAccuracyFactor();
         omniUnicastFunc->subBand_ = fSlot;
+        omniUnicastFunc->beam_ = beam;
         omniUnicastFunc->requestedTxPower_ = txPower;
         func = omniUnicastFunc;
     }
@@ -217,6 +219,7 @@ DLCallback::processPacket(const wns::scheduler::SchedulingCompound & compound,
         broadcastFunc->transmissionStop_ =
         startTime + pduDuration - Utilities::getComputationalAccuracyFactor();
         broadcastFunc->subBand_ = fSlot;
+        broadcastFunc->beam_ = beam;
         func = broadcastFunc;
     }
 
@@ -238,6 +241,11 @@ DLCallback::processPacket(const wns::scheduler::SchedulingCompound & compound,
     phyCommand->peer.measureInterference_ = true; // measureInterference;
     phyCommand->peer.estimatedCQI = estimatedCQI;
     phyCommand->magic.sourceComponent_ = wimacComponent;
+
+    colleagues.harq->storeSchedulingTimeSlot(timeSlotPtr);
+
+    phyCommand->magic.schedulingTimeSlot = wns::scheduler::SchedulingTimeSlotPtr(
+        new wns::scheduler::SchedulingTimeSlot(*timeSlotPtr));
 
     scheduledPDUs.push(pdu);
 }

@@ -45,7 +45,7 @@ namespace wimac { namespace scheduler {
     private:
         void
         processPacket(const wns::scheduler::SchedulingCompound& compound,
-            const wns::scheduler::SchedulingTimeSlotPtr& timeSlotPtr);
+            wns::scheduler::SchedulingTimeSlotPtr& timeSlotPtr);
 
         wns::ldk::fun::FUN* fun_;
         bool beamforming;

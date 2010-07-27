@@ -60,11 +60,13 @@ namespace wimac {
             transmissionStart_(-1.0),
             transmissionStop_(-1.0),
             subBand_(0),
+            beam_(0),
             phyMode_()
         {}
         wns::simulator::Time transmissionStart_;
         wns::simulator::Time transmissionStop_;
         int subBand_;
+        int beam_;
         wns::service::phy::phymode::PhyModeInterfacePtr phyMode_;
     };
 

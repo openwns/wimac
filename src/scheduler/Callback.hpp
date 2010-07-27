@@ -29,6 +29,7 @@
 #include <queue>
 
 #include <WNS/scheduler/CallBackInterface.hpp>
+#include <WNS/scheduler/harq/HARQInterface.hpp>
 #include <WNS/probe/bus/ContextCollector.hpp> 
 
 namespace wns { namespace scheduler {
@@ -47,7 +48,8 @@ namespace wimac { namespace scheduler {
     public:
         Callback(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config);
 
-        virtual void setColleagues(wns::scheduler::RegistryProxyInterface* registry);
+        virtual void setColleagues(wns::scheduler::RegistryProxyInterface* registry,
+            wns::scheduler::harq::HARQInterface* harq);
 
         /**
         * @brief Deliver all scheduled compounds to the given connector now.
@@ -58,6 +60,7 @@ namespace wimac { namespace scheduler {
     protected:
         struct {
             wns::scheduler::RegistryProxyInterface* registry;
+            wns::scheduler::harq::HARQInterface* harq;
         } colleagues;
 
         struct {

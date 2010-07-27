@@ -102,6 +102,20 @@ DataCollector::onFUNCreated()
         txScheduler->setFUN(getFUN());
         txScheduler->setReceptor(getReceptor());
     }
+    else
+    {
+        std::string name;
+        if(getName() == "dlscheduler")
+            name = "ulscheduler";
+        else
+            name = "dlscheduler";
+
+        otherTXScheduler = getFUN()->findFriend<wimac::frame::DataCollector*>(
+            name)->getTxScheduler();
+
+        assure(otherTXScheduler != NULL, "Cannot find other txScheduler for HARQ");
+    }
+
     if (rxScheduler.get())
     {
         rxScheduler->setFUN(getFUN());
@@ -121,15 +135,31 @@ DataCollector::doOnData(const wns::ldk::CompoundPtr& compound)
 
     assure(phyCommand, "Cannot extract phyCommand");
 
-    if(phyCommand->magic.schedulingTimeSlot != NULL)
-    {    
-        rxScheduler->getHARQ()->onTimeSlotReceived(phyCommand->magic.schedulingTimeSlot,
+    assure(otherTXScheduler, "Need pointer to TX scheduler for other direction");
+
+    if(phyCommand->magic.schedulingTimeSlot != NULL 
+        && otherTXScheduler->getHARQ() != NULL)
+    {
+        assure(phyCommand->magic.schedulingTimeSlot
+            ->physicalResources[0].countScheduledCompounds() == 1, 
+                "We only support one PDU per resource");
+
+        int beam = phyCommand->local.pAFunc_->beam_;
+
+        wimac::PhyUserCommand* shedPhyCommand = phyUser_->getCommand(
+            phyCommand->magic.schedulingTimeSlot
+                ->physicalResources[beam].scheduledCompoundsBegin()
+                    ->compoundPtr->getCommandPool());
+
+        shedPhyCommand->magic.rxMeasurement = phyCommand->magic.rxMeasurement;
+
+        otherTXScheduler->getHARQ()->onTimeSlotReceived(phyCommand->magic.schedulingTimeSlot,
             wns::scheduler::harq::HARQInterface::TimeSlotInfo(
             phyCommand->magic.rxMeasurement,
             0.0,
             phyCommand->local.pAFunc_->subBand_));
-    
-        if(deliverReceivedEvent != wns::events::scheduler::IEventPtr())
+   
+        if(deliverReceivedEvent == wns::events::scheduler::IEventPtr())
         {
             deliverReceivedEvent = wns::simulator::getEventScheduler()->scheduleDelay(
                 boost::bind(&DataCollector::deliverReceived, this), 
@@ -137,7 +167,7 @@ DataCollector::doOnData(const wns::ldk::CompoundPtr& compound)
         }
     }
     else
-    {
+    { 
         getDeliverer()->getAcceptor(compound)->onData(compound);
     }
 }
@@ -147,8 +177,10 @@ DataCollector::deliverReceived()
 {
     deliverReceivedEvent = wns::events::scheduler::IEventPtr();
 
+    assure(otherTXScheduler, "Need pointer to TX scheduler for other direction");
+
     wns::scheduler::harq::HARQInterface::DecodeStatusContainer compounds;
-    compounds = rxScheduler->getHARQ()->decode();
+    compounds = otherTXScheduler->getHARQ()->decode();
 
     wns::scheduler::harq::HARQInterface::DecodeStatusContainer::iterator it;
 
@@ -159,14 +191,18 @@ DataCollector::deliverReceived()
             wns::scheduler::PhysicalResourceBlockVector::iterator itPRB;
             for(itPRB = it->first->physicalResources.begin();
                 itPRB != it->first->physicalResources.end();
-                ++it)
+                ++itPRB)
             {
                 wns::scheduler::ScheduledCompoundsList::const_iterator compoundIt;
+
                 // Iterate over all contained compounds
                 for (compoundIt = itPRB->scheduledCompoundsBegin();
                     compoundIt != itPRB->scheduledCompoundsEnd();
                     ++compoundIt)
                 {
+                    wimac::PhyUserCommand* phyCommand = 
+                        phyUser_->getCommand(compoundIt->compoundPtr->getCommandPool());
+
                     getDeliverer()->getAcceptor(compoundIt->compoundPtr)
                         ->onData(compoundIt->compoundPtr);
                 }
