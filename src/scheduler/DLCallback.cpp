@@ -194,6 +194,7 @@ DLCallback::processPacket(const wns::scheduler::SchedulingCompound & compound,
         startTime + pduDuration - Utilities::getComputationalAccuracyFactor();
         sdmaFunc->subBand_ = fSlot;
         sdmaFunc->beam_ = beam;
+        sdmaFunc->timeSlot_ = timeSlot;
         sdmaFunc->pattern_ = pattern;
         sdmaFunc->requestedTxPower_ = txPower;
         func = sdmaFunc;
@@ -220,6 +221,7 @@ DLCallback::processPacket(const wns::scheduler::SchedulingCompound & compound,
         startTime + pduDuration - Utilities::getComputationalAccuracyFactor();
         broadcastFunc->subBand_ = fSlot;
         broadcastFunc->beam_ = beam;
+        broadcastFunc->timeSlot_ = timeSlot;
         func = broadcastFunc;
     }
 

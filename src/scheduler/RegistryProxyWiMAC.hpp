@@ -64,8 +64,10 @@ namespace wimac { namespace scheduler {
 		wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface> getBestPhyMode(const wns::Ratio&);
 		wns::scheduler::UserID getMyUserID();
 		simTimeType getOverhead(int numBursts);
-		wns::scheduler::ChannelQualityOnOneSubChannel estimateTxSINRAt(const wns::scheduler::UserID user);
-		wns::scheduler::ChannelQualityOnOneSubChannel estimateRxSINROf(const wns::scheduler::UserID user);
+		wns::scheduler::ChannelQualityOnOneSubChannel estimateTxSINRAt(
+            const wns::scheduler::UserID user, int slot);
+		wns::scheduler::ChannelQualityOnOneSubChannel estimateRxSINROf(
+            const wns::scheduler::UserID user, int slot);
 		wns::Power estimateInterferenceStdDeviation(const wns::scheduler::UserID user);
 		wns::scheduler::Bits getQueueSizeLimitPerConnection();
 		int getStationType(const wns::scheduler::UserID user);

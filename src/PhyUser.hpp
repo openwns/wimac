@@ -149,6 +149,9 @@ namespace wimac {
          */
         const wns::simulator::Time maxAgeCacheEntry;
 
+        int lastInterferenceSlot;
+        wns::Power interferenceForSlot;
+
         struct{
 
             wns::probe::bus::ContextCollectorPtr interferenceSDMA;

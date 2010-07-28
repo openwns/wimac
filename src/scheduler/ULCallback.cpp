@@ -260,6 +260,7 @@ ULSlaveCallback::processPacket(const wns::scheduler::SchedulingCompound & compou
         omniUnicastFunc->transmissionStop_ = endTime;
         omniUnicastFunc->subBand_ = fSlot;
         omniUnicastFunc->beam_ = beam;
+        omniUnicastFunc->timeSlot_ = timeSlot;
         omniUnicastFunc->requestedTxPower_ = txPower;
         func = omniUnicastFunc;
     }else

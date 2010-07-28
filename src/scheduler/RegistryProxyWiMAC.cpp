@@ -263,26 +263,26 @@ RegistryProxyWiMAC::getOverhead(int /* numBursts */) {
 }
 
 wns::scheduler::ChannelQualityOnOneSubChannel
-RegistryProxyWiMAC::estimateTxSINRAt(const wns::scheduler::UserID user){
+RegistryProxyWiMAC::estimateTxSINRAt(const wns::scheduler::UserID user, int slot){
 
 	// lookup the results reported by the receiving subscriber station in the
 	// local cache
 	wns::Power interference =
 		layer2->getManagementService<service::InterferenceCache>("interferenceCache")
-            ->getAveragedInterference(user.getNode());
+            ->getAveragedInterference(user.getNode(), slot);
 	wns::Ratio pathloss =
 		layer2->getManagementService<service::InterferenceCache>("interferenceCache")
-            ->getAveragedPathloss(user.getNode());
+            ->getAveragedPathloss(user.getNode(), slot);
     wns::Power carrier =
         layer2->getManagementService<service::InterferenceCache>("interferenceCache")
-            ->getAveragedCarrier(user.getNode());
+            ->getAveragedCarrier(user.getNode(), slot);
 
 
     return wns::scheduler::ChannelQualityOnOneSubChannel(pathloss, interference, carrier);
 }
 
 wns::scheduler::ChannelQualityOnOneSubChannel
-RegistryProxyWiMAC::estimateRxSINROf(const wns::scheduler::UserID user){
+RegistryProxyWiMAC::estimateRxSINROf(const wns::scheduler::UserID user, int slot){
 
 	// lookup the results previously reported by us to the remote side
 	service::InterferenceCache* remoteCache =
@@ -290,9 +290,9 @@ RegistryProxyWiMAC::estimateRxSINROf(const wns::scheduler::UserID user){
 		getStationByNode(user.getNode())->
 		getManagementService<service::InterferenceCache>("interferenceCache");
 
-	wns::Ratio pathloss = remoteCache->getAveragedPathloss(getMyUserID().getNode());
-    wns::Power interference = remoteCache->getAveragedInterference(getMyUserID().getNode());
-    wns::Power carrier = remoteCache->getAveragedCarrier(getMyUserID().getNode());
+	wns::Ratio pathloss = remoteCache->getAveragedPathloss(getMyUserID().getNode(), slot);
+    wns::Power interference = remoteCache->getAveragedInterference(getMyUserID().getNode(), slot);
+    wns::Power carrier = remoteCache->getAveragedCarrier(getMyUserID().getNode(), slot);
 
     return wns::scheduler::ChannelQualityOnOneSubChannel(pathloss, interference, carrier);
 }

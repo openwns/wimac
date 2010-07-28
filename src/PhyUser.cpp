@@ -59,6 +59,7 @@ PhyUser::PhyUser(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config) :
     wns::Cloneable<PhyUser>(),
     cacheEntryTimeStamp(-1),
     maxAgeCacheEntry(1.0),
+    lastInterferenceSlot(-1),
     friends_()
 {
     friends_.interferenceCacheName = "interferenceCache";
@@ -136,6 +137,7 @@ PhyUser::PhyUser( const PhyUser& rhs ):
 	wns::Cloneable<PhyUser>( rhs ),
 	cacheEntryTimeStamp(-1),
 	maxAgeCacheEntry(1.0),
+    lastInterferenceSlot(-1),
 	friends_()
 {
 	friends_.interferenceCacheName = rhs.friends_.interferenceCacheName;
@@ -534,6 +536,39 @@ bool PhyUser::filter( const wns::ldk::CompoundPtr& compound)
                 ///station doesn't know it and sends compounds on the old
                 ///ConnectionIdentifiers.
                 return true;
+            }
+        }
+        else // probe interference in BS
+        {
+            // Currently only OFDM is supported so only subChannel 0 is used
+            if(friends_.layer->getStationType() == wns::service::dll::StationTypes::AP()
+                && phyCommand->local.pAFunc_->timeSlot_ >= 0
+                && phyCommand->local.pAFunc_->subBand_ == 0)
+            {
+                int slot = phyCommand->local.pAFunc_->timeSlot_;
+                wns::Power rxPower = phyCommand->magic.rxMeasurement->getRxPower(); 
+                if(slot != lastInterferenceSlot)
+                {
+                    if(lastInterferenceSlot >= 0)
+                    {
+                        LOG_INFO( "Storing interference for slot: ", lastInterferenceSlot, " ",  
+                            interferenceForSlot);
+        
+                        phyCommand->magic.sourceComponent_
+                            ->getManagementService<service::InterferenceCache>("interferenceCache")
+                                ->storeInterference(friends_.layer->getNode(),
+                                                    interferenceForSlot,
+                                                    service::InterferenceCache::Local, 
+                                                    lastInterferenceSlot);
+                    }
+                    lastInterferenceSlot = slot;
+                    interferenceForSlot = wns::Power::from_dBm(-200.0);
+                }
+
+                interferenceForSlot += rxPower;
+                LOG_INFO( "Added interference from: ", 
+                    phyCommand->peer.source_->getName(), " ",
+                    rxPower, " total in slot ", slot, " is ",  interferenceForSlot);
             }
         }
     }

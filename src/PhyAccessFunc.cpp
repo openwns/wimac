@@ -42,7 +42,7 @@ void StartTransmission::operator()()
     LOG_INFO(phyUser_->getFUN()->getName(), " start transmission to ", dstStation_->getName());
     assure(phyMode_,"invalid PhyMode");
     phyUser_->getNotificationService()->disableReception();
-    phyUser_->getDataTransmissionService()->startUnicast( compound_, dstStation_, subBand_, requestedTxPower_, phyMode_ );
+    phyUser_->getDataTransmissionService()->startBroadcast( compound_, subBand_, requestedTxPower_, phyMode_ );
 }
 
 void StartBroadcastTransmission::operator()()
