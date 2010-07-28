@@ -83,19 +83,23 @@ class SubscriberStation(openwns.node.Node, scenarios.interfaces.INode):
     def addTraffic(self, binding, load):
         self.load.addTraffic(binding, load) 
 
-    def setChannelModel(self, channelmodel):
-        # reconfiguring propagation model according to the selected scenario environment
-        propagationConfigPairs = [("AP","AP"),("AP","FRS"),("AP","UT"),
-                                    ("UT","UT"),("UT","FRS"),("UT","AP"),
-                                    ("FRS","FRS"),("FRS","AP"),("FRS","UT")]
-        for pair in propagationConfigPairs:
-            self.phy.ofdmaStation.receiver[0].propagation.setPair(pair[0],pair[1]).pathloss = channelmodel.pathloss
-            self.phy.ofdmaStation.receiver[0].propagation.setPair(pair[0],pair[1]).shadowing = channelmodel.shadowing
-            self.phy.ofdmaStation.receiver[0].propagation.setPair(pair[0],pair[1]).fastFading = channelmodel. fastFading
+    def setChannelModel(self, channelmodelConfigurations):
+        for entry in channelmodelConfigurations: 
+            p1 = entry.transceiverPair[0]
+            p2 = entry.transceiverPair[1]
+            self.phy.ofdmaStation.receiver[0].propagation.setPair(
+                    p1, p2).pathloss = entry.channelmodel.pathloss
+            self.phy.ofdmaStation.receiver[0].propagation.setPair(
+                    p1, p2).shadowing = entry.channelmodel.shadowing
+            self.phy.ofdmaStation.receiver[0].propagation.setPair(
+                    p1, p2).fastFading = entry.channelmodel.fastFading
 
-            self.phy.ofdmaStation.transmitter[0].propagation.setPair(pair[0],pair[1]).pathloss = channelmodel.pathloss
-            self.phy.ofdmaStation.transmitter[0].propagation.setPair(pair[0],pair[1]).shadowing = channelmodel.shadowing
-            self.phy.ofdmaStation.transmitter[0].propagation.setPair(pair[0],pair[1]).fastFading = channelmodel. fastFading
+            self.phy.ofdmaStation.transmitter[0].propagation.setPair(
+                    p1, p2).pathloss = entry.channelmodel.pathloss
+            self.phy.ofdmaStation.transmitter[0].propagation.setPair(
+                    p1, p2).shadowing =  entry.channelmodel.shadowing
+            self.phy.ofdmaStation.transmitter[0].propagation.setPair(
+                    p1, p2).fastFading = entry.channelmodel.fastFading
 
 
 class RemoteStation(openwns.node.Node):
@@ -196,20 +200,23 @@ class BaseStation(openwns.node.Node, scenarios.interfaces.INode):
     def addTraffic(self, binding, load):
         assert false, "Don't deploy traffic to base stations"
 
-    def setChannelModel(self, channelmodel):
-        # reconfiguring propagation model according to the selected scenario environment
-        propagationConfigPairs = [("AP","AP"),("AP","FRS"),("AP","UT"),
-                                    ("UT","UT"),("UT","FRS"),("UT","AP"),
-                                    ("FRS","FRS"),("FRS","AP"),("FRS","UT")]
-        for pair in propagationConfigPairs:
-            self.phy.ofdmaStation.receiver[0].propagation.setPair(pair[0],pair[1]).pathloss = channelmodel.pathloss
-            self.phy.ofdmaStation.receiver[0].propagation.setPair(pair[0],pair[1]).shadowing = channelmodel.shadowing
-            self.phy.ofdmaStation.receiver[0].propagation.setPair(pair[0],pair[1]).fastFading = channelmodel. fastFading
+    def setChannelModel(self, channelmodelConfigurations):
+        for entry in channelmodelConfigurations: 
+            p1 = entry.transceiverPair[0]
+            p2 = entry.transceiverPair[1]
+            self.phy.ofdmaStation.receiver[0].propagation.setPair(
+                    p1, p2).pathloss = entry.channelmodel.pathloss
+            self.phy.ofdmaStation.receiver[0].propagation.setPair(
+                    p1, p2).shadowing = entry.channelmodel.shadowing
+            self.phy.ofdmaStation.receiver[0].propagation.setPair(
+                    p1, p2).fastFading = entry.channelmodel.fastFading
 
-            self.phy.ofdmaStation.transmitter[0].propagation.setPair(pair[0],pair[1]).pathloss = channelmodel.pathloss
-            self.phy.ofdmaStation.transmitter[0].propagation.setPair(pair[0],pair[1]).shadowing = channelmodel.shadowing
-            self.phy.ofdmaStation.transmitter[0].propagation.setPair(pair[0],pair[1]).fastFading = channelmodel. fastFading
-
+            self.phy.ofdmaStation.transmitter[0].propagation.setPair(
+                    p1, p2).pathloss = entry.channelmodel.pathloss
+            self.phy.ofdmaStation.transmitter[0].propagation.setPair(
+                    p1, p2).shadowing =  entry.channelmodel.shadowing
+            self.phy.ofdmaStation.transmitter[0].propagation.setPair(
+                    p1, p2).fastFading = entry.channelmodel.fastFading
 
 class RANG(openwns.node.Node):
     dll = None
