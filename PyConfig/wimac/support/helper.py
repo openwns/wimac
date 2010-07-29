@@ -171,19 +171,31 @@ def setupScheduler(simulator, sched):
     import openwns.Scheduler
     
     if sched == "RoundRobin":
-        scheduler = openwns.Scheduler.RoundRobin()
+        scheduler = openwns.Scheduler.RoundRobin
+        dsa = openwns.scheduler.DSAStrategy.LinearFFirst
     elif sched == "PropFair":
-        scheduler = openwns.Scheduler.ProportionalFair()
+        scheduler = openwns.Scheduler.ProportionalFair
+        dsa = openwns.scheduler.DSAStrategy.LinearFFirst
+    elif sched == "Fixed":
+        scheduler = openwns.Scheduler.DSADrivenRR
+        dsa = openwns.scheduler.DSAStrategy.Fixed
+    elif sched == "Random":
+        scheduler = openwns.Scheduler.RoundRobin
+        dsa = openwns.scheduler.DSAStrategy.Fixed
     else:
         raise "Unknown scheduler %s" % sched
-    
+
     bsNodes = simulator.simulationModel.getNodesByProperty("Type", "BS")
-    
+
     for bs in bsNodes:
         for i in xrange(len(bs.dll.dlscheduler.config.txScheduler.strategy.subStrategies)):
-            bs.dll.dlscheduler.config.txScheduler.strategy.subStrategies[i] = scheduler
-            bs.dll.ulscheduler.config.rxScheduler.strategy.subStrategies[i] = scheduler
-    
+            bs.dll.dlscheduler.config.txScheduler.strategy.subStrategies[i] = scheduler()
+            bs.dll.dlscheduler.config.txScheduler.strategy.dsastrategy = dsa(
+                oneUserOnOneSubChannel = True)
+
+            bs.dll.ulscheduler.config.rxScheduler.strategy.subStrategies[i] = scheduler()
+            bs.dll.ulscheduler.config.rxScheduler.strategy.dsastrategy = dsa(
+                oneUserOnOneSubChannel = True)
 
 def disableIPHeader(simulator):
   
