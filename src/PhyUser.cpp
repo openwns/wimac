@@ -554,9 +554,8 @@ bool PhyUser::filter( const wns::ldk::CompoundPtr& compound)
                         LOG_INFO( "Storing interference for slot: ", lastInterferenceSlot, " ",  
                             interferenceForSlot);
         
-                        phyCommand->magic.sourceComponent_
-                            ->getManagementService<service::InterferenceCache>("interferenceCache")
-                                ->storeInterference(friends_.layer->getNode(),
+                        friends_.layer->getManagementService<service::InterferenceCache>(
+                            "interferenceCache")->storeInterference(friends_.layer->getNode(),
                                                     interferenceForSlot,
                                                     service::InterferenceCache::Local, 
                                                     lastInterferenceSlot);
