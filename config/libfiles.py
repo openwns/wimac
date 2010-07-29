@@ -93,6 +93,7 @@ pyconfigs = [
     'wimac/Services.py',
     'wimac/CompoundSwitch.py',
     'wimac/KeyBuilder.py',
+    'wimac/qos.py',
     'wimac/Rang.py',
     'wimac/WiMAC.py',
     'wimac/LLMapping.py',

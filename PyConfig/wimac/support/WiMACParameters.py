@@ -428,6 +428,9 @@ class ParametersMAC(Frozen):
     #  Reminder: Sub frame is located in the uplink frame phase.
     #####
     
+    useApplicationLoadGen = False
+    # Chose loadgenerator (False if constanze and true for applications
+    #####
     
     import wimac.Services
     associationService = "BestAtGivenTime" # "Fixed"

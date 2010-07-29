@@ -2,6 +2,9 @@ import openwns.geometry.position
 import openwns.node
 from openwns import dBm, dB
 import constanze.traffic
+
+import tcp.TCP
+
 import rise.Mobility
 import ip.Component
 
@@ -14,6 +17,7 @@ from wimac.support.Transceiver import Transceiver
 
 import scenarios.interfaces
 import scenarios.channelmodel
+
 
 def getOFDMAComponent(node, typeString, _config):
     transceiver = Transceiver(_config)
@@ -65,7 +69,17 @@ class SubscriberStation(openwns.node.Node, scenarios.interfaces.INode):
 
         self.nl.addRoute("0.0.0.0", "0.0.0.0", "192.168.254.254", "wimax")
 
-        self.load = constanze.node.ConstanzeComponent(self, "constanze")
+        if _config.parametersMAC.useApplicationLoadGen:
+            self.tl = tcp.TCP.UDPComponent(self, "udp", self.nl.dataTransmission, self.nl.notification)
+
+            import applications
+            import applications.component
+            self.load = applications.component.Client(self, "applications")
+            self.load.logger.enabled = True
+        else:
+            self.load = constanze.node.ConstanzeComponent(self, "constanze")
+
+
         self.mobility = rise.Mobility.Component(node = self,
                                                 name = "mobility UT"+str(_id),
                                                 mobility = rise.Mobility.No(openwns.geometry.position.Position())
@@ -224,7 +238,7 @@ class RANG(openwns.node.Node):
     load = None
     ipAddress = None
 
-    def __init__(self, name = "RANGWiMAX", id = 1):
+    def __init__(self, config, name = "RANGWiMAX", id = 1):
         super(RANG, self).__init__(name) 
         self.setProperty("Type", "RANG")        
         # create dll for Rang
@@ -246,5 +260,12 @@ class RANG(openwns.node.Node):
                        _dllDataTransmission = self.dll.dataTransmission,
                        _dllNotification = self.dll.notification)
 
-        self.load = constanze.node.ConstanzeComponent(self, "constanze")
+        if config.parametersMAC.useApplicationLoadGen:
+            self.tl = tcp.TCP.UDPComponent(self, "udp", self.nl.dataTransmission, self.nl.notification)
 
+            import applications
+            import applications.component
+            self.load = applications.component.Server(self, "applications")
+            self.load.logger.enabled = True
+        else:
+            self.load = constanze.node.ConstanzeComponent(self, "constanze")

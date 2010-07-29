@@ -30,6 +30,84 @@ from constanze.node import IPBinding, IPListenerBinding, Listener
 from openwns import dBm, dB, fromdB, fromdBm
 from scenarios.channelmodel.channelmodelcreator import *
 
+try:
+    import applications.clientSessions
+    import applications.serverSessions
+    import applications.codec
+    import applications.component
+except ImportError:
+    pass
+
+import wimac.qos
+
+### Application VoIP
+def createDLVoIPTraffic(simulator, codecType = applications.codec.AMR_12_2(), comfortNoiseChoice = True, settlingTime = 0.0):
+    rangs = simulator.simulationModel.getNodesByProperty("Type", "RANG")
+    rang = rangs[0]
+    utNodes = simulator.simulationModel.getNodesByProperty("Type", "UE")
+    
+    for ut in utNodes:
+        voipDL = applications.serverSessions.VoIP(codecType = codecType,
+                                                  comfortNoiseChoice = comfortNoiseChoice, settlingTime = settlingTime)
+
+        tlListenerBinding = applications.component.TLListenerBinding(rang.nl.domainName, "127.0.0.1", 1028,
+                                                                      wimac.qos.UGSQosClass, 1028, voipDL,
+                                                                      parentLogger = rang.logger)
+        rang.load.addListenerBinding(tlListenerBinding)
+
+def createULVoIPTraffic(simulator, codecType = applications.codec.AMR_12_2(), comfortNoiseChoice = True,
+                        settlingTime = 0.0, minStartDelay = 0.1, maxStartDelay = 1.0):
+    rangs = simulator.simulationModel.getNodesByProperty("Type", "RANG")
+    rang = rangs[0]
+    utNodes = simulator.simulationModel.getNodesByProperty("Type", "UE")
+               
+    for ut in utNodes:
+        voipUL = applications.clientSessions.VoIP(codecType = codecType,
+                                                  comfortNoiseChoice = comfortNoiseChoice, settlingTime = settlingTime,
+                                                  minStartDelay = minStartDelay, maxStartDelay = maxStartDelay)
+
+        tlBinding = applications.component.TLBinding(ut.nl.domainName, rang.nl.domainName,
+                                                     1028, wimac.qos.UGSQosClass,
+                                                     1028, parentLogger = ut.logger)
+        ut.load.addTraffic(tlBinding, voipUL)
+###
+
+
+### Application Video(WiMAX)
+def createDLWiMAXVideoTraffic(simulator, framesPerSecond = 10.0, numberOfPackets = 8.0, shapeOfPacketSize = 1.2,
+                        scaleOfPacketSize = 40.0, shapeOfPacketIat = 1.2, scaleOfPacketIat = 2.5,
+                        settlingTime = 0.0):
+    rangs = simulator.simulationModel.getNodesByProperty("Type", "RANG")
+    rang = rangs[0]
+    utNodes = simulator.simulationModel.getNodesByProperty("Type", "UE")
+    
+    for ut in utNodes:
+        wimaxVideoDL = applications.serverSessions.WiMAXVideo(framesPerSecond = framesPerSecond, numberOfPackets = numberOfPackets,
+                                                        shapeOfPacketSize = shapeOfPacketSize, scaleOfPacketSize = scaleOfPacketSize,
+                                                        shapeOfPacketIat = shapeOfPacketIat, scaleOfPacketIat = scaleOfPacketIat,
+                                                        settlingTime = settlingTime, parentLogger = rang.logger)
+
+        tlListenerBinding = applications.component.TLListenerBinding(rang.nl.domainName, "127.0.0.1", 1032,
+                                                                      wimac.qos.rtPSQosClass, 1032, wimaxVideoDL,
+                                                                      parentLogger = rang.logger)
+        rang.load.addListenerBinding(tlListenerBinding)
+
+
+def createULWiMAXVideoTraffic(simulator, settlingTime = 0.0, minStartDelay = 1.0, maxStartDelay = 2.0):
+    rangs = simulator.simulationModel.getNodesByProperty("Type", "RANG")
+    rang = rangs[0]
+    utNodes = simulator.simulationModel.getNodesByProperty("Type", "UE")
+               
+    for ut in utNodes:
+        wimaxVideoUL = applications.clientSessions.WiMAXVideo(settlingTime = settlingTime, minStartDelay = minStartDelay, maxStartDelay = maxStartDelay)
+
+        tlBinding = applications.component.TLBinding(ut.nl.domainName, rang.nl.domainName,
+                                                     1032, wimac.qos.SignalingQosClass,
+                                                     1032, parentLogger = ut.logger)
+        ut.load.addTraffic(tlBinding, wimaxVideoUL)
+###
+
+
 def createDLPoissonTraffic(simulator, rate, packetSize):
     rangs = simulator.simulationModel.getNodesByProperty("Type", "RANG")
     rang = rangs[0]

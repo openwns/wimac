@@ -47,6 +47,9 @@ import ip.Component
 import constanze.traffic
 from constanze.node import IPBinding, IPListenerBinding, Listener
 
+import applications.clientSessions
+import applications.serverSessions
+import applications.component
 
 import wimac.Rang
 
@@ -68,20 +71,22 @@ class WiMAXBSCreator(scenarios.interfaces.INodeCreator):
 
         if self.rang == None or self.oneRANGperBS == True:
             if self.oneRANGperBS:
-                rang = wimac.support.Nodes.RANG("WiMAXRang" + str(bs.nodeID), bs.nodeID)
+                rang = wimac.support.Nodes.RANG(self.config, "WiMAXRang" + str(bs.nodeID), bs.nodeID)
                 rang.dll.addAP(bs)
-            else:
-                rang = wimac.support.Nodes.RANG()
                 self.rang = rang
-                
-            # The RANG only has one IPListenerBinding that is attached
-            # to the listener. The listener is the only traffic sink
-            # within the RANG
-            ipListenerBinding = IPListenerBinding(rang.nl.domainName)
-            listener = Listener(rang.nl.domainName + ".listener")
-            rang.load.addListener(ipListenerBinding, listener)
+            else:
+                rang = wimac.support.Nodes.RANG(self.config)
+                self.rang = rang
 
-            openwns.simulator.getSimulator().simulationModel.nodes.append(rang)
+            if self.config.parametersMAC.useApplicationLoadGen == False: 
+                # The RANG only has one IPListenerBinding that is attached
+                # to the listener. The listener is the only traffic sink
+                # within the RANG
+                ipListenerBinding = IPListenerBinding(rang.nl.domainName)
+                listener = Listener(rang.nl.domainName + ".listener")
+                rang.load.addListener(ipListenerBinding, listener)
+
+            openwns.simulator.getSimulator().simulationModel.nodes.append(self.rang)
 
         if self.oneRANGperBS == False:
             self.rang.dll.addAP(bs)

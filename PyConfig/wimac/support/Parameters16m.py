@@ -271,6 +271,8 @@ class ParametersMAC(Frozen):
     #  sub frame ratio of the uplink frame phase
     #  Reminder: Sub frame is located in the uplink frame phase.
     #####
+
+    useApplicationLoadGen = False
     
     import wimac.Services
     associationService = "BestAtGivenTime" # "Fixed"
