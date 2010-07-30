@@ -47,10 +47,6 @@ import ip.Component
 import constanze.traffic
 from constanze.node import IPBinding, IPListenerBinding, Listener
 
-import applications.clientSessions
-import applications.serverSessions
-import applications.component
-
 import wimac.Rang
 
 from wimac.support.Transceiver import Transceiver
