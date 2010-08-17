@@ -27,6 +27,8 @@ def getSamplingFrequencyOFDMA(bandwidth, cyclicPrefix):
         n = 28/25.0;
     elif bandwidth == 7 or bandwidth == 8.75:
         n = 8/7.0;
+    else:
+        print "error: the bandwidth ", bandwidth, " is not a valid value"
     return floor(n * bandwidth * 1e+6 / 8000) * 8000
 
 def getFftSize(BW):
@@ -129,13 +131,13 @@ class ParametersOFDMA(object):
     #subcarrierPerSubchannel = 16
     __name__ = "ParametersOFDMA"
     
-    def __init__(self, _bandwidth):
+    def __init__(self, bandwidth):
         # OFDMA parameters not yet completed
         # check this before usage!!
         #########################################################################
         #       Primitive Parameters                                            #
         #########################################################################
-        self.channelBandwidth = _bandwidth
+        self.channelBandwidth = bandwidth
         # [MHz]
         # [5, 7, 8.75, 10, 20]
         ###########
@@ -179,7 +181,7 @@ class ParametersOFDMA(object):
         self.ttg = 105.714E-6
         self.rtg = 60.0E-6
 
-        self.DL2ULratio = 4/4
+        self.DL2ULratio = 4/4.0 #/3.0
         #[8:0, 6:2, 5:3, 4:4, or 3:5] valid for [5, 10, 20] MHz bandwidth
         #[3:2 or 2:3] for 7 MHz and [5:2, 4:3, or 3:4] for 8.75 MHz channel bandwidth
         

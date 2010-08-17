@@ -69,6 +69,7 @@ def installDebugEvaluation(sim, loggingStationIDs, settlingTime, kind = "PDF"):
                 
     bodyInstallDefaultEvaluation(sim, loggingStationIDs, settlingTime, sources, kind)
 
+# begin example "wimac.tutorial.experiment2.evaluating.tutorialEvaluation"
 def installTutorialEvaluation(sim, loggingStationIDs, settlingTime, kind = "PDF"):
     sources = ["wimac.top.window.incoming.bitThroughput", 
                "wimac.top.packet.incoming.delay",
@@ -80,6 +81,7 @@ def installTutorialEvaluation(sim, loggingStationIDs, settlingTime, kind = "PDF"
                #"wimac.deltaInterferenceSDMA"
                ] 
     bodyInstallDefaultEvaluation(sim, loggingStationIDs, settlingTime, sources, kind, tutorial = True)
+# end example
 
 def bodyInstallDefaultEvaluation(sim, loggingStationIDs, settlingTime, sources, kind, tutorial = False):
     probedAtTx = ["wimac.buffer.delay",

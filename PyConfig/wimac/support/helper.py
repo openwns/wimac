@@ -254,6 +254,9 @@ def setupScheduler(simulator, sched):
     elif sched == "PropFair":
         scheduler = openwns.Scheduler.ProportionalFair
         dsa = openwns.scheduler.DSAStrategy.LinearFFirst
+    elif sched == "ExhaustiveRR":
+        scheduler = openwns.Scheduler.ExhaustiveRoundRobin
+        dsa = openwns.scheduler.DSAStrategy.LinearFFirst
     elif sched == "Fixed":
         scheduler = openwns.Scheduler.DSADrivenRR
         dsa = openwns.scheduler.DSAStrategy.Fixed
