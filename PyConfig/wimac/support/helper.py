@@ -245,6 +245,8 @@ def setupPhyDetail(simulator, freq, bsTxPower, utTxPower, config, rxNoiseBS, rxN
         ut.dll.ulscheduler.config.txScheduler.registry.powerCapabilitiesUT = utPower
         ut.phy.ofdmaStation.txPower = bsTxPower
 
+
+# begin example "wimac.tutorial.experiment2.staticFactory.substrategy.ProportionalFair.helper.py"
 def setupScheduler(simulator, sched):
     import openwns.Scheduler
     
@@ -277,6 +279,45 @@ def setupScheduler(simulator, sched):
             bs.dll.ulscheduler.config.rxScheduler.strategy.subStrategies[i] = scheduler()
             bs.dll.ulscheduler.config.rxScheduler.strategy.dsastrategy = dsa(
                 oneUserOnOneSubChannel = True)
+# end example
+
+
+def setupSchedulerDetails(simulator, packetScheduler, dsaStrategy):
+    import openwns.Scheduler
+    sched = packetScheduler
+        
+    if sched == "RoundRobin":
+        scheduler = openwns.Scheduler.RoundRobin
+    elif sched == "PropFair":
+        scheduler = openwns.Scheduler.ProportionalFair
+    elif sched == "ExhaustiveRR":
+        scheduler = openwns.Scheduler.ExhaustiveRoundRobin
+    elif sched == "DSADrivenRR":
+        scheduler = openwns.Scheduler.DSADrivenRR
+    else:
+        raise "Unknown scheduler %s" % sched
+
+    if dsaStrategy == "LinearFFirst":
+        dsa = openwns.scheduler.DSAStrategy.LinearFFirst
+    elif dsaStrategy == "Random":
+        dsa = openwns.scheduler.DSAStrategy.Random
+    elif dsaStrategy == "Fixed":
+        dsa = openwns.scheduler.DSAStrategy.Fixed
+    else:
+        raise "Unknown DSA strategy %s" % dsaStr
+    
+    bsNodes = simulator.simulationModel.getNodesByProperty("Type", "BS")
+
+    for bs in bsNodes:
+        for i in xrange(len(bs.dll.dlscheduler.config.txScheduler.strategy.subStrategies)):
+            bs.dll.dlscheduler.config.txScheduler.strategy.subStrategies[i] = scheduler()
+            bs.dll.dlscheduler.config.txScheduler.strategy.dsastrategy = dsa(
+                oneUserOnOneSubChannel = True)
+
+            bs.dll.ulscheduler.config.rxScheduler.strategy.subStrategies[i] = scheduler()
+            bs.dll.ulscheduler.config.rxScheduler.strategy.dsastrategy = dsa(
+                oneUserOnOneSubChannel = True)
+
 
 def disableIPHeader(simulator):
   
