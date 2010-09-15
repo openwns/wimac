@@ -277,7 +277,7 @@ void
 PhyUser::onData(wns::osi::PDUPtr pdu,
         wns::service::phy::power::PowerMeasurementPtr rxPowerMeasurement)
 {
-    wns::ldk::CompoundPtr compound = wns::staticCast<wns::ldk::Compound>(pdu);
+    wns::ldk::CompoundPtr compound = wns::staticCast<wns::ldk::Compound>(pdu)->copy();
     if(!getFUN()->getProxy()->commandIsActivated(
         compound->getCommandPool(), this))      
             return;
