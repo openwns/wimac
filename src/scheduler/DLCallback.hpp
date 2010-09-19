@@ -50,6 +50,7 @@ namespace wimac { namespace scheduler {
         wns::ldk::fun::FUN* fun_;
         bool beamforming;
         wns::simulator::Time slotLength_;
+	long int tbCounter_;
     };
 
 }}

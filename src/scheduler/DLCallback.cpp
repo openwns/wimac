@@ -54,7 +54,8 @@ DLCallback::DLCallback(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& confi
     Callback(fun, config),
     fun_(fun),
     beamforming(config.get<bool>("beamforming")),
-    slotLength_(config.get<wns::simulator::Time>("slotLength"))
+    slotLength_(config.get<wns::simulator::Time>("slotLength")),
+    tbCounter_(0)
 {}
 
 void DLCallback::deliverNow(wns::ldk::Connector* connector)
@@ -93,6 +94,8 @@ void DLCallback::deliverNow(wns::ldk::Connector* connector)
 void
 DLCallback::callBack(wns::scheduler::SchedulingMapPtr schedulingMap)
 {
+    tbCounter_++;
+
     lastScheduling_ = wns::simulator::getEventScheduler()->getTime();    
 
     for(wns::scheduler::SubChannelVector::iterator iterSubChannel = schedulingMap->subChannels.begin();
@@ -244,7 +247,7 @@ DLCallback::processPacket(const wns::scheduler::SchedulingCompound & compound,
     phyCommand->peer.estimatedCQI = estimatedCQI;
     phyCommand->magic.sourceComponent_ = wimacComponent;
 
-    colleagues.harq->storeSchedulingTimeSlot(timeSlotPtr);
+    colleagues.harq->storeSchedulingTimeSlot(tbCounter_, timeSlotPtr);
 
     phyCommand->magic.schedulingTimeSlot = wns::scheduler::SchedulingTimeSlotPtr(
         new wns::scheduler::SchedulingTimeSlot(*timeSlotPtr));

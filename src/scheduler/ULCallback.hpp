@@ -49,6 +49,7 @@ namespace wimac { namespace scheduler {
     protected:
         wns::ldk::fun::FUN* fun_;
         wns::simulator::Time slotLength_;
+	long int tbCounter_;
     };
 
     class ULMasterCallback :
@@ -63,6 +64,7 @@ namespace wimac { namespace scheduler {
 
         virtual void
         deliverNow(wns::ldk::Connector* connector);
+
     private:
         bool beamforming;
     };

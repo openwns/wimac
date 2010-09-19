@@ -62,12 +62,14 @@ ULCallback(fun, config)
 ULCallback::ULCallback(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config) :
     Callback(fun, config),
     fun_(fun),
-    slotLength_(config.get<wns::simulator::Time>("slotLength"))
+    slotLength_(config.get<wns::simulator::Time>("slotLength")),
+    tbCounter_(0)
 {}
 
 void
 ULCallback::callBack(wns::scheduler::SchedulingMapPtr schedulingMap)
 {
+    tbCounter_++;
     LOG_INFO(fun_->getLayer()->getName(), " ULCallback::callBack(): ");
     lastScheduling_ = wns::simulator::getEventScheduler()->getTime();
 
@@ -286,7 +288,7 @@ ULSlaveCallback::processPacket(const wns::scheduler::SchedulingCompound & compou
     phyCommand->peer.estimatedCQI = estimatedCQI;
     phyCommand->magic.sourceComponent_ = wimacComponent;
 
-    colleagues.harq->storeSchedulingTimeSlot(timeSlotPtr);
+    colleagues.harq->storeSchedulingTimeSlot(tbCounter_, timeSlotPtr);
 
     phyCommand->magic.schedulingTimeSlot = wns::scheduler::SchedulingTimeSlotPtr(
         new wns::scheduler::SchedulingTimeSlot(*timeSlotPtr));
