@@ -336,6 +336,11 @@ BypassQueue::resetQueues(wns::scheduler::UserID)
     return wns::scheduler::queue::QueueInterface::ProbeOutput();
 }
 
+void
+BypassQueue::frameStarts()
+{
+}
+
 wns::scheduler::queue::QueueInterface::ProbeOutput
 BypassQueue::resetQueue(wns::scheduler::ConnectionID)
 {

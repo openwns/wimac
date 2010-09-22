@@ -101,6 +101,13 @@ namespace wimac { namespace scheduler {
         resetQueues(wns::scheduler::UserID);
 
         /**
+         * @brief May be called to signal that a frame starts
+         */
+        virtual void
+        frameStarts();
+
+
+        /**
          * @brief Resets only the queue belonging to the given
          * ConnectionID and all backlogged PDUs from this queue.
          */
