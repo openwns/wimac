@@ -439,7 +439,7 @@ RegistryProxyWiMAC::filterReachable(wns::scheduler::UserSet users)
 }
 
 wns::scheduler::ConnectionSet
-RegistryProxyWiMAC::filterReachable(wns::scheduler::ConnectionSet connections, const int /*frameNr*/)
+RegistryProxyWiMAC::filterReachable(wns::scheduler::ConnectionSet connections, const int /*frameNr*/, bool /*useHARQ*/)
 {
        return connections;
 }

@@ -73,7 +73,7 @@ namespace wimac { namespace scheduler {
 		int getStationType(const wns::scheduler::UserID user);
         virtual wns::scheduler::UserSet filterReachable( wns::scheduler::UserSet users ); // soon obsolete
 		virtual wns::scheduler::UserSet filterReachable( wns::scheduler::UserSet users, const int frameNr );
-		virtual wns::scheduler::ConnectionSet filterReachable(wns::scheduler::ConnectionSet connections, const int frameNr );
+		virtual wns::scheduler::ConnectionSet filterReachable(wns::scheduler::ConnectionSet connections, const int frameNr, bool useHARQ );
 		virtual wns::scheduler::PowerMap calcULResources(const wns::scheduler::UserSet&, unsigned long int) const;
 		virtual wns::scheduler::UserSet getActiveULUsers() const;
 		/**@brief returns one for UTs, and #connected UTs in case of RNs */
