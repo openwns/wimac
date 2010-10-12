@@ -72,6 +72,10 @@ class SubscriberStation(openwns.node.Node, scenarios.interfaces.INode):
         if _config.parametersMAC.useApplicationLoadGen:
             self.tl = tcp.TCP.UDPComponent(self, "udp", self.nl.dataTransmission, self.nl.notification)
 
+            self.tl.addFlowHandling(
+                _dllNotification = self.dll.notification,
+                _flowEstablishmentAndRelease = self.dll.flowEstablishmentAndRelease)
+
             import applications
             import applications.component
             self.load = applications.component.Client(self, "applications")
@@ -247,7 +251,7 @@ class RANG(openwns.node.Node):
         self.ipAddress = "192.168.254." + str(255 - id)
         # create Network Layer and Loadgen
         domainName = "RANG" + str(id) + ".wimax.wns.org"
-        self.nl = ip.Component.IPv4Component(self, domainName + ".ip", domainName)
+        self.nl = ip.Component.IPv4Component(self, domainName + ".ip", domainName, useDllFlowIDRule = True)
 
         self.nl.addDLL(_name = "tun",
                        # Where to get my IP Address

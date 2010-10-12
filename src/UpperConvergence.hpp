@@ -153,7 +153,8 @@ namespace wimac {
         wns::service::dll::FlowHandler* tlFlowHandler;
 
         std::map<long int, ConnectionIdentifier::QoSCategory> flowID2QosClass;
-        long int dllFlowID;
+
+        static long int dllFlowID;
 
         wimac::RANG* rang_;
     };

@@ -47,6 +47,8 @@ STATIC_FACTORY_REGISTER_WITH_CREATOR(
     "wimac.NoUpperConvergence",
     wns::ldk::FUNConfigCreator);
 
+long int UpperConvergence::dllFlowID = 0;
+
 
 UpperConvergence::UpperConvergence(wns::ldk::fun::FUN* fun, const wns::pyconfig::View&) :
     wns::ldk::CommandTypeSpecifier<UpperCommand>(fun),
@@ -55,7 +57,6 @@ UpperConvergence::UpperConvergence(wns::ldk::fun::FUN* fun, const wns::pyconfig:
     wns::ldk::HasDeliverer<>(),
     sourceMACAddress_(),
     dataHandler_(NULL),
-    dllFlowID(0),
     rang_(NULL)
 {}
 
@@ -76,7 +77,7 @@ UpperConvergence::sendData(
 
     LOG_INFO(getFUN()->getName(),
              ": doSendData() called in convergence::Upper, target DLLAddress: " ,
-             peer);
+             peer, " DLLFlowID: ", _dllFlowID);
 
     wns::ldk::CompoundPtr compound(new wns::ldk::Compound(getFUN()->createCommandPool(), pdu));
 
@@ -91,6 +92,10 @@ UpperConvergence::sendData(
     if(flowID2QosClass.find(_dllFlowID) != flowID2QosClass.end())
     {
         sgc->local.qosClass = flowID2QosClass[_dllFlowID];
+
+        LOG_INFO(getFUN()->getName(),
+            ": doSendData() called in convergence::Upper, QoS class: ", 
+            sgc->local.qosClass);
     }
 
     if(this->getConnector()->hasAcceptor(compound))
@@ -118,17 +123,29 @@ UpperConvergence::getMACAddress() const
 void
 UpperConvergence::doOnData(const wns::ldk::CompoundPtr& compound)
 {
+    UpperCommand* myCommand = getCommand(compound->getCommandPool());
+
     LOG_INFO( getFUN()->getName(),
-              ": doOnData(), forwarding to upper Component (IP) ");
+        ": doOnData(), forwarding to upper Component (IP). DLLFlowID: ", 
+        myCommand->local.dllFlowID, " QoS class: ", myCommand->local.qosClass);
 
     if(dataHandler_ != NULL)
-        dataHandler_->onData(compound->getData());
+        dataHandler_->onData(compound->getData(), myCommand->local.dllFlowID);
     else if (rang_ != NULL)
     {
-        UpperCommand* myCommand = getCommand(compound->getCommandPool());
+
+        if(flowID2QosClass.find(myCommand->local.dllFlowID) == flowID2QosClass.end())
+        {
+            LOG_INFO( getFUN()->getName(),
+                ": doOnData(), mapping DLLFlowID: ", 
+                myCommand->local.dllFlowID, " to QoS class: ", myCommand->local.qosClass);
+
+            flowID2QosClass[myCommand->local.dllFlowID] = myCommand->local.qosClass;
+        }
+
         rang_->onData(compound->getData(),
             myCommand->peer.sourceMACAddress,
-            this);
+            this, myCommand->local.dllFlowID);
     }
     else
         assure(false, "No data handler registered");   
@@ -194,6 +211,8 @@ void
 UpperConvergence::establishFlow(wns::service::tl::FlowID flowID, wns::service::qos::QoSClass qosClass)
 {
     assure(tlFlowHandler, "No TL FlowHandler set");
+
+    dllFlowID++;
     
     LOG_INFO("FlowEstablishment called from TL for: ", 
         flowID, " QoS class: ", qosClass, " DLLFlowID ", dllFlowID);
@@ -201,7 +220,6 @@ UpperConvergence::establishFlow(wns::service::tl::FlowID flowID, wns::service::q
     flowID2QosClass[dllFlowID] = ConnectionIdentifier::QoSCategory(qosClass);
     tlFlowHandler->onFlowEstablished(flowID, dllFlowID);
 
-    dllFlowID++;
 
 } // establishFlow
 

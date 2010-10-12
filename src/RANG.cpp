@@ -55,17 +55,17 @@ RANG::doStartup()
 
 void
 RANG::onData(const wns::SmartPtr<wns::osi::PDU>& _data,
-		wns::service::dll::FlowID)//****
+		wns::service::dll::FlowID dllFlowID)
 {
     assure(dataHandlerRegistry.knows(wns::service::dll::protocolNumberOf(_data)), "no data handler set");
-    dataHandlerRegistry.find(wns::service::dll::protocolNumberOf(_data))->onData(_data);
+    dataHandlerRegistry.find(wns::service::dll::protocolNumberOf(_data))->onData(_data, dllFlowID);
 }
 
 void
 RANG::onData(const wns::SmartPtr<wns::osi::PDU>& _data,
              wns::service::dll::UnicastAddress _sourceMACAddress,
              wns::service::dll::UnicastDataTransmission* _ap,
-             wns::service::dll::FlowID _dllFlowID)//****
+             wns::service::dll::FlowID _dllFlowID)
 {
     updateAPLookUp(_sourceMACAddress, _ap);
 
@@ -74,7 +74,7 @@ RANG::onData(const wns::SmartPtr<wns::osi::PDU>& _data,
     MESSAGE_END();
 
     assure(dataHandlerRegistry.knows(wns::service::dll::protocolNumberOf(_data)), "no data handler set");
-    dataHandlerRegistry.find(wns::service::dll::protocolNumberOf(_data))->onData(_data);
+    dataHandlerRegistry.find(wns::service::dll::protocolNumberOf(_data))->onData(_data, _dllFlowID);
 }
 
 void
@@ -82,7 +82,7 @@ RANG::sendData(
     const wns::service::dll::UnicastAddress& _peer,
     const wns::SmartPtr<wns::osi::PDU>& pdu,
     wns::service::dll::protocolNumber protocol,
-    wns::service::dll::FlowID _dllFlowID)//****
+    wns::service::dll::FlowID _dllFlowID)
 {
     wns::service::dll::UnicastDataTransmission* ap = NULL;
     if( knowsAddress(_peer) )
@@ -99,9 +99,11 @@ RANG::sendData(
     m << ": doSendData(), RANG forwarding to convergence::Upper\n";
     m << "target is ";
     m << _peer;
+    m << " DLLFlowID: ";
+    m << _dllFlowID;
     MESSAGE_END();
 
-    ap->sendData(_peer, pdu, protocol);
+    ap->sendData(_peer, pdu, protocol, _dllFlowID);
 }
 
 void

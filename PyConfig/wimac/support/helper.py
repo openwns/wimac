@@ -99,7 +99,7 @@ try:
             wimaxVideoUL = applications.clientSessions.WiMAXVideo(settlingTime = settlingTime, minStartDelay = minStartDelay, maxStartDelay = maxStartDelay)
     
             tlBinding = applications.component.TLBinding(ut.nl.domainName, rang.nl.domainName,
-                                                        1032, wimac.qos.SignalingQosClass,
+                                                        1032, wimac.qos.rtPSQosClass,
                                                         1032, parentLogger = ut.logger)
             ut.load.addTraffic(tlBinding, wimaxVideoUL)
     ###

@@ -72,6 +72,19 @@ Component::Component(wns::node::Interface* node, const wns::pyconfig::View& conf
     fun_ = new wns::ldk::fun::Main(this);
     wns::ldk::configureFUN(fun_, config.get<wns::pyconfig::View>("fun"));
 
+    if(!getConfig().isNone("upperConvergenceName"))
+    {
+        std::string upperConvergenceName = getConfig().get<std::string>("upperConvergenceName");
+        UpperConvergence* upperConvergence =
+            getFUN()->findFriend<UpperConvergence*>(upperConvergenceName);
+
+        // register UpperConvergence as the DLL DataTransmissionService
+        addService(getConfig().get<std::string>("dataTransmission"), upperConvergence);
+        addService(getConfig().get<std::string>("notification"), upperConvergence);
+        addService(getConfig().get<std::string>("flowEstablishmentAndRelease"), upperConvergence);
+        upperConvergence->setMACAddress(address_);
+    }
+
     // fire up control and management Services
     { // do control services
         for (int ii = 0; ii<config.len("controlServices"); ++ii){
@@ -213,19 +226,6 @@ Component::onNodeCreated()
     // set services in PhyUser to communicate with lower layer
     PhyUser* phyUser = getFUN()->findFriend<PhyUser*>("phyUser");
     phyUser->setMACAddress( getMACAddress() );
-
-    if(!getConfig().isNone("upperConvergenceName"))
-    {
-        std::string upperConvergenceName = getConfig().get<std::string>("upperConvergenceName");
-        UpperConvergence* upperConvergence =
-            getFUN()->findFriend<UpperConvergence*>(upperConvergenceName);
-
-        // register UpperConvergence as the DLL DataTransmissionService
-        addService(getConfig().get<std::string>("dataTransmission"), upperConvergence);
-        addService(getConfig().get<std::string>("notification"), upperConvergence);
-        addService(getConfig().get<std::string>("flowEstablishmentAndRelease"), upperConvergence);
-        upperConvergence->setMACAddress(address_);
-    }
 
 	phyUser->setDataTransmissionService(
 			getService<wns::service::phy::ofdma::DataTransmission*>( transServiceName ) );
