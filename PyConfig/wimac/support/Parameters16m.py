@@ -23,7 +23,8 @@ def getSamplingFrequencyOFDMA(bandwidth, cyclicPrefix):
     """
 
     # sampling factor refering to IEEE802.16e 8.4.2.3
-    if bandwidth == 20 or bandwidth == 10 or bandwidth == 5:
+    #bandwidth of 1.25MHz is introduced for a faster tutorial
+    if bandwidth == 20 or bandwidth == 10 or bandwidth == 5 or bandwidth == 1.25:
         n = 28/25.0;
     elif bandwidth == 7 or bandwidth == 8.75:
         n = 8/7.0;
@@ -33,7 +34,10 @@ def getSamplingFrequencyOFDMA(bandwidth, cyclicPrefix):
 
 def getFftSize(BW):
 
-    if BW == 5:
+    #bandwidth of 1.25MHz is introduced for a faster tutorial
+    if BW == 1.25:
+        fft = 128;
+    elif BW == 5:
         fft = 512;
     elif BW == 7:
         fft = 1024;
@@ -58,6 +62,8 @@ def getNumberOfChannels(subcarrierAllocation, fftSize):
             Nsub = 48;
         elif fftSize == 512:
             Nsub = 24;
+        elif fftSize == 128:
+            Nsub = 6;
         else:
             Nsub = 0;
     else:

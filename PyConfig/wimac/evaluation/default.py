@@ -73,7 +73,7 @@ def installDebugEvaluation(sim, loggingStationIDs, settlingTime, kind = "PDF"):
 def installTutorialEvaluation(sim, loggingStationIDs, settlingTime, kind = "PDF"):
     sources = ["wimac.top.window.incoming.bitThroughput", 
                "wimac.top.packet.incoming.delay",
-               #"wimac.top.window.aggregated.bitThroughput",
+               "wimac.top.window.aggregated.bitThroughput",
                #"wimac.cirSDMA",
                #"wimac.carrierSDMA",
                #"wimac.interferenceSDMA",
@@ -154,6 +154,15 @@ def bodyInstallDefaultEvaluation(sim, loggingStationIDs, settlingTime, sources, 
 
         if kind == "Moments":                            
             node.getLeafs().appendChildren(openwns.evaluation.generators.Moments())
+        elif kind == "delayPDF":
+            if "delay" in src:                          
+                node.getLeafs().appendChildren(openwns.evaluation.generators.PDF(
+                                                            description = 'packet delay [s]',
+                                                            minXValue = 0.0,
+                                                            maxXValue = 0.1,
+                                                            resolution =  1000))
+            else:
+                node.getLeafs().appendChildren(openwns.evaluation.generators.Moments())
         else:
             if src in ["wimac.cirSDMA", "wimac.deltaCarrierSDMA", "wimac.deltaInterferenceSDMA"]:
                 node.getLeafs().appendChildren(openwns.evaluation.generators.PDF(
@@ -171,15 +180,15 @@ def bodyInstallDefaultEvaluation(sim, loggingStationIDs, settlingTime, sources, 
                 node.getLeafs().appendChildren(openwns.evaluation.generators.PDF(
                                                             description = 'packet delay [s]',
                                                             minXValue = 0.0,
-                                                            maxXValue = 0.25,
-                                                            resolution =  25000))
+                                                            maxXValue = 0.15,
+                                                            resolution =  15000))
                                                 
             elif "Delay" in src:                          
                 node.getLeafs().appendChildren(openwns.evaluation.generators.PDF(
                                                             description = 'packet delay [s]',
                                                             minXValue = 0.0,
                                                             maxXValue = 0.01,
-                                                            resolution =  10000))
+                                                            resolution =  1000))
                                                 
             elif "size" in string.lower(src):                          
                 node.getLeafs().appendChildren(openwns.evaluation.generators.PDF(
