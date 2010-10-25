@@ -150,7 +150,7 @@ def setupPhy(simulator, config, scenario):
     from openwns.interval import Interval
 
     if scenario == "InH":
-        setupPhyDetail(simulator, 3400, dBm(24), dBm(24), config, dB(5), dB(7))
+        setupPhyDetail(simulator, 3400, dBm(24), dBm(21), config, dB(5), dB(7))
     elif scenario == "UMa":
         setupPhyDetail(simulator, 2000, dBm(46), dBm(24), config, dB(5), dB(7))
     elif scenario == "UMi":
