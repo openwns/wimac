@@ -176,7 +176,7 @@ ULMasterCallback::processPacket(const wns::scheduler::SchedulingCompound & compo
 
 
     //only in beamforming case receive pattern need to be set
-    LOG_INFO(fun_->getLayer()->getName(), " DLCallback::processPacket() create PatternSetterPhyAccessFuncFunc");
+    LOG_INFO(fun_->getLayer()->getName(), " ULCallback::processPacket() create PatternSetterPhyAccessFuncFunc");
     PatternSetterPhyAccessFunc* patternFunc =
         new PatternSetterPhyAccessFunc;
     patternFunc->destination_ = user.getNode();

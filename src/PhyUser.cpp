@@ -205,8 +205,9 @@ PhyUser::doIsAccepting(const wns::ldk::CompoundPtr& /*compound*/) const
 void
 PhyUser::doSendData(const wns::ldk::CompoundPtr& compound)
 {
-	COMMANDTYPE* command = getCommand( compound->getCommandPool() );
-	(*command->local.pAFunc_.get())( this, compound );
+    COMMANDTYPE* command = getCommand( compound->getCommandPool() );
+    LOG_INFO( getFUN()->getName(), ": doSendData" );
+    (*command->local.pAFunc_.get())( this, compound );
 
     int macaddr = address.getInteger();
 }
