@@ -21,7 +21,7 @@ import scenarios.channelmodel
 
 def getOFDMAComponent(node, typeString, _config):
     transceiver = Transceiver(_config)
-    if(_config.parametersPhy.beamforming):
+    if(_config.parametersPhy.beamforming): #and typeString == "AP"):
         phyStation = ofdmaphy.Station.OFDMABFStation([transceiver.receiver[typeString]],
                                 [transceiver.transmitter[typeString]])
     else:
@@ -188,6 +188,7 @@ class BaseStation(openwns.node.Node, scenarios.interfaces.INode):
     phy = None
     dll = None
     mobility = None
+    beamforming = False
 
     def __init__(self, _id, _config):
         super(BaseStation, self).__init__("BS"+str(_id))
@@ -198,7 +199,7 @@ class BaseStation(openwns.node.Node, scenarios.interfaces.INode):
         self.dll = wimac.Stations.BaseStation(self, _config)
         self.dll.setStationID(_id)
         self.phy = getOFDMAComponent(self, "AP", _config)
-                
+        self.beamforming = _config.parametersPhy.beamforming 
         self.dll.setPhyDataTransmission(self.phy.dataTransmission)
         self.dll.setPhyNotification(self.phy.notification)
         self.mobility = rise.Mobility.Component(node = self,
@@ -213,6 +214,8 @@ class BaseStation(openwns.node.Node, scenarios.interfaces.INode):
 
     def setAntenna(self, antenna):
         self.phy.ofdmaStation.antennas = [antenna]
+        if(self.beamforming):
+            self.phy.ofdmaStation.beamformingAntenna.coordOffset = self.phy.ofdmaStation.antennas[0].coordOffset
         pass
 
     def addTraffic(self, binding, load):
