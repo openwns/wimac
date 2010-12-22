@@ -164,9 +164,9 @@ def setupPhy(simulator, config, scenario):
     else:
         raise "Unknown scenario %s" % scenario
 
-class TestChannelModelCreator(scenarios.channelmodel.SingleChannelModelCreator):
+class SingleSlopeChannelModelCreator(scenarios.channelmodel.SingleChannelModelCreator):
     
-    def __init__(self):
+    def __init__(self, offset, distFactor, freqFactor = 0.0):
         
         import rise.Scenario
         from rise.scenario import Shadowing
@@ -176,19 +176,28 @@ class TestChannelModelCreator(scenarios.channelmodel.SingleChannelModelCreator):
         transceiverPairs = scenarios.channelmodel.defaultPairs
 
         pathloss = rise.scenario.Pathloss.SingleSlope(
-            validFrequencies = Interval(4000, 6000),
-            validDistances = Interval(2, 20000),
-            offset = "41.9 dB",
-            freqFactor = 0,
-            distFactor = "23.8 dB",
+            validFrequencies = Interval(100, 100000),
+            validDistances = Interval(0, 20000),
+            offset = offset, 
+            freqFactor = freqFactor,
+            distFactor = distFactor, 
             distanceUnit = "m", 
-            minPathloss = "49.06 dB",
+            minPathloss = "0.0 dB",
             outOfMinRange = rise.scenario.Pathloss.Constant("49.06 dB"),
             outOfMaxRange = rise.scenario.Pathloss.Deny()
             )
         scenarios.channelmodel.SingleChannelModelCreator.__init__(
                 self, transceiverPairs, pathloss, Shadowing.No(), FastFading.No())
 
+class TestChannelModelCreator(SingleSlopeChannelModelCreator):
+    
+    def __init__(self):
+	SingleSlopeChannelModelCreator.__init__(self, "41.9 dB", "23.8 dB")
+
+class InHNLoSChannelModelCreator(SingleSlopeChannelModelCreator):
+    
+    def __init__(self):
+	SingleSlopeChannelModelCreator.__init__(self, "22.13 dB", "43.3 dB")
 
 def setupPhyDetail(simulator, freq, bsTxPower, utTxPower, config, rxNoiseBS, rxNoiseUT):
 
@@ -259,11 +268,11 @@ def setupScheduler(simulator, sched):
     elif sched == "ExhaustiveRR":
         scheduler = openwns.Scheduler.ExhaustiveRoundRobin
         dsa = openwns.scheduler.DSAStrategy.LinearFFirst
-    elif sched == "Fixed":
-        scheduler = openwns.Scheduler.DSADrivenRR
-        dsa = openwns.scheduler.DSAStrategy.Fixed
     elif sched == "Random":
         scheduler = openwns.Scheduler.RoundRobin
+        dsa = openwns.scheduler.DSAStrategy.Random
+    elif sched == "Fixed":
+        scheduler = openwns.Scheduler.DSADrivenRR
         dsa = openwns.scheduler.DSAStrategy.Fixed
     else:
         raise "Unknown scheduler %s" % sched
@@ -336,5 +345,3 @@ def setL2ProbeWindowSize(simulator, size):
         node.dll.topTpProbe.config.windowSize = size
         node.dll.topTpProbe.config.sampleInterval = size
 
-    
-  

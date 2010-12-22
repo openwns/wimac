@@ -303,3 +303,76 @@ def installScheduleEvaluation(sim, loggingStationIDs):
                                 by = 'MAC.Id', forAll = bsIDs, format = "Id%d"))
                                 
         node.appendChildren(openwns.evaluation.generators.TimeSeries())
+
+###############################
+def installFemtoEvaluation(sim, loggingStationIDs, settlingTime):
+
+    kind = "Moments"
+    sourcesMoments = ["wimac.top.packet.incoming.size",
+                      "wimac.top.packet.outgoing.size"]
+    for src in sourcesMoments:
+        bySystemStaTypeIdProbe(sim, loggingStationIDs, settlingTime, kind, 0.0, 0.0, probeName = src, resolution = 0)
+
+    kind = "PDF"
+    sourcesPDF = ["wimac.top.window.aggregated.bitThroughput", 
+                  "wimac.cirSDMA",
+                  "wimac.deltaPHYModeSDMA"]
+    for src in sourcesPDF:
+        if src == "wimac.top.window.aggregated.bitThroughput":
+            bySystemStaTypeIdProbe(sim, loggingStationIDs, settlingTime, kind, 0.0, 35E5, probeName = src, resolution = 35000)
+        elif src == "wimac.cirSDMA":
+            bySystemStaTypeIdProbe(sim, loggingStationIDs, settlingTime, kind, -20.0, 60.0, probeName = src, resolution = 1000)
+        elif src == "wimac.deltaPHYModeSDMA":
+            bySystemStaTypeIdProbe(sim, loggingStationIDs, settlingTime, kind, -20.0, 20.0, probeName = src, resolution = 1000)
+
+
+def bySystemStaTypeIdProbe(sim, loggingStationIDs, settlingTime, kind, minX, maxX, probeName, resolution = 1000):
+
+    Sys1IDs = []
+    Sys2IDs = []
+    Sys1Nodes = sim.simulationModel.getNodesByProperty("isCenter", True)
+    Sys2Nodes = sim.simulationModel.getNodesByProperty("isCenter", False)
+    for station in Sys1Nodes:
+        Sys1IDs.append(station.dll.stationID)
+    for station in Sys2Nodes:
+        Sys2IDs.append(station.dll.stationID)
+
+    # Only the ones included in loggingStationIDs:
+    Sys1IDs = filter(lambda x:x in Sys1IDs, loggingStationIDs)
+    Sys2IDs = filter(lambda x:x in Sys2IDs, loggingStationIDs)
+
+    node = openwns.evaluation.createSourceNode(sim, probeName)
+
+    if kind == "Moments":
+        probe = openwns.evaluation.generators.Moments()
+    elif kind == "PDF":
+        probe = openwns.evaluation.generators.PDF(minXValue = minX, maxXValue = maxX, resolution = resolution)
+    else:
+        assert False, "Unknown probe type " + kind
+
+    node = node.appendChildren(openwns.evaluation.SettlingTimeGuard(settlingTime))
+
+    #Probes for system1
+    sys1Nodes = node.appendChildren(openwns.evaluation.generators.Accept(by = 'MAC.Id', ifIn = Sys1IDs, suffix = 'Sys1'))
+
+    #Probes for system2
+    sys2Nodes = node.appendChildren(openwns.evaluation.generators.Accept(by = 'MAC.Id', ifIn = Sys2IDs, suffix = 'Sys2'))
+
+    #Probes for Base Btations
+    if (probeName == "wimac.top.packet.incoming.size" or
+        probeName == "wimac.deltaPHYModeSDMA" or
+        probeName == "wimac.cirSDMA"):
+        AllBSs = node.appendChildren(openwns.evaluation.generators.Accept(by = 'MAC.StationType', ifIn = [1], suffix = 'AllBSs'))
+        sys1BS = sys1Nodes.appendChildren(openwns.evaluation.generators.Accept(by = 'MAC.StationType', ifIn = [1], suffix = 'BS'))
+        sys2BS = sys2Nodes.appendChildren(openwns.evaluation.generators.Accept(by = 'MAC.StationType', ifIn = [1], suffix = 'BS'))
+
+    #Probes for User Terminals
+    if (probeName == "wimac.top.packet.outgoing.size" or
+        probeName == "wimac.top.window.aggregated.bitThroughput"):
+        AllUTs = node.appendChildren(openwns.evaluation.generators.Accept(by = 'MAC.StationType', ifIn = [3], suffix = 'AllUTs'))
+        sys1UTs = sys1Nodes.appendChildren(openwns.evaluation.generators.Accept(by = 'MAC.StationType', ifIn = [3], suffix = 'UTs'))
+        sys2UTs = sys2Nodes.appendChildren(openwns.evaluation.generators.Accept(by = 'MAC.StationType', ifIn = [3], suffix = 'UTs'))
+
+    # Final PDF
+    node.getLeafs().appendChildren(probe)
+
