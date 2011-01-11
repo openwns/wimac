@@ -164,41 +164,6 @@ def setupPhy(simulator, config, scenario):
     else:
         raise "Unknown scenario %s" % scenario
 
-class SingleSlopeChannelModelCreator(scenarios.channelmodel.SingleChannelModelCreator):
-    
-    def __init__(self, offset, distFactor, freqFactor = 0.0):
-        
-        import rise.Scenario
-        from rise.scenario import Shadowing
-        from rise.scenario import FastFading
-        import rise.scenario.Pathloss
-        from openwns.interval import Interval
-        transceiverPairs = scenarios.channelmodel.defaultPairs
-
-        pathloss = rise.scenario.Pathloss.SingleSlope(
-            validFrequencies = Interval(100, 100000),
-            validDistances = Interval(0, 20000),
-            offset = offset, 
-            freqFactor = freqFactor,
-            distFactor = distFactor, 
-            distanceUnit = "m", 
-            minPathloss = "0.0 dB",
-            outOfMinRange = rise.scenario.Pathloss.Constant("49.06 dB"),
-            outOfMaxRange = rise.scenario.Pathloss.Deny()
-            )
-        scenarios.channelmodel.SingleChannelModelCreator.__init__(
-                self, transceiverPairs, pathloss, Shadowing.No(), FastFading.No())
-
-class TestChannelModelCreator(SingleSlopeChannelModelCreator):
-    
-    def __init__(self):
-	SingleSlopeChannelModelCreator.__init__(self, "41.9 dB", "23.8 dB")
-
-class InHNLoSChannelModelCreator(SingleSlopeChannelModelCreator):
-    
-    def __init__(self):
-	SingleSlopeChannelModelCreator.__init__(self, "22.13 dB", "43.3 dB")
-
 def setupPhyDetail(simulator, freq, bsTxPower, utTxPower, config, rxNoiseBS, rxNoiseUT):
 
     from ofdmaphy.OFDMAPhy import OFDMASystem
