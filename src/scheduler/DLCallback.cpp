@@ -181,7 +181,8 @@ DLCallback::processPacket(const wns::scheduler::SchedulingCompound & compound,
     << "        EndTime:        " << endTime<< "\n"
     << "        Beamforming:    " << beamforming << "\n"
     << "        Beam:           " << beam << "\n"
-    << "        Tx Power:       " << txPower;
+    << "        Tx Power:       " << txPower << "\n"
+    << "        valid pattern:  " << (pattern != wns::service::phy::ofdma::PatternPtr());
     LOG_INFO(fun_->getLayer()->getName(), m.str());
 #endif
 

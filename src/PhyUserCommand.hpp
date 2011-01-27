@@ -127,8 +127,7 @@ namespace wimac {
 			return magic.rxMeasurement->getSINR();
 		}
 
-        // MUE: ToDo: Add sdma.iIntra to ChannelQualityOnOneSubChannel structure
-        //wns::Power getEstimatedIintra() const { return peer.estimatedCandI_.sdma.iIntra; }
+        wns::Power getEstimatedIintra() const { return peer.estimatedCQI.sdma.iIntra; }
 
     };
 }

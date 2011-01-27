@@ -58,6 +58,8 @@ namespace wimac { namespace frame {
 		virtual wns::scheduler::SchedulingMapPtr
 		getMasterMapForSlaveScheduling() = 0;
 		
+                virtual wns::scheduler::ChannelQualityOnOneSubChannel 
+		getEstimatedCQI() const { return wns::scheduler::ChannelQualityOnOneSubChannel(); }
 	};
 
 
@@ -124,8 +126,8 @@ namespace wimac { namespace frame {
                 return burstPhyMode;
             }
 
-            wns::CandI getEstimatedCandI() const {
-                return estimatedCandI_;
+            wns::scheduler::ChannelQualityOnOneSubChannel getEstimatedCQI() const {
+                return estimatedCQI_;
             }
 
             bool hasUplinkBurst() const {
@@ -163,7 +165,7 @@ namespace wimac { namespace frame {
             wns::simulator::Time burstEndTime_;
             wns::scheduler::MapInfoCollectionPtr myBursts_;
             wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface> burstPhyMode;
-            wns::CandI estimatedCandI_;
+            wns::scheduler::ChannelQualityOnOneSubChannel estimatedCQI_;
             bool hasUplinkBurst_;
 /*new Mapcollector variables*/
             wns::scheduler::SchedulingMapPtr scheduledULMap_;

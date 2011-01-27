@@ -38,7 +38,12 @@
 #include <WNS/StaticFactory.hpp>
 
 
-namespace wimac { namespace scheduler {
+namespace wimac {
+
+    namespace frame {
+        class MapHandlerInterface;
+    }
+    namespace scheduler {
 
 	class Scheduler;
 	/// The registry proxy for the WiMAC.
@@ -165,6 +170,7 @@ namespace wimac { namespace scheduler {
         int numberOfPriorities;
         wns::scheduler::ConnectionList cidList;
         bool isDL_;
+        wimac::frame::MapHandlerInterface* mapHandler;
 	};
 
 }} // namespace wimac::scheduler

@@ -41,6 +41,7 @@
 #include <WIMAC/services/ConnectionManager.hpp>
 #include <WIMAC/services/InterferenceCache.hpp>
 #include <WIMAC/ConnectionIdentifier.hpp>
+#include <WIMAC/frame/ULMapCollector.hpp>
 
 
 using namespace wimac;
@@ -57,7 +58,8 @@ RegistryProxyWiMAC::RegistryProxyWiMAC(wns::ldk::fun::FUN*, const wns::pyconfig:
 	  powerAP(config.get("powerCapabilitiesAP")),
 	  powerFRS(config.get("powerCapabilitiesFRS")),
       numberOfPriorities(config.get<int>("numberOfPriorities")),
-            isDL_(config.get<bool>("isDL"))
+          isDL_(config.get<bool>("isDL")),
+          mapHandler(0)
 {
 	//phyModeMapper.reset(wns::service::phy::phymode::createPhyModeMapper(config.getView("phyModeMapper")));// obsolete
 }
@@ -210,6 +212,12 @@ RegistryProxyWiMAC::setFUN(const wns::ldk::fun::FUN* _fun) {
 
 	connManager = layer2->getManagementService<service::ConnectionManager>("connectionManager");
 	assure(connManager, "RegistryProxyWiMAC needs a Connection Manager");
+        
+        wns::service::dll::StationType stationType = layer2->getStationType();
+        if(stationType == wns::service::dll::StationTypes::UT()) {
+            mapHandler = fun->findFriend< wimac::frame::MapHandlerInterface*>("ulmapcollector");
+            assure( mapHandler, "mapcollector not of type wimac::scheduler::MapHandler");
+        }
 }
 
 std::string
@@ -264,21 +272,24 @@ RegistryProxyWiMAC::getOverhead(int /* numBursts */) {
 
 wns::scheduler::ChannelQualityOnOneSubChannel
 RegistryProxyWiMAC::estimateTxSINRAt(const wns::scheduler::UserID user, int slot){
-
+    wns::service::dll::StationType stationType = layer2->getStationType();
+    if(stationType != wns::service::dll::StationTypes::UT()) {
 	// lookup the results reported by the receiving subscriber station in the
-	// local cache
+        // local cache
 	wns::Power interference =
 		layer2->getManagementService<service::InterferenceCache>("interferenceCache")
             ->getAveragedInterference(user.getNode(), slot);
 	wns::Ratio pathloss =
 		layer2->getManagementService<service::InterferenceCache>("interferenceCache")
             ->getAveragedPathloss(user.getNode(), slot);
-    wns::Power carrier =
+        wns::Power carrier =
         layer2->getManagementService<service::InterferenceCache>("interferenceCache")
             ->getAveragedCarrier(user.getNode(), slot);
-
-
-    return wns::scheduler::ChannelQualityOnOneSubChannel(pathloss, interference, carrier);
+        return wns::scheduler::ChannelQualityOnOneSubChannel(pathloss, interference, carrier);
+    } else {
+        //lookup results signaled by the BS-master through the MAP
+        return mapHandler->getEstimatedCQI();
+    }
 }
 
 wns::scheduler::ChannelQualityOnOneSubChannel
@@ -573,11 +584,15 @@ RegistryProxyWiMAC::getConnectionsForPriority(int priority)
     for (ConnectionIdentifiers::iterator iter = CIDs.begin();
             iter != CIDs.end(); ++iter)
         result.insert(wns::scheduler::ConnectionID((*iter)->getID()));
-
-    CIDs = 
-        connManager->getAllDataConnections(ConnectionIdentifier::Uplink, 
+    
+    /*if(isDL_) {
+        CIDs = connManager->getAllDataConnections(ConnectionIdentifier::Downlink, 
             ConnectionIdentifier::QoSCategory(priority));
-
+    } else {*/
+        CIDs = connManager->getAllDataConnections(ConnectionIdentifier::Uplink, 
+            ConnectionIdentifier::QoSCategory(priority));
+    //}
+    
     for (ConnectionIdentifiers::iterator iter = CIDs.begin();
             iter != CIDs.end(); ++iter)
         result.insert(wns::scheduler::ConnectionID((*iter)->getID()));

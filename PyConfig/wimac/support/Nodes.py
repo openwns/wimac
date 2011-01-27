@@ -21,7 +21,7 @@ import scenarios.channelmodel
 
 def getOFDMAComponent(node, typeString, _config):
     transceiver = Transceiver(_config)
-    if(_config.parametersPhy.beamforming): #and typeString == "AP"):
+    if(_config.parametersPhy.beamforming and typeString == "AP"):
         phyStation = ofdmaphy.Station.OFDMABFStation([transceiver.receiver[typeString]],
                                 [transceiver.transmitter[typeString]])
     else:

@@ -260,15 +260,15 @@ PhyUser::doOnData(const wns::ldk::CompoundPtr& compound)
 	{
 		LOG_INFO( "estimated C/I = ",
 				  puCommand->peer.estimatedCQI.carrier, " / ", puCommand->peer.estimatedCQI.interference,
-				  " = " , puCommand->peer.estimatedCQI.carrier / puCommand->peer.estimatedCQI.interference);/*,
+				  " = " , puCommand->peer.estimatedCQI.carrier / puCommand->peer.estimatedCQI.interference,
 				  "\n estimated intra-cell interference: ", puCommand->getEstimatedIintra()
-			);*/
+			);
 	}
 	else{
 		LOG_INFO( "estimated C/I = ",
-				  puCommand->peer.estimatedCQI.carrier, " / ", puCommand->peer.estimatedCQI.interference);/*,
+				  puCommand->peer.estimatedCQI.carrier, " / ", puCommand->peer.estimatedCQI.interference,
 				  "\n estimated intra-cell interference: ", puCommand->getEstimatedIintra()
-			);*/
+			);
 	}
 
 	getDeliverer()->getAcceptor(compound)->onData(compound);
@@ -321,7 +321,7 @@ PhyUser::onData(wns::osi::PDUPtr pdu,
 
         wns::Power iInterPlusNoise;
         if(interference > wns::Power::from_mW(0.0)) { /*puCommand->getEstimatedIintra()){*/
-            iInterPlusNoise = interference;/* - puCommand->getEstimatedIintra();*/
+            iInterPlusNoise = interference - puCommand->getEstimatedIintra();
         }else{
             iInterPlusNoise = wns::Power::from_mW(0.0);
             LOG_INFO(getFUN()->getName(), " PhyUser: write iInterPlusNoise = null to interferenceCache");
@@ -417,7 +417,10 @@ PhyUser::onData(wns::osi::PDUPtr pdu,
 #ifndef NDEBUG
     traceIncoming(compound, rxPowerMeasurement);
 #endif
-
+   double m = puCommand->magic.rxMeasurement->getSINR().get_factor();
+   double e = puCommand->peer.estimatedCQI.carrier.get_mW() / puCommand->peer.estimatedCQI.interference.get_mW();
+   LOG_INFO( " Delta C/I = ", rxPower.get_dBm() - puCommand->peer.estimatedCQI.carrier.get_dBm(),
+             "/ ",interference.get_dBm() - puCommand->peer.estimatedCQI.interference.get_dBm()," = ", m - e);
 	//Deliver compound
 	doOnData(compound);
 }

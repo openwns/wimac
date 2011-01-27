@@ -320,7 +320,8 @@ class SubscriberStation(Layer2):
             mapHandlerName = "ulmapcollector",
             strategy = strategyUL,
             freqChannels = config.parametersPhy.subchannels,
-            maxBeams = 1, # Currently no beamforming
+            # Currently no beamforming at MS but Tx-UL-Scheduler needs to know BS capability
+            maxBeams = config.parametersPhy.maximalBeams, 
             beamforming =  False,
             mapper = self.mapper,
             #friendliness_dBm = config.friendliness_dBm,

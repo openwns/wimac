@@ -67,7 +67,8 @@ ULMapCollector::ULMapCollector( wns::ldk::fun::FUN* fun, const wns::pyconfig::Vi
     //hasUplinkBurst_(false),
     //myBursts_(new wns::scheduler::MapInfoCollection)
     ulResourcesAvailable_(false),
-    scheduledULMap_(wns::scheduler::SchedulingMapPtr())
+    scheduledULMap_(wns::scheduler::SchedulingMapPtr()),
+    estimatedCQI_(wns::scheduler::ChannelQualityOnOneSubChannel())
 
 {
     if (!config.isNone("ulSchedulerName") )
@@ -219,6 +220,7 @@ void ULMapCollector::doOnData( const wns::ldk::CompoundPtr& compound )
 	{
 		ulResourcesAvailable_ = true; // assume always true when a MAP comes
                 LOG_INFO( getFUN()->getLayer()->getName(), " has granted resources" );
+                estimatedCQI_ = scheduledULMap_->getEstimatedCQI(me_);
 	}
 
 	getFrameBuilder()->finishedPhase(this);

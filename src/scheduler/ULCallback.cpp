@@ -115,6 +115,7 @@ void
 ULMasterCallback::processPacket(const wns::scheduler::SchedulingCompound & compound,
     wns::scheduler::SchedulingTimeSlotPtr& timeSlotPtr)
 {
+    assure(beamforming == true, "error: ULMasterCallback suppose to be called only in beamforming case");
     simTimeType startTime = compound.startTime;
     simTimeType endTime = compound.endTime;
     wns::scheduler::UserID user = compound.userID;
@@ -143,7 +144,6 @@ ULMasterCallback::processPacket(const wns::scheduler::SchedulingCompound & compo
     }
 
     wns::scheduler::ChannelQualityOnOneSubChannel estimatedCQI = compound.estimatedCQI;
-
     double rate = phyModePtr->getDataRate();
 
 //  mapInfoEntry->start += timeSlot * slotLength_;
@@ -169,14 +169,15 @@ ULMasterCallback::processPacket(const wns::scheduler::SchedulingCompound & compo
     << "        EndTime:        " << endTime << "\n"
     << "        Beamforming:    " << beamforming << "\n"
     << "        Beam:           " << beam << "\n"
-    << "        Tx Power:       " << txPower;
+    << "        Tx Power:       " << txPower << "\n"
+    << "        pattern:        " << (pattern != wns::service::phy::ofdma::PatternPtr());
     LOG_INFO(fun_->getLayer()->getName(), m.str());
 #endif
 //	pduCount++;
 
 
     //only in beamforming case receive pattern need to be set
-    LOG_INFO(fun_->getLayer()->getName(), " ULCallback::processPacket() create PatternSetterPhyAccessFuncFunc");
+    LOG_INFO(fun_->getLayer()->getName(), " ULCallback::processPacket() create PatternSetterPhyAccessFunc " );
     PatternSetterPhyAccessFunc* patternFunc =
         new PatternSetterPhyAccessFunc;
     patternFunc->destination_ = user.getNode();
@@ -225,7 +226,8 @@ ULSlaveCallback::processPacket(const wns::scheduler::SchedulingCompound & compou
     startTime += timeSlotOffset;
     endTime += timeSlotOffset - Utilities::getComputationalAccuracyFactor();
 
-    wns::scheduler::ChannelQualityOnOneSubChannel estimatedCQI = compound.estimatedCQI;
+   wns::scheduler::ChannelQualityOnOneSubChannel estimatedCQI = compound.estimatedCQI;
+   LOG_INFO(fun_->getLayer()->getName(),"###6 C.I.Iintra ", estimatedCQI.carrier, estimatedCQI.interference, estimatedCQI.sdma.iIntra);
 
     double rate = phyModePtr->getDataRate();
     wns::ldk::CompoundPtr pdu  = compound.compoundPtr;
