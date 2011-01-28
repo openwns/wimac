@@ -585,13 +585,13 @@ RegistryProxyWiMAC::getConnectionsForPriority(int priority)
             iter != CIDs.end(); ++iter)
         result.insert(wns::scheduler::ConnectionID((*iter)->getID()));
     
-    /*if(isDL_) {
+    if(isDL_) {
         CIDs = connManager->getAllDataConnections(ConnectionIdentifier::Downlink, 
             ConnectionIdentifier::QoSCategory(priority));
-    } else {*/
+    } else {
         CIDs = connManager->getAllDataConnections(ConnectionIdentifier::Uplink, 
             ConnectionIdentifier::QoSCategory(priority));
-    //}
+    }
     
     for (ConnectionIdentifiers::iterator iter = CIDs.begin();
             iter != CIDs.end(); ++iter)
