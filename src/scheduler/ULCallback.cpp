@@ -33,42 +33,33 @@
 #include <WIMAC/PhyUserCommand.hpp>
 #include <WIMAC/PhyUser.hpp>
 #include <WIMAC/Utilities.hpp>
-
+#include <WIMAC/scheduler/RegistryProxyWiMAC.hpp>
 #include <boost/bind.hpp> 
 
 STATIC_FACTORY_REGISTER_WITH_CREATOR(
-    wimac::scheduler::ULMasterCallback,
+    wimac::scheduler::ULCallback,
     wimac::scheduler::Callback,
-    "wimac.scheduler.ULMasterCallback",
+    "wimac.scheduler.ULCallback",
     wns::ldk::FUNConfigCreator );
-
-STATIC_FACTORY_REGISTER_WITH_CREATOR(
-    wimac::scheduler::ULSlaveCallback,
-    wimac::scheduler::Callback,
-    "wimac.scheduler.ULSlaveCallback",
-    wns::ldk::FUNConfigCreator );
-
 
 using namespace wimac::scheduler;
-ULMasterCallback::ULMasterCallback(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config):
-    ULCallback(fun, config),
-    beamforming(config.get<bool>("beamforming"))
-{}
-
-ULSlaveCallback::ULSlaveCallback(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config):
-ULCallback(fun, config)
-{}
 
 ULCallback::ULCallback(wns::ldk::fun::FUN* fun, const wns::pyconfig::View& config) :
     Callback(fun, config),
     fun_(fun),
     slotLength_(config.get<wns::simulator::Time>("slotLength")),
-    tbCounter_(0)
+    tbCounter_(0),
+    beamforming(config.get<bool>("beamforming"))
 {}
 
 void
 ULCallback::callBack(wns::scheduler::SchedulingMapPtr schedulingMap)
 {
+    wimac::scheduler::RegistryProxyWiMAC* registry = dynamic_cast<wimac::scheduler::RegistryProxyWiMAC*>(colleagues.registry);
+    bool isMaster = registry->getStationType(registry->getMyUserID()) == wns::service::dll::StationTypes::AP();
+    if (isMaster && !beamforming)
+        return;
+
     tbCounter_++;
     LOG_INFO(fun_->getLayer()->getName(), " ULCallback::callBack(): ");
     lastScheduling_ = wns::simulator::getEventScheduler()->getTime();
@@ -110,124 +101,28 @@ ULCallback::callBack(wns::scheduler::SchedulingMapPtr schedulingMap)
     } // forall subChannels
 }
 
-// ULMaster processPacket, seting receive beamforming pattern
-void
-ULMasterCallback::processPacket(const wns::scheduler::SchedulingCompound & compound,
-    wns::scheduler::SchedulingTimeSlotPtr& timeSlotPtr)
-{
-    assure(beamforming == true, "error: ULMasterCallback suppose to be called only in beamforming case");
-    simTimeType startTime = compound.startTime;
-    simTimeType endTime = compound.endTime;
-    wns::scheduler::UserID user = compound.userID;
-    int userID = user.getNodeID();
-    int fSlot = compound.subChannel;
-    int timeSlot = compound.timeSlot;
-    int beam = compound.spatialLayer; //beam;
-    wns::Power txPower = compound.txPower;
-    wns::service::phy::phymode::PhyModeInterfacePtr phyModePtr = compound.phyModePtr;
-    wns::service::phy::ofdma::PatternPtr pattern = compound.pattern;
-
-    simTimeType timeSlotOffset = timeSlot * slotLength_;
-    startTime += timeSlotOffset;
-    endTime += timeSlotOffset - Utilities::getComputationalAccuracyFactor();
-
-    if(scheduleStartProbe_->hasObservers())
-    {
-        // Probe userID for start and stop to get nice sample and hold curve
-        wns::simulator::getEventScheduler()->schedule(
-        boost::bind(&Callback::probeScheduleStart, this, timeSlot, fSlot, beam, userID), startTime);
-    }
-    if(scheduleStopProbe_->hasObservers())
-    {
-        wns::simulator::getEventScheduler()->schedule(
-        boost::bind(&Callback::probeScheduleStop, this, timeSlot, fSlot, beam, userID), endTime);
-    }
-
-    wns::scheduler::ChannelQualityOnOneSubChannel estimatedCQI = compound.estimatedCQI;
-    double rate = phyModePtr->getDataRate();
-
-//  mapInfoEntry->start += timeSlot * slotLength_;
-//  mapInfoEntry->end += timeSlot * slotLength_;
-
-  //simTimeType pduPointer = mapInfoEntry->start;
-
-  // iterate over all compounds in list:
-  //for (wns::scheduler::CompoundList::iterator iter=compounds.begin(); iter!=compounds.end(); ++iter)
-  //{
-    wns::ldk::CompoundPtr pdu = compound.compoundPtr;
-    simTimeType pduDuration = pdu->getLengthInBits() / rate;;
-
-    assure(pdu != wns::ldk::CompoundPtr(), "Invalid PDU");
-
-#ifndef WNS_NO_LOGGING
-    std::stringstream m;
-    m <<     ":  direction: UL master \n"
-    << "        PDU scheduled for user (destination): " << colleagues.registry->getNameForUser(user) << "\n"
-    << "        Frequency Slot: " << fSlot << "\n"
-    << "        Time Slot: " << timeSlot << " slotLength: "<<slotLength_<< "\n"
-    << "        StartTime:      " << startTime << "\n"
-    << "        EndTime:        " << endTime << "\n"
-    << "        Beamforming:    " << beamforming << "\n"
-    << "        Beam:           " << beam << "\n"
-    << "        Tx Power:       " << txPower << "\n"
-    << "        pattern:        " << (pattern != wns::service::phy::ofdma::PatternPtr());
-    LOG_INFO(fun_->getLayer()->getName(), m.str());
-#endif
-//	pduCount++;
-
-
-    //only in beamforming case receive pattern need to be set
-    LOG_INFO(fun_->getLayer()->getName(), " ULCallback::processPacket() create PatternSetterPhyAccessFunc " );
-    PatternSetterPhyAccessFunc* patternFunc =
-        new PatternSetterPhyAccessFunc;
-    patternFunc->destination_ = user.getNode();
-    patternFunc->patternStart_ = startTime;
-    patternFunc->patternEnd_ = endTime;
-    patternFunc->pattern_ = pattern;
-
-    // set PhyUser command
-    wimac::PhyUserCommand* phyCommand = dynamic_cast<wimac::PhyUserCommand*>(
-        fun_->getProxy()->activateCommand( pdu->getCommandPool(), friends_.phyUser ) );
-
-    phyCommand->local.pAFunc_.reset( patternFunc );
-
-    phyCommand->peer.destination_ = user.getNode();
-    wimac::Component* wimacComponent = dynamic_cast<wimac::Component*>(fun_->getLayer());
-    phyCommand->peer.cellID_ = wimacComponent->getCellID();
-    phyCommand->peer.source_ = wimacComponent->getNode();
-    phyCommand->peer.phyModePtr = phyModePtr;
-    //	(wns::SmartPtr<const wns::service::phy::phymode::PhyModeInterface>
-    //	 (dynamic_cast<const wns::service::phy::phymode::PhyModeInterface*>(phyMode.clone())));
-
-    phyCommand->peer.measureInterference_ = true; //measureInterference;
-    phyCommand->peer.estimatedCQI = estimatedCQI;
-    phyCommand->magic.sourceComponent_ = wimacComponent;
-    phyCommand->magic.schedulingTimeSlot = wns::scheduler::SchedulingTimeSlotPtr(
-        new wns::scheduler::SchedulingTimeSlot(*timeSlotPtr));
-}
-
 //ULSlave processPacket, setting omnidirectional transmit phy access functor
 void
-ULSlaveCallback::processPacket(const wns::scheduler::SchedulingCompound & compound,
+ULCallback::processPacket(const wns::scheduler::SchedulingCompound & compound,
     wns::scheduler::SchedulingTimeSlotPtr& timeSlotPtr)
 {
     simTimeType startTime = compound.startTime;
     simTimeType endTime = compound.endTime;
     wns::scheduler::UserID user = compound.userID;
     int userID = user.getNodeID();
+    wns::service::phy::ofdma::PatternPtr pattern = compound.pattern;
+
     int fSlot = compound.subChannel;
     int timeSlot = compound.timeSlot;
     int beam = compound.spatialLayer; //beam;
     wns::Power txPower = compound.txPower;
     wns::service::phy::phymode::PhyModeInterfacePtr phyModePtr = compound.phyModePtr;
-    wns::service::phy::ofdma::PatternPtr pattern = compound.pattern;
+
 
     simTimeType timeSlotOffset = timeSlot * slotLength_;
     startTime += timeSlotOffset;
     endTime += timeSlotOffset - Utilities::getComputationalAccuracyFactor();
-
-   wns::scheduler::ChannelQualityOnOneSubChannel estimatedCQI = compound.estimatedCQI;
-   LOG_INFO(fun_->getLayer()->getName(),"###6 C.I.Iintra ", estimatedCQI.carrier, estimatedCQI.interference, estimatedCQI.sdma.iIntra);
+    wns::scheduler::ChannelQualityOnOneSubChannel estimatedCQI = compound.estimatedCQI;
 
     double rate = phyModePtr->getDataRate();
     wns::ldk::CompoundPtr pdu  = compound.compoundPtr;
@@ -235,19 +130,19 @@ ULSlaveCallback::processPacket(const wns::scheduler::SchedulingCompound & compou
     // TODO
     assure(pdu != wns::ldk::CompoundPtr(), "Invalid empty PDU");
     //assure(beam < maxBeams, "Too many beams");
-    //assure(endTime > startTime, "Scheduled PDU must end after it starts");
+    assure(endTime > startTime, "Scheduled PDU must end after it starts");
     //assure(endTime <= this->getDuration(), "PDU overun the maximum duration of the frame phase!");
     //assure(fSlot < freqChannels, "Invalid frequency channel");
 
 #ifndef WNS_NO_LOGGING
     std::stringstream m;
-    m <<     ":  direction: UL slave \n"
+    m <<     ":  direction: UL \n"
       << "        PDU scheduled for user (destination): " << colleagues.registry->getNameForUser(user) << "\n"
       << "        Frequency Slot: " << fSlot << "\n"
       << "        Time Slot: " << timeSlot << " slotLength: "<<slotLength_<< "\n"
       << "        StartTime:      " << startTime << "\n"
       << "        EndTime:        " << endTime<< "\n"
-      //<< "        Beamforming:    " << beamforming << "\n"
+      << "        Beamforming:    " << beamforming << "\n"
       << "        Beam:           " << beam << "\n"
       << "        Tx Power:       " << txPower;
     LOG_INFO(fun_->getLayer()->getName(), m.str());
@@ -255,7 +150,20 @@ ULSlaveCallback::processPacket(const wns::scheduler::SchedulingCompound & compou
 
     PhyAccessFunc* func = 0;
 
-    if(user.isValid())
+     //in beamforming case (currently only in uplink master possible) the receive pattern need to be set
+    if(compound.pattern != wns::service::phy::ofdma::PatternPtr())
+    {
+        assure(beamforming," set pattern without beamforming");
+        LOG_INFO(fun_->getLayer()->getName(), " ULCallback::processPacket() create PatternSetterPhyAccessFunc " );
+        PatternSetterPhyAccessFunc* patternFunc =
+            new PatternSetterPhyAccessFunc;
+        patternFunc->destination_ = user.getNode();
+        patternFunc->patternStart_ = startTime;
+        patternFunc->patternEnd_ = endTime;
+        patternFunc->pattern_ = pattern;
+        func = patternFunc;
+    }
+    else if(user.isValid())
     {
         LOG_INFO(fun_->getLayer()->getName(), " ULCallback::processPacket() create OmniUnicastPhyAccessFunc");
         OmniUnicastPhyAccessFunc* omniUnicastFunc = new OmniUnicastPhyAccessFunc;
@@ -271,16 +179,11 @@ ULSlaveCallback::processPacket(const wns::scheduler::SchedulingCompound & compou
     {
         throw wns::Exception( "destination address missing, UT is not supposed to broadcast" );
     }
-
-
     // set PhyUser command
     wimac::PhyUserCommand* phyCommand = dynamic_cast<wimac::PhyUserCommand*>(
         fun_->getProxy()->activateCommand( pdu->getCommandPool(), friends_.phyUser ) );
-
     phyCommand->local.pAFunc_.reset( func );
-
     phyCommand->local.pAFunc_->phyMode_ = phyModePtr;
-
     phyCommand->peer.destination_ = user.getNode();
     wimac::Component* wimacComponent = dynamic_cast<wimac::Component*>(fun_->getLayer());
     phyCommand->peer.cellID_ = wimacComponent->getCellID();
@@ -289,23 +192,17 @@ ULSlaveCallback::processPacket(const wns::scheduler::SchedulingCompound & compou
     phyCommand->peer.measureInterference_ = true; // measureInterference;
     phyCommand->peer.estimatedCQI = estimatedCQI;
     phyCommand->magic.sourceComponent_ = wimacComponent;
-
     colleagues.harq->storeSchedulingTimeSlot(tbCounter_, timeSlotPtr);
 
     phyCommand->magic.schedulingTimeSlot = wns::scheduler::SchedulingTimeSlotPtr(
         new wns::scheduler::SchedulingTimeSlot(*timeSlotPtr));
-
+  
     scheduledPDUs.push(pdu);
 }
 
-void ULMasterCallback::deliverNow(wns::ldk::Connector* connector)
+void ULCallback::deliverNow(wns::ldk::Connector* connector)
 {
-    assure(false, "ULMaster must not deliver packets");
-}
-
-void ULSlaveCallback::deliverNow(wns::ldk::Connector* connector)
-{
-    LOG_INFO(fun_->getLayer()->getName(), " ULSlaveCallback::deliverNow() ");
+    LOG_INFO(fun_->getLayer()->getName(), " ULCallback::deliverNow() ");
     wns::simulator::Time now = wns::simulator::getEventScheduler()->getTime();
 
     while (!scheduledPDUs.empty())
@@ -320,10 +217,13 @@ void ULSlaveCallback::deliverNow(wns::ldk::Connector* connector)
 
         func->transmissionStart_ += now;
         func->transmissionStop_ += now;
-
-        frameOffsetDelayProbe_->put(compound, func->transmissionStart_ - lastScheduling_);
-        transmissionDelayProbe_->put(compound, func->transmissionStop_ - func->transmissionStart_);
-
+        wimac::scheduler::RegistryProxyWiMAC* registry = dynamic_cast<wimac::scheduler::RegistryProxyWiMAC*>(colleagues.registry);
+        bool isSlave = registry->getStationType(registry->getMyUserID()) == wns::service::dll::StationTypes::UT();
+        if(isSlave)
+        {
+            frameOffsetDelayProbe_->put(compound, func->transmissionStart_ - lastScheduling_);
+            transmissionDelayProbe_->put(compound, func->transmissionStop_ - func->transmissionStart_);
+        }
         if(connector->hasAcceptor(scheduledPDUs.front()))
         {
             connector->getAcceptor(scheduledPDUs.front())->sendData(scheduledPDUs.front());

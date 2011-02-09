@@ -190,6 +190,7 @@ PhyUser::PhyUser( const PhyUser& rhs ):
         new wns::probe::bus::ContextCollector(
             *rhs.probes_.jsonTracing ));
 }
+
 PhyUser::PhyUser::~PhyUser()
 {
 }

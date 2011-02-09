@@ -222,9 +222,8 @@ Scheduler::deliverSchedule(wns::ldk::Connector* connector)
             return; //ULSlave scheduling not required without granted resources
         }
     }
-    
-    if (schedulerSpot_ != wns::scheduler::SchedulerSpot::ULMaster())     
-        colleagues.callback->deliverNow(connector);
+
+    colleagues.callback->deliverNow(connector);
 }
 
 void

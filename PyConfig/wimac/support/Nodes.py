@@ -29,8 +29,8 @@ def getOFDMAComponent(node, typeString, _config):
                                 [transceiver.transmitter[typeString]])
     # The following three are default values changed in a later step
     # by the scenario module
-    phyStation.txFrequency = 5470 # MHz
-    phyStation.rxFrequency = 5470 # MHz
+    phyStation.txFrequency = _config.centerFrequency # MHz
+    phyStation.rxFrequency = _config.centerFrequency # MHz
     phyStation.txPower = dBm(30)
     phyStation.numberOfSubCarrier = _config.parametersPhy.subchannels
     phyStation.bandwidth =  _config.parametersPhy.channelBandwidth

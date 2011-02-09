@@ -175,25 +175,13 @@ class Callback(Sealed):
     scheduleStopProbeName = "wimac.scheduleStop"
     
 class ULCallback(Callback):
-    #__plugin__ = 'wimac.scheduler.ULCallback'
+    __plugin__ = 'wimac.scheduler.ULCallback'
     slotLength = None
-
-    def __init__(self, **kw):
-        self.slotLength = 0
-        attrsetter(self, kw) 
-
-class ULMasterCallback(ULCallback):
-    __plugin__ = 'wimac.scheduler.ULMasterCallback'
-
     beamforming = None
     def __init__(self, **kw):
-        ULCallback.__init__(self, **kw)
-
-class ULSlaveCallback(ULCallback):
-    __plugin__ = 'wimac.scheduler.ULSlaveCallback'
-
-    def __init__(self, **kw):
-        ULCallback.__init__(self, **kw)
+        self.slotLength = 0
+        self.beamforming = False
+        attrsetter(self, kw) 
 
 class DLCallback(Callback):
     __plugin__ = 'wimac.scheduler.DLCallback'

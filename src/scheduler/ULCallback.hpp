@@ -41,47 +41,19 @@ namespace wimac { namespace scheduler {
 
         virtual void
         processPacket(const wns::scheduler::SchedulingCompound & compound,
-            wns::scheduler::SchedulingTimeSlotPtr& timeSlotPtr) = 0;
+            wns::scheduler::SchedulingTimeSlotPtr& timeSlotPtr);
 
         virtual void 
-        deliverNow(wns::ldk::Connector*) = 0;
+        deliverNow(wns::ldk::Connector*);
 
     protected:
         wns::ldk::fun::FUN* fun_;
         wns::simulator::Time slotLength_;
 	long int tbCounter_;
-    };
-
-    class ULMasterCallback :
-        public ULCallback
-    {
-    public:
-        ULMasterCallback(wns::ldk::fun::FUN*, const wns::pyconfig::View&);
-
-        virtual void
-        processPacket(const wns::scheduler::SchedulingCompound & compound,
-            wns::scheduler::SchedulingTimeSlotPtr& timeSlotPtr);
-
-        virtual void
-        deliverNow(wns::ldk::Connector* connector);
-
     private:
         bool beamforming;
     };
 
-    class ULSlaveCallback :
-        public ULCallback
-    {
-    public:
-        ULSlaveCallback(wns::ldk::fun::FUN*, const wns::pyconfig::View&);
-
-        virtual void
-        processPacket(const wns::scheduler::SchedulingCompound & compound,
-            wns::scheduler::SchedulingTimeSlotPtr& timeSlotPtr);
-
-        virtual void
-        deliverNow(wns::ldk::Connector* connector);
-    };
 }}
 #endif
 
