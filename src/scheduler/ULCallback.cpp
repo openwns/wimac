@@ -150,16 +150,17 @@ ULCallback::processPacket(const wns::scheduler::SchedulingCompound & compound,
 
     PhyAccessFunc* func = 0;
 
-     //in beamforming case (currently only in uplink master possible) the receive pattern need to be set
+     //in beamforming case ((currently) = uplink master possible) the receive pattern need to be set
     if(compound.pattern != wns::service::phy::ofdma::PatternPtr())
     {
         assure(beamforming," set pattern without beamforming");
         LOG_INFO(fun_->getLayer()->getName(), " ULCallback::processPacket() create PatternSetterPhyAccessFunc " );
         PatternSetterPhyAccessFunc* patternFunc =
             new PatternSetterPhyAccessFunc;
+        //patternFunc->destination_ is the mobile station in uplink master, as required for sdma reception. Specific receive pattern can only be distinguished by the source id.
         patternFunc->destination_ = user.getNode();
-        patternFunc->patternStart_ = startTime;
-        patternFunc->patternEnd_ = endTime;
+        patternFunc->transmissionStart_= startTime;
+        patternFunc->transmissionStop_= endTime;
         patternFunc->pattern_ = pattern;
         func = patternFunc;
     }

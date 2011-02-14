@@ -264,14 +264,18 @@ PhyUser::doOnData(const wns::ldk::CompoundPtr& compound)
 				  " = " , puCommand->peer.estimatedCQI.carrier / puCommand->peer.estimatedCQI.interference,
 				  "\n estimated intra-cell interference: ", puCommand->getEstimatedIintra()
 			);
-	}
+                       double delta_SINR = (getCommand( compound->getCommandPool() )->magic.rxMeasurement->getSINR().get_factor()) - (puCommand->peer.estimatedCQI.carrier / puCommand->peer.estimatedCQI.interference).get_factor();
+                if(abs(delta_SINR) > 0.001)
+                {
+                    LOG_INFO( "Delta C / I: ", delta_SINR);
+                }else{ LOG_INFO("abs(Delta C / I) < 0.001 "); }
+        }
 	else{
 		LOG_INFO( "estimated C/I = ",
 				  puCommand->peer.estimatedCQI.carrier, " / ", puCommand->peer.estimatedCQI.interference,
 				  "\n estimated intra-cell interference: ", puCommand->getEstimatedIintra()
 			);
 	}
-
 	getDeliverer()->getAcceptor(compound)->onData(compound);
 }
 
@@ -413,17 +417,13 @@ PhyUser::onData(wns::osi::PDUPtr pdu,
             interference.get_dBm() - puCommand->peer.estimatedCQI.interference.get_dBm());
 	}else{
 		assure(0, "PhyUser::onData: Received PDU can't be releated to a probe!");
-	}
+    }
 
 #ifndef NDEBUG
     traceIncoming(compound, rxPowerMeasurement);
 #endif
-   double m = puCommand->magic.rxMeasurement->getSINR().get_factor();
-   double e = puCommand->peer.estimatedCQI.carrier.get_mW() / puCommand->peer.estimatedCQI.interference.get_mW();
-   LOG_INFO( " Delta C/I = ", rxPower.get_dBm() - puCommand->peer.estimatedCQI.carrier.get_dBm(),
-             "/ ",interference.get_dBm() - puCommand->peer.estimatedCQI.interference.get_dBm()," = ", m - e);
-	//Deliver compound
-	doOnData(compound);
+    //Deliver compound
+    doOnData(compound);
 }
 
 void

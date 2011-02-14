@@ -121,11 +121,14 @@ void BeamformingPhyAccessFunc::operator()( PhyUser* pu, const wns::ldk::Compound
 
 void PatternSetterPhyAccessFunc::operator()( PhyUser* pu, const wns::ldk::CompoundPtr& )
 {
+    patternStart_ = transmissionStart_;
+    patternEnd_ = transmissionStop_;
     SetPattern setter ( pu, destination_, pattern_);
     wns::simulator::getEventScheduler()
         ->schedule( setter, patternStart_ );
-
-    RemovePattern remover (pu, destination_);
+    
+    //race condition: removing before reading by approximalty 1.6e-5 [s] 
+    /*RemovePattern remover (pu, destination_);
     wns::simulator::getEventScheduler()
-        ->schedule( remover, patternEnd_ );
+        ->schedule( remover, patternEnd_);*/
 }
