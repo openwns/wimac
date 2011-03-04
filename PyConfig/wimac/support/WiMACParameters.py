@@ -275,6 +275,8 @@ class ParametersOFDM(Frozen):
     # since we assume all UTs being served in parallel
     # If False: per subchannel nominal power equals the max power since we assume UTs only use few subchannels
     #################
+    
+    eirpLimited = False
 
 
 ###############################################################################

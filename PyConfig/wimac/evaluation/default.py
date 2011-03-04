@@ -78,7 +78,8 @@ def installTutorialEvaluation(sim, loggingStationIDs, settlingTime, kind = "PDF"
                #"wimac.carrierSDMA",
                #"wimac.interferenceSDMA",
                #"wimac.deltaPHYModeSDMA",
-               #"wimac.deltaInterferenceSDMA"
+               #"wimac.deltaInterferenceSDMA",
+			   #"wimac.deltaCarrierSDMA"
                ] 
     bodyInstallDefaultEvaluation(sim, loggingStationIDs, settlingTime, sources, kind, tutorial = True)
 # end example
@@ -164,7 +165,7 @@ def bodyInstallDefaultEvaluation(sim, loggingStationIDs, settlingTime, sources, 
             else:
                 node.getLeafs().appendChildren(openwns.evaluation.generators.Moments())
         else:
-            if src in ["wimac.cirSDMA", "wimac.deltaCarrierSDMA", "wimac.deltaInterferenceSDMA"]:
+            if src in ["wimac.cirSDMA", "wimac.carrierSDMA", "wimac.interferenceSDMA", "wimac.deltaCarrierSDMA", "wimac.deltaInterferenceSDMA"]:
                 node.getLeafs().appendChildren(openwns.evaluation.generators.PDF(
                                                             minXValue = -100,
                                                             maxXValue = 100,

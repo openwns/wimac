@@ -246,6 +246,8 @@ class ParametersOFDMA(object):
        # True (assuming all UTs served in parallel):    power_per_subchannel = max_power / #subchannel * #user_terminals
        # False (assuming UTs use very few subchannels): power_per_subchannel = max_power
        #################
+       
+        self.eirpLimited = False
         
 #TODO
 ###############################################################

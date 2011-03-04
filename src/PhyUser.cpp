@@ -163,7 +163,7 @@ PhyUser::PhyUser( const PhyUser& rhs ):
         new wns::probe::bus::ContextCollector(
             *rhs.probes_.deltaPHYModeSDMA));
     probes_.PHYModeSDMA = wns::probe::bus::ContextCollectorPtr(
-    new wns::probe::bus::ContextCollector(
+        new wns::probe::bus::ContextCollector(
         *rhs.probes_.PHYModeSDMA));
     probes_.deltaInterferenceSDMA = wns::probe::bus::ContextCollectorPtr(
         new wns::probe::bus::ContextCollector(
