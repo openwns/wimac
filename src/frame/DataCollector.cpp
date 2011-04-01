@@ -156,7 +156,6 @@ DataCollector::doOnData(const wns::ldk::CompoundPtr& compound)
         otherTXScheduler->getHARQ()->onTimeSlotReceived(phyCommand->magic.schedulingTimeSlot,
             wns::scheduler::harq::HARQInterface::TimeSlotInfo(
             phyCommand->magic.rxMeasurement,
-            0.0,
             phyCommand->local.pAFunc_->subBand_));
    
         if(deliverReceivedEvent == wns::events::scheduler::IEventPtr())
