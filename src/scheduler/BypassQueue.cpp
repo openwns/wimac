@@ -416,7 +416,7 @@ BypassQueue::numBitsForCid(wns::scheduler::ConnectionID cid) const
 }
 
 wns::scheduler::QueueStatusContainer
-BypassQueue::getQueueStatus() const
+BypassQueue::getQueueStatus(bool forFuture) const
 {
     throw wns::Exception("not implemented");
 }

@@ -179,7 +179,7 @@ namespace wimac { namespace scheduler {
          * @brief Returns the container of QueueStatus for each cid
          */
         wns::scheduler::QueueStatusContainer
-        getQueueStatus() const;
+        getQueueStatus(bool forFuture) const;
 
         /**
          * @brief Has to be called before calling put(CompoundPtr) to
