@@ -3,9 +3,6 @@ from rise.Transmitter import Transmitter
 import rise.scenario.Propagation
 from ofdmaphy.Receiver import OFDMAReceiver
 
-from rise.scenario.FTFading import *
-#from rise.scenario.FTFadingConfiguration import *
-
 class Transceiver(Sealed):
     propagation = None
     receiver = None
@@ -21,18 +18,15 @@ class Transceiver(Sealed):
 
         ##### Set Transceiver #########################################################
         self.receiver['AP'] = OFDMAReceiver( propagation = self.propagation,
-                                             propagationCharacteristicName = "AP",
-                                             FTFadingStrategy = FTFadingOff())
+                                             propagationCharacteristicName = "AP")
         self.receiver['AP'].logger.enabled = False
 
         self.receiver['FRS'] = OFDMAReceiver( propagation = self.propagation,
-                                              propagationCharacteristicName = "FRS",
-                                              FTFadingStrategy = FTFadingOff())
+                                              propagationCharacteristicName = "FRS")
         self.receiver['FRS'].logger.enabled = False
 
         self.receiver['UT'] = OFDMAReceiver( propagation = self.propagation,
-                                             propagationCharacteristicName = "UT",
-                                             FTFadingStrategy = FTFadingOff())
+                                             propagationCharacteristicName = "UT")
         self.receiver['UT'].logger.enabled = False
 
         self.transmitter['AP'] = Transmitter( propagation = self.propagation,
