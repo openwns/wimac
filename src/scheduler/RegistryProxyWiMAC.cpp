@@ -308,12 +308,6 @@ RegistryProxyWiMAC::estimateRxSINROf(const wns::scheduler::UserID user, int slot
     return wns::scheduler::ChannelQualityOnOneSubChannel(pathloss, interference, carrier);
 }
 
-wns::Power
-RegistryProxyWiMAC::estimateInterferenceStdDeviation(const wns::scheduler::UserID user) {
-	return layer2->getManagementService<service::InterferenceCache>("interferenceCache")
-        ->getInterferenceDeviation(user.getNode());
-}
-
 wns::scheduler::Bits
 RegistryProxyWiMAC::getQueueSizeLimitPerConnection() {
 	return queueSize;

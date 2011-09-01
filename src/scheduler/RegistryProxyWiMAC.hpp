@@ -73,7 +73,6 @@ namespace wimac {
             const wns::scheduler::UserID user, int slot);
 		wns::scheduler::ChannelQualityOnOneSubChannel estimateRxSINROf(
             const wns::scheduler::UserID user, int slot);
-		wns::Power estimateInterferenceStdDeviation(const wns::scheduler::UserID user);
 		wns::scheduler::Bits getQueueSizeLimitPerConnection();
 		int getStationType(const wns::scheduler::UserID user);
         virtual wns::scheduler::UserSet filterReachable( wns::scheduler::UserSet users ); // soon obsolete
