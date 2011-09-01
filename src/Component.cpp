@@ -251,6 +251,7 @@ Component::onWorldCreated()
 void
 Component::onShutdown()
 {
+    getFUN()->onShutdown();
 }
 
 int
