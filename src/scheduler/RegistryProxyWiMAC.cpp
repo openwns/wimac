@@ -615,3 +615,19 @@ RegistryProxyWiMAC::getCQIAvailable() const
 {
        return false;
 }
+
+wns::Ratio
+RegistryProxyWiMAC::getEffectiveUplinkSINR(const wns::scheduler::UserID sender, 
+    const std::set<unsigned int>& scs, 
+    const wns::Power& txPower)
+{
+    assure(false, "Not implemented, adapt WiMAC interference cache or use DLLBase ICache.");
+}
+
+wns::Ratio
+RegistryProxyWiMAC::getEffectiveDownlinkSINR(const wns::scheduler::UserID receiver, 
+    const std::set<unsigned int>& scs, 
+    const wns::Power& txPower)
+{
+    assure(false, "Not implemented, adapt WiMAC interference cache or use DLLBase ICache.");
+}
