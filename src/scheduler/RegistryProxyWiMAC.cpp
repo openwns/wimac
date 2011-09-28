@@ -271,7 +271,8 @@ RegistryProxyWiMAC::getOverhead(int /* numBursts */) {
 }
 
 wns::scheduler::ChannelQualityOnOneSubChannel
-RegistryProxyWiMAC::estimateTxSINRAt(const wns::scheduler::UserID user, int slot){
+RegistryProxyWiMAC::estimateTxSINRAt(const wns::scheduler::UserID user, int slot, int timeSlot)
+{
     wns::service::dll::StationType stationType = layer2->getStationType();
     if(stationType != wns::service::dll::StationTypes::UT()) {
 	// lookup the results reported by the receiving subscriber station in the
@@ -293,7 +294,8 @@ RegistryProxyWiMAC::estimateTxSINRAt(const wns::scheduler::UserID user, int slot
 }
 
 wns::scheduler::ChannelQualityOnOneSubChannel
-RegistryProxyWiMAC::estimateRxSINROf(const wns::scheduler::UserID user, int slot){
+RegistryProxyWiMAC::estimateRxSINROf(const wns::scheduler::UserID user, int slot, int timeSlot)
+{
 
 	// lookup the results previously reported by us to the remote side
 	service::InterferenceCache* remoteCache =
@@ -619,6 +621,7 @@ RegistryProxyWiMAC::getCQIAvailable() const
 wns::Ratio
 RegistryProxyWiMAC::getEffectiveUplinkSINR(const wns::scheduler::UserID sender, 
     const std::set<unsigned int>& scs, 
+    const int timeSlot,
     const wns::Power& txPower)
 {
     assure(false, "Not implemented, adapt WiMAC interference cache or use DLLBase ICache.");
@@ -626,7 +629,8 @@ RegistryProxyWiMAC::getEffectiveUplinkSINR(const wns::scheduler::UserID sender,
 
 wns::Ratio
 RegistryProxyWiMAC::getEffectiveDownlinkSINR(const wns::scheduler::UserID receiver, 
-    const std::set<unsigned int>& scs, 
+    const std::set<unsigned int>& scs,
+    const int timeSlot, 
     const wns::Power& txPower)
 {
     assure(false, "Not implemented, adapt WiMAC interference cache or use DLLBase ICache.");

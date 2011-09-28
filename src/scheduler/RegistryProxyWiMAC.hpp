@@ -70,9 +70,9 @@ namespace wimac {
 		wns::scheduler::UserID getMyUserID();
 		simTimeType getOverhead(int numBursts);
 		wns::scheduler::ChannelQualityOnOneSubChannel estimateTxSINRAt(
-            const wns::scheduler::UserID user, int slot);
+            const wns::scheduler::UserID user, int slot, int timeSlot);
 		wns::scheduler::ChannelQualityOnOneSubChannel estimateRxSINROf(
-            const wns::scheduler::UserID user, int slot);
+            const wns::scheduler::UserID user, int slot, int timeSlot);
 		wns::scheduler::Bits getQueueSizeLimitPerConnection();
 		int getStationType(const wns::scheduler::UserID user);
         virtual wns::scheduler::UserSet filterReachable( wns::scheduler::UserSet users ); // soon obsolete
@@ -86,12 +86,14 @@ namespace wimac {
 
         wns::Ratio
         getEffectiveUplinkSINR(const wns::scheduler::UserID sender, 
-            const std::set<unsigned int>& scs, 
+            const std::set<unsigned int>& scs,
+            const int timeSlot, 
             const wns::Power& txPower);
 
         wns::Ratio
         getEffectiveDownlinkSINR(const wns::scheduler::UserID receiver, 
-            const std::set<unsigned int>& scs, 
+            const std::set<unsigned int>& scs,
+            const int timeSlot, 
             const wns::Power& txPower);
 
 		/** @brief get the ChannelsQualities (CQI) on all the subbands of the user.
