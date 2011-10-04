@@ -415,19 +415,6 @@ void Scheduler::setFUN(wns::ldk::fun::FUN* fun)
         pyConfig.get("harq"));
     assure(colleagues.harq, "HARQ creation failed");
 
-    /* UL Master HARQ needs to know about DownlinkHARQ */
-    if(schedulerSpot_ == wns::scheduler::SchedulerSpot::ULMaster())
-    {
-        wimac::scheduler::Scheduler* sched = dynamic_cast<wimac::scheduler::Scheduler*>(
-            fun->findFriend<frame::DataCollector*>("dlscheduler")->getTxScheduler());
-        assure(sched, "Cannot find downlink scheduler in ULMaster");
-
-        wns::scheduler::harq::HARQInterface* dlHARQ = sched->colleagues.harq;
-        assure(dlHARQ, "Cannot find downlink HARQ in ULMaster");
-
-        colleagues.harq->setDownlinkHARQ(dlHARQ);
-    }
-
 	// tell the modules who friends and colleagues are
 	colleagues.grouper->setColleagues(colleagues.registry);
 	colleagues.strategy->setColleagues(colleagues.queue,
@@ -446,6 +433,19 @@ void Scheduler::setFUN(wns::ldk::fun::FUN* fun)
 		colleagues.pseudoGenerator->setScheduler(this);
 	}
 	schedulerSpot_ = colleagues.strategy->getSchedulerSpotType();
+
+    /* UL Master HARQ needs to know about DownlinkHARQ */
+    if(schedulerSpot_ == wns::scheduler::SchedulerSpot::ULMaster())
+    {
+        wimac::scheduler::Scheduler* sched = dynamic_cast<wimac::scheduler::Scheduler*>(
+            fun->findFriend<frame::DataCollector*>("dlscheduler")->getTxScheduler());
+        assure(sched, "Cannot find downlink scheduler in ULMaster");
+
+        wns::scheduler::harq::HARQInterface* dlHARQ = sched->colleagues.harq;
+        assure(dlHARQ, "Cannot find downlink HARQ in ULMaster");
+
+        colleagues.harq->setDownlinkHARQ(dlHARQ);
+    }
 }
 
 

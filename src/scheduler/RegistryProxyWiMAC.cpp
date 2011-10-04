@@ -279,13 +279,13 @@ RegistryProxyWiMAC::estimateTxSINRAt(const wns::scheduler::UserID user, int slot
         // local cache
 	wns::Power interference =
 		layer2->getManagementService<service::InterferenceCache>("interferenceCache")
-            ->getAveragedInterference(user.getNode(), slot);
+            ->getAveragedInterference(user.getNode());
 	wns::Ratio pathloss =
 		layer2->getManagementService<service::InterferenceCache>("interferenceCache")
-            ->getAveragedPathloss(user.getNode(), slot);
+            ->getAveragedPathloss(user.getNode());
         wns::Power carrier =
         layer2->getManagementService<service::InterferenceCache>("interferenceCache")
-            ->getAveragedCarrier(user.getNode(), slot);
+            ->getAveragedCarrier(user.getNode());
         return wns::scheduler::ChannelQualityOnOneSubChannel(pathloss, interference, carrier);
     } else {
         //lookup results signaled by the BS-master through the MAP
@@ -303,9 +303,9 @@ RegistryProxyWiMAC::estimateRxSINROf(const wns::scheduler::UserID user, int slot
 		getStationByNode(user.getNode())->
 		getManagementService<service::InterferenceCache>("interferenceCache");
 
-	wns::Ratio pathloss = remoteCache->getAveragedPathloss(getMyUserID().getNode(), slot);
-    wns::Power interference = remoteCache->getAveragedInterference(getMyUserID().getNode(), slot);
-    wns::Power carrier = remoteCache->getAveragedCarrier(getMyUserID().getNode(), slot);
+	wns::Ratio pathloss = remoteCache->getAveragedPathloss(getMyUserID().getNode());
+    wns::Power interference = remoteCache->getAveragedInterference(getMyUserID().getNode());
+    wns::Power carrier = remoteCache->getAveragedCarrier(getMyUserID().getNode());
 
     return wns::scheduler::ChannelQualityOnOneSubChannel(pathloss, interference, carrier);
 }
