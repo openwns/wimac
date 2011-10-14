@@ -503,6 +503,14 @@ RegistryProxyWiMAC::getChannelQualities4UserOnDownlink(wns::scheduler::UserID /*
   return wns::scheduler::ChannelQualitiesOnAllSubBandsPtr(); // fake (empty)
 }
 
+
+void 
+RegistryProxyWiMAC::updateUserSubchannels (const wns::scheduler::UserID user, std::set<int>& channels)
+{
+  //TODO: add updateUserSubchannels for WiMAC
+ return;
+}
+
 wns::scheduler::PowerCapabilities
 RegistryProxyWiMAC::getPowerCapabilities(const wns::scheduler::UserID user) const
 {

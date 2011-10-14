@@ -83,7 +83,8 @@ namespace wimac {
 		/**@brief returns one for UTs, and #connected UTs in case of RNs */
 		virtual int getTotalNumberOfUsers(const wns::scheduler::UserID user);
 		void switchFilterTo(int qos);
-
+        void 
+        updateUserSubchannels (const wns::scheduler::UserID user, std::set<int>& channels);
         wns::Ratio
         getEffectiveUplinkSINR(const wns::scheduler::UserID sender, 
             const std::set<unsigned int>& scs,
@@ -95,7 +96,7 @@ namespace wimac {
             const std::set<unsigned int>& scs,
             const int timeSlot, 
             const wns::Power& txPower);
-
+  
 		/** @brief get the ChannelsQualities (CQI) on all the subbands of the user.
 		    Eventually for a future frameNr (prediction). */
 		virtual wns::scheduler::ChannelQualitiesOnAllSubBandsPtr
