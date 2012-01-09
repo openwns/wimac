@@ -639,7 +639,8 @@ wns::Ratio
 RegistryProxyWiMAC::getEffectiveDownlinkSINR(const wns::scheduler::UserID receiver, 
     const std::set<unsigned int>& scs,
     const int timeSlot, 
-    const wns::Power& txPower)
+    const wns::Power& txPower,
+    const bool worstCase)
 {
     assure(false, "Not implemented, adapt WiMAC interference cache or use DLLBase ICache.");
 }

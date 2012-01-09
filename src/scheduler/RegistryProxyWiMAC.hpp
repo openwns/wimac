@@ -95,7 +95,8 @@ namespace wimac {
         getEffectiveDownlinkSINR(const wns::scheduler::UserID receiver, 
             const std::set<unsigned int>& scs,
             const int timeSlot, 
-            const wns::Power& txPower);
+            const wns::Power& txPower,
+            const bool worstCase);
   
 		/** @brief get the ChannelsQualities (CQI) on all the subbands of the user.
 		    Eventually for a future frameNr (prediction). */
