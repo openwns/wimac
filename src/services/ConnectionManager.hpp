@@ -64,6 +64,10 @@ namespace wimac {
                 *this << "Connection Identifier not found in "
                       << file << ":" << line;
             }
+
+            virtual
+            ~CIDNotFound() throw() {};
+
         private:
             CIDNotFound();
         };
