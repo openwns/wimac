@@ -28,9 +28,6 @@
 
 #include <WIMAC/scheduler/Scheduler.hpp>
 
-#include <boost/filesystem/fstream.hpp>
-#include <boost/filesystem/path.hpp>
-
 #include <WNS/ldk/Compound.hpp>
 #include <WNS/ldk/Deliverer.hpp>
 #include <WNS/service/phy/ofdma/Handler.hpp>
@@ -59,14 +56,13 @@ STATIC_FACTORY_REGISTER_WITH_CREATOR(
 using namespace wimac::scheduler;
 
 Scheduler::Scheduler(wns::ldk::FunctionalUnit* parent, const wns::pyconfig::View& config) :
-	plotFrames(config.get<bool>("plotFrames")),
 	usedSlotDuration(0.0),
 	offsetInSlot(0.0),
         slotDuration(config.get<double>("slotDuration")),
 	freqChannels(config.get<int>("freqChannels")),
 	maxBeams(config.get<int>("maxBeams")),
 	beamforming(config.get<bool>("beamforming")),
-    numberOfTimeSlots_(config.get<int>("numberOfTimeSlots")),
+        numberOfTimeSlots_(config.get<int>("numberOfTimeSlots")),
 	uplink(config.get<bool>("uplink")),
 	alwaysAcceptIfQueueAccepts(config.get<bool>("alwaysAcceptIfQueueAccepts")),
 	logger("W-NS", "Scheduler",
@@ -227,51 +223,8 @@ Scheduler::deliverSchedule(wns::ldk::Connector* connector)
 }
 
 void
-Scheduler::setupPlotting()
-{
-    std::string direction = uplink ? std::string("UL") : std::string("DL");
-    std::stringstream configFilename;
-    configFilename << parent_->getFUN()->getLayer()->getName() << "_"
-                   <<  direction
-                   << "_frame_" << frameNo << ".conf";
-
-    boost::filesystem::path ssConf(outputDir);
-    ssConf /= configFilename.str();
-    std::stringstream ssPlot;
-
-
-    boost::filesystem::ofstream conf(ssConf);
-
-    conf << "[main]\n";
-    conf << "FreqChannels=" << freqChannels << "\n"
-         << "Beams=" << maxBeams << "\n"
-         << "StartTime=0.0\n"
-         << "EndTime=" << this->getDuration() << "\n";
-    conf.close();
-
-    plotFiles.clear();
-    for (unsigned int i = 0; i < freqChannels; ++i)
-    {
-        plotFiles.push_back(new boost::filesystem::fstream);
-        std::stringstream plotFilename;
-        plotFilename << parent_->getFUN()->getLayer()->getName() << "_"
-                     << direction
-                     << "_frame_" << frameNo << ".plot." << i;
-        boost::filesystem::path ssPlot(outputDir);
-        ssPlot /= plotFilename.str();
-        plotFiles[i]->open(ssPlot);
-        // format flags for the timestamps: always print 9 digits for float,
-        plotFiles[i]->flags( std::ios_base::fixed );
-        plotFiles[i]->precision(9);
-    }
-}
-
-void
 Scheduler::startScheduling()
 {
-    if (plotFrames)
-        setupPlotting();
-
     accepting_ = true;
 
     if (colleagues.pseudoGenerator)
@@ -336,12 +289,6 @@ Scheduler::finishCollection()
 //     }
 //     colleagues.callback->callBack(strategyResult_->schedulingMap);
 
-    if (plotFrames) {
-        for (unsigned int i = 0; i < freqChannels; ++i) {
-            plotFiles[i]->close();
-            delete plotFiles[i];
-        }
-    }
     frameNo++;
 }
 

@@ -64,7 +64,6 @@ class BaseStation(Layer2):
             beamforming = config.parametersPhy.beamforming,
             mapper = self.mapper,
             #friendliness_dBm = config.friendliness_dBm,
-            plotFrames = False,
             uplink = False,
             callback = wimac.Scheduler.DLCallback(
                     beamforming = config.parametersPhy.beamforming, 
@@ -99,7 +98,6 @@ class BaseStation(Layer2):
             callback = wimac.Scheduler.ULCallback(
                     beamforming = config.parametersPhy.beamforming,
                     slotLength = config.parametersPhy.slotDuration),
-            plotFrames = False,
             uplink = True,
             numberOfTimeSlots = config.numberOfTimeSlots
             )
@@ -326,7 +324,6 @@ class SubscriberStation(Layer2):
             mapper = self.mapper,
             #friendliness_dBm = config.friendliness_dBm,
             callback = wimac.Scheduler.ULCallback(slotLength = config.parametersPhy.slotDuration),
-            plotFrames = False,
             uplink = True,
             numberOfTimeSlots = config.numberOfTimeSlots
             )

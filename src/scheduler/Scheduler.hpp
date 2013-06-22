@@ -30,8 +30,6 @@
 #include <string>
 #include <queue>
 
-#include <boost/filesystem/fstream.hpp>
-
 #include <WNS/Cloneable.hpp>
 #include <WNS/pyconfig/View.hpp>
 #include <WNS/scheduler/MapInfoProviderInterface.hpp>
@@ -188,7 +186,6 @@ namespace wimac { namespace scheduler {
             } friends_;
 
             wns::logger::Logger logger;
-            std::vector<boost::filesystem::fstream*> plotFiles;
 
 
         private:

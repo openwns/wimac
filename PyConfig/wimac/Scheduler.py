@@ -102,7 +102,6 @@ class Scheduler(openwns.FCF.CompoundCollector):
     maxBeams = None
     freqChannels = None
     beamforming = None
-    plotFrames = False
     uplink = None
     alwaysAcceptIfQueueAccepts = None
     pseudoGenerator = None
