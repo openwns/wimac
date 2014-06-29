@@ -169,7 +169,7 @@ void TimingControl::onFUNCreated()
         entry.compoundCollector = compoundCollector;
         entry.duration = duration;
 
-        if(action == TimingControl::Start && action || action == TimingControl::Pause){
+        if(action && (action == TimingControl::Start || action == TimingControl::Pause)){
             // only these actions are really time consuming
             sumDuration += duration;
         }
